@@ -9,7 +9,7 @@ const __dirname = path.dirname(__filename);
 
 const PORT = 5174;
 const HOST = '0.0.0.0';
-const FRONTEND_DIR = __dirname;
+const FRONTEND_DIR = path.join(__dirname, 'dist');
 const INDEX_PATH = path.join(FRONTEND_DIR, 'index.html');
 const BACKEND_URL = process.env.BACKEND_URL || 'http://127.0.0.1:8010';
 
