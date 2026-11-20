@@ -7,7 +7,7 @@ from fastapi.responses import FileResponse
 from .services.db import init_db
 from .core.config import settings
 from .api import auth, claims, fraud, investigations, dashboard, audit, lookup, users
-from .api import ocr, forensics, departmental_dashboards
+from .api import ocr, forensics, departmental_dashboards, compliance_reports, management_reports
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
@@ -44,6 +44,8 @@ app.include_router(users.router)
 app.include_router(ocr.router)
 app.include_router(forensics.router)
 app.include_router(departmental_dashboards.router)
+app.include_router(compliance_reports.router)
+app.include_router(management_reports.router)
 
 # Mount static web dashboard
 static_dir = os.path.join(os.path.dirname(__file__), "static")

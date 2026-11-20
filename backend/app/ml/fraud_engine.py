@@ -4,6 +4,8 @@ import logging
 from datetime import datetime, timezone
 from typing import Any, Dict, List, Optional, Tuple
 
+from ..core.config import settings
+
 logger = logging.getLogger("fraud_engine")
 
 class FraudDetectionEngine:
@@ -224,14 +226,16 @@ class FraudDetectionEngine:
                     recommended_actions.append("Flag for forensic document analysis and notify Legal/Compliance.")
 
                 if "empty_text" in flags or "low_ocr_confidence" in flags:
+                    # Policy: a low OCR confidence reading alone must not
+                    # classify a document as fraudulent. Recorded for review
+                    # but contributes no fraud score.
                     indicators.append({
                         "code": "POOR_DOCUMENT_LEGIBILITY",
                         "severity": "LOW",
-                        "weight": 8.0,
-                        "detail": "Document text could not be extracted with sufficient confidence or is blank.",
+                        "weight": 0.0,
+                        "detail": "Document text could not be extracted with sufficient confidence or is blank. Low OCR confidence alone is not evidence of fraud.",
                     })
-                    rule_score += 8.0
-                    explanations.append("Low readability or missing legible text on uploaded supporting document.")
+                    explanations.append("Low readability or missing legible text on uploaded supporting document; this alone does not establish fraud.")
 
         # ---------------------------------------------------------
         # 7. SCORE CALIBRATION & CATEGORIZATION
@@ -239,14 +243,18 @@ class FraudDetectionEngine:
         # Cap score between 0 and 100
         calibrated_score = round(min(100.0, max(0.0, rule_score)), 1)
 
-        # Categorize
-        if calibrated_score < 30.0:
+        # Categorize using configurable thresholds
+        th = settings.risk_thresholds
+        low_max = float(th["low"][1])
+        med_max = float(th["medium"][1])
+        high_max = float(th["high"][1])
+        if calibrated_score < low_max:
             category = "Low"
             base_recommendation = "Low fraud risk. Proceed with standard claims adjudication process."
-        elif calibrated_score < 60.0:
+        elif calibrated_score < med_max:
             category = "Medium"
             base_recommendation = "Medium fraud risk. Recommend secondary review by Claims Officer prior to payment clearance."
-        elif calibrated_score < 80.0:
+        elif calibrated_score < high_max:
             category = "High"
             base_recommendation = "High fraud risk. Refer claim file to Fraud Investigation Unit for verification of supporting evidence."
         else:

@@ -105,8 +105,62 @@ class Investigation(Base):
     notes = Column(Text, nullable=True)
     opened_at = Column(DateTime, default=utc_now)
     closed_at = Column(DateTime, nullable=True)
+    outcome = Column(String, nullable=True)  # confirmed_fraud | cleared
+    evidence_documents = Column(JSON, nullable=True)  # IDs of linked OCRDocument records
     claim = relationship("Claim")
     investigator = relationship("User")
+
+
+class ClaimNote(Base):
+    """Internal notes attached to a claim by the Claims Management workspace."""
+    __tablename__ = "claim_notes"
+    id = Column(Integer, primary_key=True, index=True)
+    claim_id = Column(Integer, ForeignKey("claims.id"), nullable=False)
+    user_id = Column(Integer, ForeignKey("users.id"), nullable=False)
+    note = Column(Text, nullable=True)
+    created_at = Column(DateTime, default=utc_now)
+    claim = relationship("Claim")
+    user = relationship("User")
+
+
+class InvestigationNote(Base):
+    """Timestamped notes recorded by Fraud Investors during an investigation."""
+    __tablename__ = "investigation_notes"
+    id = Column(Integer, primary_key=True, index=True)
+    investigation_id = Column(Integer, ForeignKey("investigations.id"), nullable=False)
+    user_id = Column(Integer, ForeignKey("users.id"), nullable=False)
+    note = Column(Text, nullable=True)
+    created_at = Column(DateTime, default=utc_now)
+    investigation = relationship("Investigation")
+    user = relationship("User")
+
+
+class ComplianceReport(Base):
+    """Generated compliance and regulatory monitoring reports (Compliance Officer workspace)."""
+    __tablename__ = "compliance_reports"
+    id = Column(Integer, primary_key=True, index=True)
+    generated_by_id = Column(Integer, ForeignKey("users.id"), nullable=False)
+    report_type = Column(String, nullable=False)  # e.g. FRAUD_COMPLIANCE_REVIEW, AUDIT_EXCEPTIONS
+    title = Column(String, nullable=False)
+    details = Column(JSON, nullable=True)
+    period_start = Column(DateTime, nullable=True)
+    period_end = Column(DateTime, nullable=True)
+    generated_at = Column(DateTime, default=utc_now)
+    generated_by = relationship("User")
+
+
+class ManagementReport(Base):
+    """Downloadable executive management summaries (Management Workspace)."""
+    __tablename__ = "management_reports"
+    id = Column(Integer, primary_key=True, index=True)
+    generated_by_id = Column(Integer, ForeignKey("users.id"), nullable=False)
+    report_type = Column(String, nullable=True)  # e.g. EXECUTIVE_KPI_SNAPSHOT, FRAUD_TREND_REVIEW
+    title = Column(String, nullable=True)
+    summary = Column(JSON, nullable=True)
+    period_start = Column(DateTime, nullable=True)
+    period_end = Column(DateTime, nullable=True)
+    generated_at = Column(DateTime, default=utc_now)
+    generated_by = relationship("User")
 
 class AuditLog(Base):
     __tablename__ = "audit_logs"

@@ -57,3 +57,49 @@ def init_db():
     """Initializes all tables defined in models."""
     from ..models import sqlalchemy_models  # noqa: F401
     Base.metadata.create_all(bind=engine)
+    _migrate_schema()
+
+
+def _migrate_schema():
+    """
+    Adds missing nullable columns to pre-existing database tables.
+
+    The shipped development database may have been created with an older
+    model schema. SQLAlchemy's ``create_all`` only creates missing tables;
+    it does not alter existing ones. This migration is conservative:
+
+    - It only adds *nullable* columns that have no Python-side default.
+    - It never drops, renames or modifies existing columns or data.
+
+    All pre-existing records are preserved.
+    """
+    try:
+        from sqlalchemy import inspect as sa_inspect, text
+        from ..models import sqlalchemy_models  # noqa: F401
+
+        insp = sa_inspect(engine)
+        added = []
+        with engine.begin() as conn:
+            for table_name, table in Base.metadata.tables.items():
+                existing_cols = set()
+                if insp.has_table(table_name):
+                    existing_cols = {c["name"] for c in insp.get_columns(table_name)}
+                for col in table.columns:
+                    if col.name in existing_cols:
+                        continue
+                    if not col.nullable:
+                        # Never auto-add required columns; log and skip.
+                        logger.warning(
+                            "Skipped migration of non-nullable column %s.%s",
+                            table_name, col.name,
+                        )
+                        continue
+                    type_sql = col.type.compile(dialect=engine.dialect)
+                    conn.execute(text(
+                        f'ALTER TABLE "{table_name}" ADD COLUMN "{col.name}" {type_sql}'
+                    ))
+                    added.append(f"{table_name}.{col.name}")
+        if added:
+            logger.warning("Schema migration applied; added columns: %s", ", ".join(added))
+    except Exception as e:
+        logger.error(f"Schema migration failed: {e}")

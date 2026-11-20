@@ -102,3 +102,20 @@ async def mark_notification_read(
         notif.read = True
         db.commit()
     return {"message": "Notification marked as read."}
+
+
+@router.get("/notifications/unread-count", summary="Get the count of unread notifications for the current user")
+async def get_unread_notification_count(
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_active_user),
+):
+    # Global alerts are addressed to all users; personal ones are recipient-specific
+    count = (
+        db.query(Notification)
+        .filter(
+            Notification.read == False,
+            (Notification.recipient_id == current_user.id) | (Notification.recipient_id.is_(None)),
+        )
+        .count()
+    )
+    return {"unread_count": count}

@@ -13,7 +13,7 @@ from sqlalchemy import desc, func
 
 from ..services.db import get_db
 from ..models.sqlalchemy_models import (
-    OCRDocument, OCRCorrection, Claim, User, RoleEnum, AuditLog
+    OCRDocument, OCRCorrection, Claim, Investigation, User, RoleEnum, AuditLog
 )
 from ..dependencies import get_current_active_user, require_roles, log_audit_trail
 from ..ocr.ocr_service import process_document
@@ -30,7 +30,24 @@ ALLOWED_MIME_TYPES = {
     "image/webp",
     "text/plain",
 }
-MAX_FILE_SIZE_MB = 20
+MAX_FILE_SIZE_MB = settings.MAX_DOCUMENT_SIZE_MB
+
+
+def _claims_visible_to_user(db: Session, user: User):
+    """Returns claim IDs visible to the current user under departmental rules."""
+    q = db.query(Claim.id)
+    if user.role == RoleEnum.CLAIMS_OFFICER:
+        q = q.filter(
+            (Claim.assigned_officer_id == user.id) | (Claim.assigned_officer_id.is_(None))
+        )
+    elif user.role == RoleEnum.COMPLIANCE_OFFICER:
+        flagged_ids = db.query(Claim.id).filter(Claim.status == "flagged").all()
+        inv_claim_ids = db.query(Investigation.claim_id).all()
+        q = q.filter(Claim.id.in_([c[0] for c in (flagged_ids + inv_claim_ids)]))
+    elif user.role == RoleEnum.FRAUD_INVESTIGATOR:
+        inv_claim_ids = db.query(Investigation.claim_id).all()
+        q = q.filter(Claim.id.in_([c[0] for c in inv_claim_ids]))
+    return [c[0] for c in q.all()]
 
 
 class FieldCorrectionRequest(BaseModel):
@@ -124,7 +141,12 @@ async def upload_document_for_ocr(
     file: UploadFile = File(..., description="Document file (PDF, PNG, JPG)"),
     claim_reference: Optional[str] = Form(None, description="Associated claim ID (optional)"),
     db: Session = Depends(get_db),
-    current_user: User = Depends(get_current_active_user),
+    current_user: User = Depends(
+        require_roles([
+            RoleEnum.CLAIMS_OFFICER, RoleEnum.CLAIMS_MANAGER, RoleEnum.FRAUD_INVESTIGATOR,
+            RoleEnum.COMPLIANCE_OFFICER, RoleEnum.SYSTEM_ADMIN,
+        ])
+    ),
 ):
     """Uploads a document, runs OCR extraction, and stores structured results in the database."""
 
@@ -149,9 +171,23 @@ async def upload_document_for_ocr(
             detail=f"File size {file_size // (1024*1024)}MB exceeds the {MAX_FILE_SIZE_MB}MB limit.",
         )
 
-    # Save file to disk
+    # Departmental restriction: Claims Officers may only upload documents for
+    # claims in their queue (assigned to them or unassigned).
+    if claim_reference:
+        ref_claim = db.query(Claim).filter(
+            (Claim.claim_id == claim_reference) | (Claim.id == claim_reference)
+        ).first()
+        if ref_claim and current_user.role == RoleEnum.CLAIMS_OFFICER and ref_claim.assigned_officer_id not in (None, current_user.id):
+            raise HTTPException(
+                status_code=status.HTTP_403_FORBIDDEN,
+                detail="Not authorised to upload documents for this claim.",
+            )
+
+    # Save file to disk (sanitized — strip any directory components)
+    safe_name = os.path.basename((file.filename or "document").replace(" ", "_"))
+    if not safe_name or safe_name in (".", ".."):
+        safe_name = "document"
     os.makedirs(settings.DOCUMENTS_DIR, exist_ok=True)
-    safe_name = (file.filename or "document").replace(" ", "_")
     unique_filename = f"OCR_{uuid.uuid4().hex[:8]}_{safe_name}"
     file_path = os.path.join(settings.DOCUMENTS_DIR, unique_filename)
     with open(file_path, "wb") as f:
@@ -281,11 +317,16 @@ async def list_ocr_documents(
     if processing_status:
         query = query.filter(OCRDocument.processing_status == processing_status.lower())
 
-    # Claims officers only see their own claim documents
+    # Departmental data-access restrictions
+    visible_claim_ids = _claims_visible_to_user(db, current_user)
     if current_user.role == RoleEnum.CLAIMS_OFFICER:
-        from ..models.sqlalchemy_models import ClaimDocument
-        # Can only see docs associated with claims they handle
-        pass  # Keep broad access for now; restrict further if needed
+        query = query.filter(
+            (OCRDocument.claim_id.is_(None)) | (OCRDocument.claim_id.in_(visible_claim_ids))
+        )
+    elif current_user.role == RoleEnum.COMPLIANCE_OFFICER:
+        query = query.filter(OCRDocument.claim_id.in_(visible_claim_ids))
+    elif current_user.role == RoleEnum.FRAUD_INVESTIGATOR:
+        query = query.filter(OCRDocument.claim_id.in_(visible_claim_ids))
 
     docs = query.offset(skip).limit(limit).all()
     return [_serialize_document(d) for d in docs]
@@ -300,6 +341,13 @@ async def get_ocr_document(
     doc = db.query(OCRDocument).filter(OCRDocument.id == document_id).first()
     if not doc:
         raise HTTPException(status_code=404, detail="OCR document record not found.")
+
+    # Departmental data-access restrictions
+    visible_claim_ids = _claims_visible_to_user(db, current_user)
+    if current_user.role in (RoleEnum.CLAIMS_OFFICER, RoleEnum.COMPLIANCE_OFFICER, RoleEnum.FRAUD_INVESTIGATOR):
+        if doc.claim_id is not None and doc.claim_id not in visible_claim_ids:
+            raise HTTPException(status_code=403, detail="Not authorised to view this document.")
+
     return _serialize_document(doc)
 
 
@@ -314,6 +362,10 @@ async def correct_ocr_field(
     doc = db.query(OCRDocument).filter(OCRDocument.id == document_id).first()
     if not doc:
         raise HTTPException(status_code=404, detail="OCR document record not found.")
+
+    visible_claim_ids = _claims_visible_to_user(db, current_user)
+    if doc.claim_id is not None and doc.claim_id not in visible_claim_ids:
+        raise HTTPException(status_code=403, detail="Not authorised to correct this document.")
 
     # Get original value from extracted_fields
     original_value = None
@@ -365,6 +417,10 @@ async def mark_document_verified(
     doc = db.query(OCRDocument).filter(OCRDocument.id == document_id).first()
     if not doc:
         raise HTTPException(status_code=404, detail="OCR document record not found.")
+
+    visible_claim_ids = _claims_visible_to_user(db, current_user)
+    if doc.claim_id is not None and doc.claim_id not in visible_claim_ids:
+        raise HTTPException(status_code=403, detail="Not authorised to verify this document.")
 
     doc.is_manually_verified = True
     doc.verified_by_id = current_user.id

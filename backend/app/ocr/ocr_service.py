@@ -2,6 +2,7 @@ import os
 import re
 import hashlib
 import logging
+import shutil
 from abc import ABC, abstractmethod
 from datetime import datetime, timezone
 from typing import Any, Dict, List, Optional
@@ -25,8 +26,21 @@ class BaseOCRProvider(ABC):
 class TesseractOCRProvider(BaseOCRProvider):
     """Local Tesseract OCR provider with graceful fallback."""
 
+    # Common default install locations for Windows
+    _KNOWN_WINDOWS_PATHS = [
+        os.path.join(os.environ.get("ProgramFiles", r"C:\Program Files"), "Tesseract-OCR", "tesseract.exe"),
+        os.path.join(os.environ.get("ProgramFiles(x86)", r"C:\Program Files (x86)"), "Tesseract-OCR", "tesseract.exe"),
+        os.path.join(os.environ.get("LOCALAPPDATA", r"C:\Users\user\AppData\Local"), "Programs", "Tesseract-OCR", "tesseract.exe"),
+    ]
+
     def __init__(self, tesseract_cmd: Optional[str] = None):
         self.tesseract_cmd = tesseract_cmd or os.getenv("TESSERACT_CMD", "tesseract")
+        # Auto-detect common Windows install locations when tesseract is not in PATH
+        if HAS_PYTESSERACT and not shutil.which(self.tesseract_cmd):
+            for known in self._KNOWN_WINDOWS_PATHS:
+                if os.path.isfile(known):
+                    self.tesseract_cmd = known
+                    break
         if HAS_PYTESSERACT and self.tesseract_cmd:
             try:
                 pytesseract.pytesseract.tesseract_cmd = self.tesseract_cmd

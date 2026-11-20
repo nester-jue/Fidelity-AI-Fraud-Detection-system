@@ -5,8 +5,84 @@ import {
   Filter, Plus, RotateCw, Sliders, Users,
   ClipboardCheck, AlertTriangle, ArrowRight,
   CheckCircle2, X, Clock, TrendingUp,
-  Brain, FileCheck, Share2, Layers, Check
+  Brain, FileCheck, Share2, Layers, Check, MessageSquare, ClipboardList, Upload, Loader2
 } from 'lucide-react';
+import { apiCall } from './api/apiClient.js';
+import ExecutiveDashboard from './components/dashboards/ExecutiveDashboard.jsx';
+import ComplianceDashboard from './components/dashboards/ComplianceDashboard.jsx';
+import FraudInvestigationDashboard from './components/dashboards/FraudInvestigationDashboard.jsx';
+import AdminDashboard from './components/dashboards/AdminDashboard.jsx';
+import OCRDocumentPage from './components/pages/OCRDocumentPage.jsx';
+
+// ─────────────────────────────────────────────
+// DEPARTMENTAL NAVIGATION (Backend-enforced RBAC mirrors this)
+// ─────────────────────────────────────────────
+const ROLE_SIDEBAR = {
+  claims_officer: [
+    { id: 'overview', label: 'Dashboard', icon: Activity },
+    { id: 'claims', label: 'My Claims', icon: FileText },
+    { id: 'new-claim', label: 'New Claim', icon: Plus },
+    { id: 'ocr-results', label: 'OCR Results', icon: FileCheck },
+    { id: 'ocr-upload', label: 'Document Upload', icon: Layers },
+    { id: 'detail', label: 'AI Risk Assessment', icon: Brain },
+    { id: 'fnol', label: 'FNOL Intake', icon: Layers },
+    { id: 'notifications', label: 'Notifications', icon: Activity },
+    { id: 'profile', label: 'Profile', icon: Users },
+  ],
+  claims_manager: [
+    { id: 'overview', label: 'Dashboard', icon: Activity },
+    { id: 'claims', label: 'My Claims', icon: FileText },
+    { id: 'new-claim', label: 'New Claim', icon: Plus },
+    { id: 'ocr-results', label: 'OCR Results', icon: FileCheck },
+    { id: 'ocr-upload', label: 'Document Upload', icon: Layers },
+    { id: 'detail', label: 'AI Risk Assessment', icon: Brain },
+    { id: 'investigations', label: 'SIU Workspace', icon: ShieldCheck },
+    { id: 'fnol', label: 'FNOL Intake', icon: Layers },
+    { id: 'notifications', label: 'Notifications', icon: Activity },
+    { id: 'profile', label: 'Profile', icon: Users },
+  ],
+  management: [
+    { id: 'executive-overview', label: 'Executive Overview', icon: Activity },
+    { id: 'claims-performance', label: 'Claims Performance', icon: FileText },
+    { id: 'fraud-analytics', label: 'Fraud Analytics', icon: AlertTriangle },
+    { id: 'financial-exposure', label: 'Financial Exposure', icon: ShieldCheck },
+    { id: 'department-performance', label: 'Department Performance', icon: Users },
+    { id: 'management-reports', label: 'Management Reports', icon: FileText },
+    { id: 'profile', label: 'Profile', icon: Users },
+  ],
+  compliance_officer: [
+    { id: 'compliance-overview', label: 'Compliance Overview', icon: Activity },
+    { id: 'compliance-alerts', label: 'Compliance Alerts', icon: ShieldCheck },
+    { id: 'claims-under-review', label: 'Claims Under Review', icon: Clock },
+    { id: 'investigations', label: 'Investigations', icon: ShieldCheck },
+    { id: 'audit', label: 'Audit Trails', icon: ClipboardCheck },
+    { id: 'regulatory-reports', label: 'Regulatory Reports', icon: FileText },
+    { id: 'profile', label: 'Profile', icon: Users },
+  ],
+  fraud_investigator: [
+    { id: 'investigation-overview', label: 'Investigation Overview', icon: Activity },
+    { id: 'fraud-alerts', label: 'Fraud Alerts', icon: AlertTriangle },
+    { id: 'assigned-cases', label: 'Assigned Cases', icon: ClipboardCheck },
+    { id: 'ai-forensic-analysis', label: 'AI Forensic Analysis', icon: Brain },
+    { id: 'evidence-management', label: 'Evidence Management', icon: FileCheck },
+    { id: 'investigation-reports', label: 'Investigation Reports', icon: FileText },
+    { id: 'profile', label: 'Profile', icon: Users },
+  ],
+  system_admin: [
+    { id: 'admin-overview', label: 'Administration Overview', icon: Activity },
+    { id: 'user-management', label: 'User Management', icon: Users },
+    { id: 'roles-permissions', label: 'Roles and Permissions', icon: LockKeyhole },
+    { id: 'system-monitoring', label: 'System Monitoring', icon: Activity },
+    { id: 'ai-model-monitoring', label: 'AI Model Monitoring', icon: ShieldCheck },
+    { id: 'ocr-monitoring', label: 'OCR Monitoring', icon: Layers },
+    { id: 'audit', label: 'Audit Logs', icon: ClipboardCheck },
+    { id: 'system-configuration', label: 'System Configuration', icon: Sliders },
+    { id: 'profile', label: 'Profile', icon: Users },
+  ],
+};
+
+const getSidebar = (role) => ROLE_SIDEBAR[role] || ROLE_SIDEBAR.claims_officer;
+const firstVisibleTab = (sidebar) => sidebar && sidebar.length > 0 ? sidebar[0].id : 'overview';
 
 export default function App() {
   const [token, setToken] = useState(sessionStorage.getItem('fide_token'));
@@ -39,6 +115,7 @@ export default function App() {
 
   // Dashboard Data State
   const [activeTab, setActiveTab] = useState('overview');
+  const [dashboardType, setDashboardType] = useState(null);
   const [kpis, setKpis] = useState(null);
   const [riskDistribution, setRiskDistribution] = useState([]);
   const [recentSuspicious, setRecentSuspicious] = useState([]);
@@ -51,6 +128,10 @@ export default function App() {
   const [customersList, setCustomersList] = useState([]);
   const [policiesList, setPoliciesList] = useState([]);
   const [auditLogsList, setAuditLogsList] = useState([]);
+  const [claimNotesList, setClaimNotesList] = useState([]);
+  const [newClaimNote, setNewClaimNote] = useState('');
+  const [notesLoading, setNotesLoading] = useState(false);
+  const [notificationCount, setNotificationCount] = useState(0);
 
   // Filter States
   const [searchQuery, setSearchQuery] = useState('');
@@ -103,11 +184,56 @@ export default function App() {
       });
   }, [token]);
 
+  // Redirect users to their departmental dashboard on login
+  useEffect(() => {
+    if (!user || !token) return;
+    fetch('/departmental/my-profile', { headers: { Authorization: `Bearer ${token}` } })
+      .then(r => r.ok ? r.json() : null)
+      .then(profile => {
+        if (profile) {
+          setDashboardType(profile.dashboard_type);
+          const sidebar = getSidebar(profile.role);
+          const first = firstVisibleTab(sidebar);
+          setActiveTab(sidebar.some(t => t.id === activeTab) ? activeTab : first);
+        }
+      })
+      .catch(() => {});
+  }, [user, token]); // eslint-disable-line react-hooks/exhaustive-deps
+
+  // Enforce role-based sidebar guard: users cannot access other departments'
+  // dashboards even via manual navigation.
+  useEffect(() => {
+    if (!user) return;
+    const sidebar = getSidebar(user.role);
+    if (!sidebar.some(t => t.id === activeTab)) {
+      setActiveTab(firstVisibleTab(sidebar));
+    }
+  }, [user, activeTab]);
+
   // Load All System Data Once Authenticated
   useEffect(() => {
     if (!user || !token) return;
     refreshAllData();
   }, [user, token]);
+
+  // Load claim notes for the detail view
+  useEffect(() => {
+    if (activeTab !== 'detail' || !selectedClaim) return;
+    setNotesLoading(true);
+    fetch(`/claims/${selectedClaim.claim_id}/notes`, { headers: { Authorization: `Bearer ${token}` } })
+      .then(r => r.ok ? r.json() : [])
+      .then(setClaimNotesList)
+      .catch(() => setClaimNotesList([]))
+      .finally(() => setNotesLoading(false));
+  }, [activeTab, selectedClaim?.claim_id]);
+
+  // Unread notification count
+  const refreshUnreadCount = () => {
+    fetch('/notifications/unread-count', { headers: { Authorization: `Bearer ${token}` } })
+      .then(r => r.ok ? r.json() : null)
+      .then(d => d && setNotificationCount(d.unread_count))
+      .catch(() => {});
+  };
 
   const refreshAllData = () => {
     const headers = { Authorization: `Bearer ${token}` };
@@ -163,6 +289,9 @@ export default function App() {
     fetch('/customers', { headers }).then(r => r.ok ? r.json() : []).then(setCustomersList).catch(console.error);
     fetch('/policies', { headers }).then(r => r.ok ? r.json() : []).then(setPoliciesList).catch(console.error);
     fetch('/audit-logs/', { headers }).then(r => r.ok ? r.json() : []).then(setAuditLogsList).catch(console.error);
+
+    // Unread notification count
+    refreshUnreadCount();
   };
 
   const fetchClaimDetail = (claimId) => {
@@ -408,6 +537,74 @@ export default function App() {
         alert(`AI score recalculated for ${claimId}`);
         fetchClaimDetail(claimId);
         refreshAllData();
+      }
+    } catch (err) {
+      console.error(err);
+    }
+  };
+
+  // Request missing documents (Claims Officer)
+  const requestMissingDocuments = async (claimId) => {
+    try {
+      const fd = new FormData();
+      fd.append('reason', 'Requesting supporting documents to complete adjudication.');
+      const res = await fetch(`/claims/${claimId}/request-documents`, {
+        method: 'POST',
+        headers: { Authorization: `Bearer ${token}` },
+        body: fd,
+      });
+      if (res.ok) {
+        alert(`Documentation request sent for ${claimId}. Status: pending_documents.`);
+        refreshAllData();
+        fetchClaimDetail(claimId);
+      } else {
+        const err = await res.json().catch(() => ({}));
+        alert(`Error: ${err.detail || 'Request failed'}`);
+      }
+    } catch (err) {
+      console.error(err);
+    }
+  };
+
+  // Forward suspicious claim to Fraud Investigation Department (Claims Officer)
+  const forwardToInvestigation = async (claimId) => {
+    try {
+      const fd = new FormData();
+      fd.append('notes', selectedClaim?.assessment?.explanation || `Forwarded: AI fraud risk detected on ${claimId}.`);
+      const res = await fetch(`/claims/${claimId}/forward-to-investigation`, {
+        method: 'POST',
+        headers: { Authorization: `Bearer ${token}` },
+        body: fd,
+      });
+      if (res.ok) {
+        alert(`Claim ${claimId} forwarded to Fraud Investigation Department.`);
+        refreshAllData();
+        fetchClaimDetail(claimId);
+      } else {
+        const err = await res.json().catch(() => ({}));
+        alert(`Error: ${err.detail || 'Forward failed'}`);
+      }
+    } catch (err) {
+      console.error(err);
+    }
+  };
+
+  // Add internal note to claim
+  const addClaimNote = async () => {
+    if (!selectedClaim || !newClaimNote.trim()) return;
+    try {
+      const res = await fetch(`/claims/${selectedClaim.claim_id}/notes`, {
+        method: 'POST',
+        headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' },
+        body: JSON.stringify({ note: newClaimNote.trim() }),
+      });
+      if (res.ok) {
+        setNewClaimNote('');
+        const notes = await fetch(`/claims/${selectedClaim.claim_id}/notes`, { headers: { Authorization: `Bearer ${token}` } });
+        if (notes.ok) setClaimNotesList(await notes.json());
+      } else {
+        const err = await res.json().catch(() => ({}));
+        alert(`Error: ${err.detail || 'Note failed'}`);
       }
     } catch (err) {
       console.error(err);
@@ -905,22 +1102,13 @@ export default function App() {
           </div>
         </div>
 
-        {/* Navigation Tabs */}
+        {/* Departmental Sidebar (role-based, backend-enforced) */}
         <div className="bg-[#0F2744] border-t border-slate-700/60">
           <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 flex space-x-2 sm:space-x-4 overflow-x-auto scrollbar-thin">
-            {[
-              { id: 'overview', label: 'Executive Overview', icon: Activity },
-              { id: 'fnol', label: 'FNOL Intake', icon: Layers },
-              { id: 'claims', label: 'Claims Register', icon: FileText },
-              { id: 'detail', label: 'AI Forensics & OCR', icon: Brain },
-              { id: 'investigations', label: 'SIU Workspace', icon: ShieldCheck },
-              { id: 'network', label: 'Fraud Network Intelligence', icon: Share2 },
-              { id: 'governance', label: 'AI Model Governance', icon: Sliders },
-              { id: 'registry', label: 'Policyholders', icon: Users },
-              { id: 'audit', label: 'Audit Log', icon: ClipboardCheck },
-            ].map(tab => {
+            {getSidebar(user?.role || 'claims_officer').map(tab => {
               const Icon = tab.icon;
               const isActive = activeTab === tab.id;
+              const isNotifs = tab.id === 'notifications' && notificationCount > 0;
               return (
                 <button
                   key={tab.id}
@@ -932,7 +1120,7 @@ export default function App() {
                   }`}
                 >
                   <Icon size={16} className={isActive ? 'text-amber-400' : 'text-slate-400'} />
-                  <span>{tab.label}</span>
+                  <span>{tab.label}{isNotifs && <span className="ml-1 text-[10px] text-amber-300 font-black">●</span>}</span>
                 </button>
               );
             })}
@@ -1373,6 +1561,60 @@ export default function App() {
               </div>
             </div>
 
+            {/* Claim Management Actions (Claims Officer) */}
+            {(user?.role === 'claims_officer' || user?.role === 'claims_manager') && (
+              <div className="bg-white p-5 rounded-2xl border border-slate-200 shadow-sm">
+                <h3 className="text-xs font-extrabold uppercase tracking-wider text-slate-500 mb-3 flex items-center space-x-2"><ShieldCheck size={14} className="text-amber-600" /><span>Claim Management Actions</span></h3>
+                <div className="flex flex-wrap gap-3">
+                  <button
+                    onClick={() => requestMissingDocuments(selectedClaim.claim_id)}
+                    className="px-4 py-2 rounded-xl border-2 border-amber-500 text-amber-800 hover:bg-amber-50 font-bold text-xs transition-colors flex items-center space-x-2"
+                  >
+                    <FileText size={13} />
+                    <span>Request Missing Documents</span>
+                  </button>
+                  <button
+                    onClick={() => forwardToInvestigation(selectedClaim.claim_id)}
+                    className="px-4 py-2 rounded-xl border-2 border-red-600 text-red-800 hover:bg-red-50 font-bold text-xs transition-colors flex items-center space-x-2"
+                  >
+                    <ShieldCheck size={13} />
+                    <span>Forward to Fraud Investigation Dept</span>
+                  </button>
+                </div>
+                <div className="mt-4">
+                  <div className="flex items-center space-x-2 mb-2">
+                    <MessageSquare size={13} className="text-blue-600" />
+                    <span className="text-xs font-extrabold uppercase tracking-wider text-slate-500">Claim History & Notes ({claimNotesList.length})</span>
+                  </div>
+                  <div className="bg-slate-50 rounded-xl p-3 mb-3 max-h-44 overflow-y-auto space-y-2">
+                    {claimNotesList.length === 0 && <p className="text-xs text-slate-400">No notes recorded yet.</p>}
+                    {claimNotesList.map((n, i) => (
+                      <div key={n.id ?? i} className="text-xs text-slate-600 border-b border-slate-100 pb-1.5 last:border-0">
+                        <span className="font-semibold text-slate-800">{n.created_by}</span>
+                        <span className="text-slate-400 mx-1">·</span>
+                        <span className="text-[10px] font-mono text-slate-400">{n.created_at ? new Date(n.created_at).toLocaleString('en-ZA') : ''}</span>
+                        <p className="mt-0.5">{n.note}</p>
+                      </div>
+                    ))}
+                  </div>
+                  <div className="flex space-x-2">
+                    <textarea
+                      rows={2}
+                      placeholder="Add an internal note to this claim..."
+                      value={newClaimNote}
+                      onChange={e => setNewClaimNote(e.target.value)}
+                      className="flex-1 px-3 py-2 text-xs border border-slate-200 rounded-xl resize-none"
+                      disabled={notesLoading}
+                    />
+                    <button onClick={addClaimNote} disabled={notesLoading || !newClaimNote.trim()}
+                      className="px-3.5 py-2 bg-[#0F2744] text-white rounded-xl hover:bg-[#1B3A57] font-bold text-xs transition-colors disabled:opacity-50">
+                      <Plus size={13} />
+                    </button>
+                  </div>
+                </div>
+              </div>
+            )}
+
             <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
               {/* Left Score Column */}
               <div className="space-y-6">
@@ -1780,6 +2022,28 @@ export default function App() {
           </div>
         )}
 
+        {/* ========================================================= */}
+        {/* NEW: DEPARTMENTAL WORKSPACES */}
+        {/* ========================================================= */}
+        {['executive-overview', 'claims-performance', 'fraud-analytics', 'financial-exposure', 'department-performance', 'management-reports'].includes(activeTab) && (
+          <ExecutiveDashboard />
+        )}
+        {['compliance-overview', 'compliance-alerts', 'claims-under-review', 'regulatory-reports'].includes(activeTab) && (
+          <ComplianceDashboard />
+        )}
+        {['investigation-overview', 'fraud-alerts', 'assigned-cases', 'ai-forensic-analysis', 'evidence-management', 'investigation-reports'].includes(activeTab) && (
+          <FraudInvestigationDashboard />
+        )}
+        {['admin-overview', 'user-management', 'roles-permissions', 'system-monitoring', 'ai-model-monitoring', 'ocr-monitoring', 'system-configuration'].includes(activeTab) && (
+          <AdminDashboard />
+        )}
+        {activeTab === 'ocr' && <OCRDocumentPage activeTab="ocr-results" user={user} />}
+        {activeTab === 'ocr-results' && <OCRDocumentPage activeTab="ocr-results" user={user} />}
+        {activeTab === 'ocr-upload' && <OCRDocumentPage activeTab="ocr-upload" user={user} />}
+        {activeTab === 'notifications' && <NotificationsPanel user={user} token={token} onCountChange={(n) => setNotificationCount(n)} />}
+        {activeTab === 'profile' && <ProfilePanel user={user} />}
+        {activeTab === 'new-claim' && <NewClaimPanel user={user} />}
+
       </main>
 
       {/* Modal: Submit Claim */}
@@ -2014,6 +2278,230 @@ export default function App() {
           </div>
         </div>
       )}
+    </div>
+  );
+}
+
+// ─────────────────────────────────────────────
+// NEW COMPONENTS: New Claim, Notifications, Profile
+// ─────────────────────────────────────────────
+
+function NewClaimPanel({ user }) {
+  const [form, setForm] = useState({
+    policy_number: '',
+    claim_type: '',
+    claim_amount: '',
+    incident_date: '',
+    beneficiary_name: '',
+    description: '',
+  });
+  const [files, setFiles] = useState([]);
+  const [submitting, setSubmitting] = useState(false);
+  const [success, setSuccess] = useState(null);
+  const [error, setError] = useState('');
+
+  const inputCls = 'w-full px-3.5 py-2.5 border border-slate-200 rounded-xl text-xs bg-slate-50 focus:outline-none focus:ring-2 focus:ring-blue-500 transition-colors';
+  const labelCls = 'block text-[10px] font-extrabold uppercase tracking-wider text-slate-500 mb-1';
+
+  const handleChange = (e) => setForm((prev) => ({ ...prev, [e.target.name]: e.target.value }));
+
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    setSubmitting(true);
+    setError(''); setSuccess(null);
+    try {
+      const fd = new FormData();
+      Object.entries(form).forEach(([k, v]) => v && fd.append(k, v));
+      files.forEach((f) => fd.append('documents', f));
+      const res = await apiCall('/claims/submit', { method: 'POST', body: fd });
+      if (!res.ok) {
+        const body = await res.json().catch(() => ({}));
+        throw new Error(body.detail || `Server error: ${res.status}`);
+      }
+      const data = await res.json();
+      setSuccess(data);
+      setForm({ policy_number: '', claim_type: '', claim_amount: '', incident_date: '', beneficiary_name: '', description: '' });
+      setFiles([]);
+    } catch (err) {
+      setError(err.message);
+    } finally {
+      setSubmitting(false);
+    }
+  };
+
+  return (
+    <div className="space-y-6 max-w-3xl">
+      <div>
+        <h1 className="text-2xl font-extrabold text-slate-900">Register New Claim</h1>
+        <p className="text-xs text-slate-500 mt-0.5">Complete all required fields to submit a new insurance claim</p>
+      </div>
+
+      {success && (
+        <div className="flex items-start gap-3 p-4 bg-green-50 border border-green-200 rounded-2xl">
+          <CheckCircle className="w-5 h-5 text-green-500 flex-shrink-0 mt-0.5" />
+          <div>
+            <p className="text-sm font-bold text-green-700">Claim submitted successfully!</p>
+            <p className="text-xs text-green-600 mt-0.5">
+              Claim ID: <span className="font-mono font-bold">#{String(success.claim_id || '').slice(-8).toUpperCase()}</span>
+              {success.status && <> · Status: <span className="font-semibold">{success.status}</span></>}
+            </p>
+          </div>
+        </div>
+      )}
+
+      {error && (
+        <div className="flex items-start gap-3 p-4 bg-red-50 border border-red-200 rounded-2xl">
+          <AlertCircle className="w-5 h-5 text-red-500 flex-shrink-0 mt-0.5" />
+          <p className="text-xs font-bold text-red-700">Submission failed</p>
+          <p className="text-xs text-red-600 mt-0.5">{error}</p>
+        </div>
+      )}
+
+      {!success && (
+        <div className="bg-white rounded-2xl border border-slate-200 shadow-sm">
+          <div className="px-6 py-4 border-b border-slate-200 flex items-center gap-2">
+            <FileText className="w-4 h-4 text-blue-500" />
+            <h2 className="text-sm font-extrabold uppercase tracking-wider text-slate-700">Claim Details</h2>
+          </div>
+          <form onSubmit={handleSubmit} className="p-6 space-y-5">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
+              <div>
+                <label className={labelCls}>Policy Number *</label>
+                <input name="policy_number" required type="text" placeholder="e.g. POL-2024-001234" value={form.policy_number} onChange={handleChange} className={inputCls} />
+              </div>
+              <div>
+                <label className={labelCls}>Claim Type *</label>
+                <select name="claim_type" required value={form.claim_type} onChange={handleChange} className={inputCls}>
+                  <option value="">Select…</option>
+                  <option value="Death Benefit">Death Benefit</option>
+                  <option value="Funeral Expense">Funeral Expense</option>
+                  <option value="Accidental Death">Accidental Death</option>
+                  <option value="Critical Illness">Critical Illness</option>
+                  <option value="Medical Expense">Medical Expense</option>
+                  <option value="Other">Other</option>
+                </select>
+              </div>
+              <div>
+                <label className={labelCls}>Claim Amount (ZAR) *</label>
+                <input name="claim_amount" required type="number" min="0" step="0.01" placeholder="0.00" value={form.claim_amount} onChange={handleChange} className={`${inputCls} font-bold font-mono`} />
+              </div>
+              <div>
+                <label className={labelCls}>Incident Date *</label>
+                <input name="incident_date" required type="date" value={form.incident_date} onChange={handleChange} className={inputCls} />
+              </div>
+              <div className="sm:col-span-2">
+                <label className={labelCls}>Beneficiary Name *</label>
+                <input name="beneficiary_name" required type="text" placeholder="Full name of beneficiary" value={form.beneficiary_name} onChange={handleChange} className={inputCls} />
+              </div>
+            </div>
+            <div>
+              <label className={labelCls}>Description</label>
+              <textarea name="description" rows={4} placeholder="Describe the incident and circumstances of the claim…" value={form.description} onChange={handleChange} className={`${inputCls} resize-none`} />
+            </div>
+            <div>
+              <label className={labelCls}>Supporting Documents</label>
+              <label className="flex flex-col items-center justify-center w-full border-2 border-dashed border-slate-300 rounded-xl p-6 cursor-pointer hover:border-blue-400 hover:bg-blue-50/40 transition-colors bg-slate-50">
+                <Upload className="w-6 h-6 text-slate-400 mb-2" />
+                <p className="text-xs font-semibold text-slate-600">Click to upload or drag and drop</p>
+                <p className="text-[10px] text-slate-400 mt-0.5">PDF, JPG, PNG up to 10MB each</p>
+                <input type="file" multiple accept=".pdf,.jpg,.jpeg,.png" onChange={(e) => setFiles(Array.from(e.target.files))} className="hidden" />
+              </label>
+              {files.length > 0 && (
+                <div className="mt-2 space-y-1.5">
+                  {files.map((f, i) => (
+                    <div key={i} className="flex items-center gap-2 p-2 bg-slate-100 rounded-lg">
+                      <FileText className="w-3.5 h-3.5 text-blue-500 flex-shrink-0" />
+                      <span className="text-xs text-slate-700 truncate flex-1">{f.name}</span>
+                      <span className="text-[10px] text-slate-400">{(f.size / 1024).toFixed(1)} KB</span>
+                      <button type="button" onClick={() => setFiles((p) => p.filter((_, j) => j !== i))} className="p-0.5 text-slate-400 hover:text-red-500 transition-colors">
+                        <X className="w-3 h-3" />
+                      </button>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+            <div className="flex justify-end pt-2 border-t border-slate-100">
+              <button type="submit" disabled={submitting} className="inline-flex items-center gap-2 px-6 py-2.5 text-xs font-bold bg-blue-600 text-white rounded-xl hover:bg-blue-700 disabled:opacity-60 transition-colors shadow-sm">
+                {submitting ? <><Loader2 className="w-3.5 h-3.5 animate-spin" /> Submitting…</> : <><FileText className="w-3.5 h-3.5" /> Submit Claim</>}
+              </button>
+            </div>
+          </form>
+        </div>
+      )}
+    </div>
+  );
+}
+
+function NotificationsPanel({ user, token, onCountChange }) {
+  const [notifs, setNotifs] = useState([]);
+  const [loading, setLoading] = useState(true);
+  useEffect(() => {
+    fetch('/notifications', { headers: { Authorization: `Bearer ${token}` } })
+      .then(r => r.ok ? r.json() : [])
+      .then(setNotifs)
+      .catch(() => setNotifs([]))
+      .finally(() => setLoading(false));
+  }, []);
+  const markRead = async (id) => {
+    await fetch(`/notifications/${id}/read`, { method: 'PUT', headers: { Authorization: `Bearer ${token}` } });
+    setNotifs(p => p.map(n => n.id === id ? { ...n, read: true } : n));
+    onCountChange && fetch('/notifications/unread-count', { headers: { Authorization: `Bearer ${token}` } }).then(r => r.ok ? r.json() : null).then(d => d && onCountChange(d.unread_count));
+  };
+  return (
+    <div className="bg-white rounded-2xl border border-slate-200 shadow-sm p-6 max-w-3xl">
+      <h1 className="text-2xl font-extrabold text-slate-900 mb-2 flex items-center space-x-2"><Activity size={22} className="text-blue-600" /><span>Notifications & Alerts</span></h1>
+      <p className="text-xs text-slate-500 mb-4">AI fraud alerts and platform notifications</p>
+      {loading ? <div className="py-10 text-center"><Loader2 className="w-6 h-6 animate-spin text-blue-500" /></div> : (
+        <div className="divide-y divide-slate-100">
+          {notifs.length === 0 ? (
+            <div className="py-10 text-center"><AlertCircle className="w-8 h-8 text-slate-300 mx-auto" /><p className="text-slate-400 text-xs mt-2">No notifications</p></div>
+          ) : (
+            notifs.map(n => (
+              <div key={n.id} className={`py-3 flex gap-3 ${n.read ? 'bg-white' : 'bg-blue-50/50 border-l-2 border-l-blue-500'}`}>
+                <Activity size={15} className={n.read ? 'text-slate-400' : 'text-blue-600 animate-pulse'} />
+                <div className="flex-1">
+                  <p className={`text-xs ${n.read ? 'text-slate-500' : 'text-slate-900 font-semibold'}`}>{n.message}</p>
+                  <p className="text-[10px] font-mono text-slate-400 mt-0.5">{n.created_at ? new Date(n.created_at).toLocaleString('en-ZA') : ''}</p>
+                </div>
+                {!n.read && <button onClick={() => markRead(n.id)} className="text-[10px] font-bold text-blue-600">Mark read</button>}
+              </div>
+            ))
+          )}
+        </div>
+      )}
+    </div>
+  );
+}
+
+function ProfilePanel({ user }) {
+  const stats = [
+    ['Role', user?.role],
+    ['Department', user?.department || 'Not assigned'],
+    ['Email', user?.email],
+    ['Account Status', user?.is_active ? 'Active' : 'Inactive'],
+  ];
+  return (
+    <div className="bg-white rounded-2xl border border-slate-200 shadow-sm p-6 max-w-2xl">
+      <h1 className="text-2xl font-extrabold text-slate-900 mb-2">User Profile & Department</h1>
+      <div className="flex items-center gap-4 mb-6">
+        <div className="w-16 h-16 rounded-2xl bg-blue-50 flex items-center justify-center font-bold text-2xl text-blue-700">{(user?.full_name || user?.username || '?').slice(0, 2).toUpperCase()}</div>
+        <div>
+          <h2 className="text-lg font-extrabold text-slate-900">{user?.full_name || user?.username}</h2>
+          <p className="text-xs font-semibold text-blue-700 uppercase tracking-wider">{user?.role?.replace(/_/g, ' ')} · Dashboard: {user?.dashboard_type || '—'}</p>
+        </div>
+      </div>
+      <div className="space-y-3 border-t border-slate-100 pt-4">
+        {stats.map(([k, v]) => (
+          <div key={k} className="flex justify-between py-2 border-b border-slate-50">
+            <span className="text-[11px] font-bold text-slate-500 uppercase tracking-wider">{k}</span>
+            <span className="text-xs font-semibold text-slate-800">{v || '—'}</span>
+          </div>
+        ))}
+      </div>
+      <div className="mt-4 p-3 bg-slate-50 rounded-xl text-xs text-slate-500">
+        This workspace contains only the data and actions your role is authorised to access. Backend-enforced RBAC applies to all endpoints.
+      </div>
     </div>
   );
 }

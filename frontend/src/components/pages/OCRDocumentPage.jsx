@@ -3,7 +3,7 @@ import {
   Upload, ScanText, FileText, CheckCircle2, AlertTriangle,
   X, Eye, Edit3, Check, Clock, AlertCircle, Info
 } from 'lucide-react';
-import { api } from '../../../api/apiClient.js';
+import { api } from '../../api/apiClient.js';
 
 const statusBadge = (status) => {
   const map = {

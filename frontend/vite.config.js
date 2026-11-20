@@ -18,6 +18,11 @@ export default defineConfig({
       '/policies': 'http://localhost:8010',
       '/notifications': 'http://localhost:8010',
       '/users': 'http://localhost:8010',
+      '/departmental': 'http://localhost:8010',
+      '/forensics': 'http://localhost:8010',
+      '/ocr': 'http://localhost:8010',
+      '/compliance-reports': 'http://localhost:8010',
+      '/management-reports': 'http://localhost:8010',
     }
   }
 });

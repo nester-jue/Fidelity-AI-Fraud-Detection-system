@@ -8,9 +8,9 @@ from sqlalchemy import desc
 
 from ..services.db import get_db, SessionLocal
 from ..models.sqlalchemy_models import (
-    Claim, ClaimDocument, FraudAssessment, Notification, User, RoleEnum, Policy, Customer, Investigation
+    Claim, ClaimDocument, ClaimNote, FraudAssessment, Notification, User, RoleEnum, Policy, Customer, Investigation
 )
-from ..dependencies import get_current_active_user, require_roles, log_audit_trail
+from ..dependencies import get_current_active_user, require_roles, require_department, log_audit_trail
 from ..integrations.mock_services import PolicyService, CustomerService, ClaimsService
 from ..ocr.ocr_service import process_document
 from ..ml.fraud_engine import fraud_engine
@@ -20,7 +20,8 @@ router = APIRouter(prefix="/claims", tags=["Claims Management"])
 
 def save_uploaded_file(upload: UploadFile, claim_id: str) -> str:
     os.makedirs(settings.DOCUMENTS_DIR, exist_ok=True)
-    safe_name = upload.filename.replace(" ", "_") if upload.filename else "doc.bin"
+    raw = (upload.filename or "doc.bin").replace(" ", "_")
+    safe_name = os.path.basename(raw) or "doc.bin"
     unique_filename = f"{claim_id}_{uuid.uuid4().hex[:6]}_{safe_name}"
     file_path = os.path.join(settings.DOCUMENTS_DIR, unique_filename)
     with open(file_path, "wb") as buffer:
@@ -251,12 +252,20 @@ async def list_claims(
     status: Optional[str] = Query(None, description="Filter by status (submitted, flagged, in_review, approved, rejected)"),
     risk_category: Optional[str] = Query(None, description="Filter by AI risk (Low, Medium, High, Critical)"),
     search: Optional[str] = Query(None, description="Search by Claim ID, Policy Number, or Customer Name"),
+    assigned_only: bool = Query(False, description="Only show claims assigned to the current Claims Officer"),
     skip: int = Query(0, ge=0),
     limit: int = Query(50, ge=1, le=200),
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_active_user),
 ):
     query = db.query(Claim).order_by(desc(Claim.submission_date))
+
+    # Departmental data-access restriction: Claims Officers see their own
+    # assignments (or unassigned claims awaiting assignment).
+    if current_user.role == RoleEnum.CLAIMS_OFFICER:
+        query = query.filter(
+            (Claim.assigned_officer_id == current_user.id) | (Claim.assigned_officer_id.is_(None))
+        )
 
     if status:
         query = query.filter(Claim.status == status.lower())
@@ -305,6 +314,10 @@ async def get_claim_details(
     claim = db.query(Claim).filter((Claim.claim_id == claim_id) | (Claim.id == claim_id)).first()
     if not claim:
         raise HTTPException(status_code=404, detail=f"Claim '{claim_id}' not found.")
+
+    # Departmental data-access restriction
+    if current_user.role == RoleEnum.CLAIMS_OFFICER and claim.assigned_officer_id not in (None, current_user.id):
+        raise HTTPException(status_code=403, detail="Not authorised to view this claim.")
 
     assessment = claim.assessment
     investigation = db.query(Investigation).filter(Investigation.claim_id == claim.id).first()
@@ -382,6 +395,150 @@ async def update_claim_status(
         "claim_id": claim.claim_id,
         "status": claim.status,
     }
+
+@router.post("/{claim_id}/request-documents", summary="Claims Officer requests additional supporting documents")
+async def request_missing_documents(
+    claim_id: str,
+    reason: Optional[str] = Form("", description="Reason for the documentation request"),
+    db: Session = Depends(get_db),
+    current_user: User = Depends(require_department([RoleEnum.CLAIMS_OFFICER])),
+):
+    """Requests additional documentation for a claim — sets status to pending_documents."""
+    claim = db.query(Claim).filter((Claim.claim_id == claim_id) | (Claim.id == claim_id)).first()
+    if not claim:
+        raise HTTPException(status_code=404, detail="Claim not found.")
+    if current_user.role == RoleEnum.CLAIMS_OFFICER and claim.assigned_officer_id not in (None, current_user.id):
+        raise HTTPException(status_code=403, detail="Not authorised to update this claim.")
+
+    claim.status = "pending_documents"
+    db.commit()
+
+    log_audit_trail(
+        db, current_user, action="CLAIM_DOCUMENTS_REQUESTED", target=f"Claim:{claim.claim_id}",
+        detail={"reason": reason}
+    )
+    return {
+        "message": f"Additional documentation requested for {claim.claim_id}. Status: pending_documents.",
+        "claim_id": claim.claim_id,
+        "status": claim.status,
+    }
+
+
+@router.post("/{claim_id}/forward-to-investigation", summary="Forward a suspicious claim to the Fraud Investigation Department")
+async def forward_claim_to_investigation(
+    claim_id: str,
+    notes: Optional[str] = Form("", description="Forwarding justification and suspected fraud indicators"),
+    db: Session = Depends(get_db),
+    current_user: User = Depends(require_roles([RoleEnum.CLAIMS_OFFICER, RoleEnum.CLAIMS_MANAGER, RoleEnum.SYSTEM_ADMIN])),
+):
+    """Creates an investigation case for a claim and alerts investigators."""
+    claim = db.query(Claim).filter((Claim.claim_id == claim_id) | (Claim.id == claim_id)).first()
+    if not claim:
+        raise HTTPException(status_code=404, detail="Claim not found.")
+
+    existing = db.query(Investigation).filter(Investigation.claim_id == claim.id).first()
+    if existing:
+        return {"message": "Investigation case already exists for this claim.", "investigation_id": existing.id}
+
+    # Forward to the Fraud Investigation Department: assign to SIU investigator
+    investigator = (
+        db.query(User).filter(User.role == RoleEnum.FRAUD_INVESTIGATOR, User.is_active == True).order_by(User.id).first()
+    )
+    new_inv = Investigation(
+        claim_id=claim.id,
+        investigator_id=investigator.id if investigator else 1,
+        status="open",
+        notes=f"Forwarded by {current_user.full_name or current_user.username}: {notes}",
+        outcome=None,
+        opened_at=datetime.now(timezone.utc),
+    )
+    db.add(new_inv)
+    claim.status = "flagged"
+    db.commit()
+    db.refresh(new_inv)
+
+    # Alert investigators
+    for inv_user in db.query(User).filter(
+        User.role.in_([RoleEnum.FRAUD_INVESTIGATOR, RoleEnum.SYSTEM_ADMIN]),
+        User.is_active == True,
+    ).all():
+        db.add(Notification(
+            recipient_id=inv_user.id,
+            message=f"FRAUD ALERT: Claim {claim.claim_id} forwarded for investigation. AI risk: {claim.assessment.risk_score if claim.assessment else 'N/A'}/100.",
+            read=False,
+        ))
+    db.commit()
+
+    log_audit_trail(
+        db, current_user, action="CLAIM_FORWARDED_TO_INVESTIGATION", target=f"Claim:{claim.claim_id}",
+        detail={"investigation_id": new_inv.id}
+    )
+    return {
+        "message": f"Claim {claim.claim_id} forwarded to Fraud Investigation Department.",
+        "investigation_id": new_inv.id,
+        "claim_id": claim.claim_id,
+        "investigation_status": new_inv.status,
+    }
+
+
+@router.get("/{claim_id}/notes", summary="List internal notes recorded on a claim")
+async def list_claim_notes(
+    claim_id: str,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_active_user),
+):
+    claim = db.query(Claim).filter((Claim.claim_id == claim_id) | (Claim.id == claim_id)).first()
+    if not claim:
+        raise HTTPException(status_code=404, detail="Claim not found.")
+    notes = (
+        db.query(ClaimNote)
+        .filter(ClaimNote.claim_id == claim.id)
+        .order_by(desc(ClaimNote.created_at))
+        .limit(50)
+        .all()
+    )
+    return [
+        {
+            "id": n.id,
+            "note": n.note,
+            "created_by": n.user.full_name or n.user.username if n.user else "Unknown",
+            "created_at": n.created_at.isoformat() if n.created_at else None,
+        }
+        for n in reversed(notes)
+    ]
+
+
+@router.post("/{claim_id}/notes", summary="Add an internal note to a claim")
+async def add_claim_note(
+    claim_id: str,
+    note_data: dict = None,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(require_roles([RoleEnum.CLAIMS_OFFICER, RoleEnum.CLAIMS_MANAGER, RoleEnum.SYSTEM_ADMIN])),
+):
+    note_data = note_data or {}
+    note_text = (note_data.get("note") or note_data.get("note_text") or "").strip()
+    if not note_text:
+        raise HTTPException(status_code=400, detail="Note text is required.")
+    claim = db.query(Claim).filter((Claim.claim_id == claim_id) | (Claim.id == claim_id)).first()
+    if not claim:
+        raise HTTPException(status_code=404, detail="Claim not found.")
+    if current_user.role == RoleEnum.CLAIMS_OFFICER and claim.assigned_officer_id not in (None, current_user.id):
+        raise HTTPException(status_code=403, detail="Not authorised to add notes to this claim.")
+
+    new_note = ClaimNote(claim_id=claim.id, user_id=current_user.id, note=note_text, created_at=datetime.now(timezone.utc))
+    db.add(new_note)
+    db.commit()
+    db.refresh(new_note)
+
+    log_audit_trail(db, current_user, action="CLAIM_NOTE_ADDED", target=f"Claim:{claim.claim_id}", detail={"note_id": new_note.id})
+    return {
+        "message": "Note added successfully.",
+        "id": new_note.id,
+        "note": new_note.note,
+        "created_by": current_user.full_name or current_user.username,
+        "created_at": new_note.created_at.isoformat() if new_note.created_at else None,
+    }
+
 
 @router.post("/{claim_id}/score", summary="Manually trigger or recalculate AI fraud risk score")
 async def rescore_claim(

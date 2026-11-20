@@ -37,6 +37,7 @@ async def login_for_access_token(
 ):
     user = db.query(User).filter((User.username == form_data.username) | (User.email == form_data.username.lower())).first()
     if not user or not verify_password(form_data.password, user.hashed_password):
+        log_audit_trail(db, user, action="LOGIN_FAILED", target=f"User:{form_data.username}", detail={"ip": "127.0.0.1"})
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
             detail="Incorrect username or password",

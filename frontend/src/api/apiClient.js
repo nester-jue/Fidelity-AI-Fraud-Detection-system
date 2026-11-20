@@ -109,4 +109,32 @@ export const api = {
   // Lookup
   customers: () => apiCall('/customers'),
   policies: () => apiCall('/policies'),
+  notifications: () => apiCall('/notifications'),
+  notificationUnreadCount: () => apiCall('/notifications/unread-count'),
+
+  // Claims Officer actions
+  requestMissingDocuments: (claimId, reason) => apiCall(`/claims/${claimId}/request-documents`, { method: 'POST', body: JSON.stringify({ reason }) }),
+  forwardToInvestigation: (claimId, notes) => apiCall(`/claims/${claimId}/forward-to-investigation`, { method: 'POST', body: JSON.stringify({ notes }) }),
+  claimNotes: (claimId) => apiCall(`/claims/${claimId}/notes`),
+  addClaimNote: (claimId, note) => apiCall(`/claims/${claimId}/notes`, { method: 'POST', body: JSON.stringify({ note }) }),
+
+  // Management reports (Executive)
+  getManagementReports: () => apiCall('/management-reports/'),
+  generateManagementReport: (type = 'EXECUTIVE_KPI_SNAPSHOT') => apiCall('/management-reports/', { method: 'POST', body: JSON.stringify({ report_type: type }) }),
+  getManagementReport: (id) => apiCall(`/management-reports/${id}`),
+
+  // Compliance reports (Compliance/Admin)
+  listComplianceReports: () => apiCall('/compliance-reports/'),
+  generateComplianceReport: () => apiCall('/compliance-reports/', { method: 'POST', body: JSON.stringify({ report_type: 'FRAUD_COMPLIANCE_REVIEW' }) }),
+  getComplianceReport: (id) => apiCall(`/compliance-reports/${id}`),
+  listComplianceExceptions: () => apiCall('/compliance-reports/exceptions'),
+
+  // Fraud risk thresholds (Admin)
+  getForensicsRiskThresholds: () => apiCall('/forensics/risk-thresholds'),
+  updateForensicsRiskThresholds: (updates) => apiCall('/forensics/risk-thresholds', { method: 'PUT', body: JSON.stringify(updates) }),
+
+  // Investigation details & notes
+  investigationDetail: (id) => apiCall(`/investigations/${id}`),
+  addInvestigationNote: (id, note) => apiCall(`/investigations/${id}/notes`, { method: 'POST', body: JSON.stringify({ note }) }),
+  attachEvidence: (id, documentIds) => apiCall(`/investigations/${id}/`, { method: 'PUT', body: JSON.stringify({ evidence_documents: documentIds }) }).catch(() => null),
 };

@@ -32,6 +32,28 @@ class Settings(BaseModel):
     MODEL_VERSION: str = "v1.0-fidelity-rf-iso"
     MODEL_DIR: str = Field(default_factory=lambda: os.getenv("MODEL_DIR", os.path.abspath(os.path.join(os.path.dirname(__file__), "..", "..", "..", "ml", "models"))))
 
+    # Fraud risk classification thresholds (configurable)
+    RISK_THRESHOLD_LOW_MAX: int = int(os.getenv("RISK_THRESHOLD_LOW_MAX", "29"))
+    RISK_THRESHOLD_MEDIUM_MAX: int = int(os.getenv("RISK_THRESHOLD_MEDIUM_MAX", "59"))
+    RISK_THRESHOLD_HIGH_MAX: int = int(os.getenv("RISK_THRESHOLD_HIGH_MAX", "79"))
+    RISK_THRESHOLD_CRITICAL_MAX: int = int(os.getenv("RISK_THRESHOLD_CRITICAL_MAX", "100"))
+    RISK_THRESHOLD_LOW_MIN: int = 0
+    RISK_THRESHOLD_MEDIUM_MIN: int = 30
+    RISK_THRESHOLD_HIGH_MIN: int = 60
+    RISK_THRESHOLD_CRITICAL_MIN: int = 80
+
+    # Document upload limits
+    MAX_DOCUMENT_SIZE_MB: int = int(os.getenv("MAX_DOCUMENT_SIZE_MB", "20"))
+
+    @property
+    def risk_thresholds(self) -> dict:
+        return {
+            "low": [self.RISK_THRESHOLD_LOW_MIN, self.RISK_THRESHOLD_LOW_MAX],
+            "medium": [self.RISK_THRESHOLD_MEDIUM_MIN, self.RISK_THRESHOLD_MEDIUM_MAX],
+            "high": [self.RISK_THRESHOLD_HIGH_MIN, self.RISK_THRESHOLD_HIGH_MAX],
+            "critical": [self.RISK_THRESHOLD_CRITICAL_MIN, self.RISK_THRESHOLD_CRITICAL_MAX],
+        }
+
     # CORS
     CORS_ORIGINS: list[str] = [
         "http://localhost:5174",

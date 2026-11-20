@@ -13,8 +13,61 @@ from ..models.sqlalchemy_models import (
     Claim, FraudAssessment, Investigation, User, RoleEnum, OCRDocument
 )
 from ..dependencies import get_current_active_user, require_roles
+from ..core.config import settings
 
 router = APIRouter(prefix="/forensics", tags=["AI Forensic Analysis"])
+
+
+@router.get("/risk-thresholds", summary="Get the configurable AI fraud risk classification thresholds")
+async def get_risk_thresholds():
+    return {
+        "thresholds": settings.risk_thresholds,
+        "classification": {
+            "Low Risk": {"min": 0, "max": settings.RISK_THRESHOLD_LOW_MAX},
+            "Medium Risk": {"min": settings.RISK_THRESHOLD_MEDIUM_MIN, "max": settings.RISK_THRESHOLD_MEDIUM_MAX},
+            "High Risk": {"min": settings.RISK_THRESHOLD_HIGH_MIN, "max": settings.RISK_THRESHOLD_HIGH_MAX},
+            "Critical Risk": {"min": settings.RISK_THRESHOLD_CRITICAL_MIN, "max": 100},
+        },
+    }
+
+
+@router.put("/risk-thresholds", summary="Update configurable AI risk classification thresholds (system admin)")
+async def update_risk_thresholds(
+    updates: dict,
+    current_user: User = Depends(require_roles([RoleEnum.SYSTEM_ADMIN])),
+):
+    """Updates thresholds at runtime. Values validated as integers 0-100 and min<=max."""
+    from fastapi import HTTPException
+
+    allowed = {
+        "LOW_MAX": "RISK_THRESHOLD_LOW_MAX",
+        "LOW_MIN": "RISK_THRESHOLD_LOW_MIN",
+        "MEDIUM_MAX": "RISK_THRESHOLD_MEDIUM_MAX",
+        "MEDIUM_MIN": "RISK_THRESHOLD_MEDIUM_MIN",
+        "HIGH_MAX": "RISK_THRESHOLD_HIGH_MAX",
+        "HIGH_MIN": "RISK_THRESHOLD_HIGH_MIN",
+        "CRITICAL_MAX": "RISK_THRESHOLD_CRITICAL_MAX",
+        "CRITICAL_MIN": "RISK_THRESHOLD_CRITICAL_MIN",
+    }
+    applied = {}
+    for key, val in (updates or {}).items():
+        attr = allowed.get(key)
+        if attr is None:
+            raise HTTPException(status_code=400, detail=f"Unknown threshold key: {key}")
+        if not isinstance(val, int) or isinstance(val, bool) or not 0 <= val <= 100:
+            raise HTTPException(status_code=400, detail=f"Invalid value for {key}: must be integer 0-100")
+        setattr(settings, attr, val)
+        applied[key] = val
+
+    # Enforce min < max sanity
+    if settings.RISK_THRESHOLD_LOW_MAX >= settings.RISK_THRESHOLD_MEDIUM_MAX:
+        raise HTTPException(status_code=400, detail="LOW_MAX must be less than MEDIUM_MAX")
+    if settings.RISK_THRESHOLD_MEDIUM_MAX >= settings.RISK_THRESHOLD_HIGH_MAX:
+        raise HTTPException(status_code=400, detail="MEDIUM_MAX must be less than HIGH_MAX")
+    if settings.RISK_THRESHOLD_HIGH_MAX >= settings.RISK_THRESHOLD_CRITICAL_MAX:
+        raise HTTPException(status_code=400, detail="HIGH_MAX must be less than CRITICAL_MAX")
+
+    return {"message": "Risk thresholds updated.", "thresholds": settings.risk_thresholds, "applied": applied}
 
 
 def _risk_color(category: str) -> str:

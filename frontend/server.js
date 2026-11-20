@@ -11,8 +11,49 @@ const PORT = 5174;
 const HOST = '0.0.0.0';
 const FRONTEND_DIR = __dirname;
 const INDEX_PATH = path.join(FRONTEND_DIR, 'index.html');
+const BACKEND_URL = process.env.BACKEND_URL || 'http://127.0.0.1:8010';
 
-const server = http.createServer((req, res) => {
+// API path prefixes proxied to the FastAPI backend
+const API_PREFIXES = [
+  '/api', '/auth', '/claims', '/fraud', '/investigations', '/dashboard',
+  '/audit-logs', '/customers', '/policies', '/notifications', '/users',
+  '/departmental', '/forensics', '/ocr', '/compliance-reports', '/management-reports', '/health',
+];
+
+async function proxyToBackend(req, res, body) {
+  const url = BACKEND_URL + req.url;
+  try {
+    const upstream = await fetch(url, {
+      method: req.method,
+      headers: {
+        ...(req.headers.host ? { 'Host': req.headers.host } : {}),
+        ...(req.headers['content-type'] ? { 'Content-Type': req.headers['content-type'] } : {}),
+        ...(req.headers.authorization ? { 'Authorization': req.headers.authorization } : {}),
+      },
+      body: ['GET', 'HEAD', 'DELETE'].includes(req.method) ? undefined : body,
+    });
+    const buffer = Buffer.from(await upstream.arrayBuffer());
+    res.writeHead(upstream.status, {
+      'Content-Type': upstream.headers.get('content-type') || 'application/json',
+      'Access-Control-Allow-Origin': '*',
+      'Cache-Control': 'no-store',
+    });
+    res.end(buffer);
+  } catch (e) {
+    res.writeHead(502, { 'Content-Type': 'text/plain' });
+    res.end(`Backend unavailable at ${BACKEND_URL}: ${e.message}`);
+  }
+}
+
+const server = http.createServer(async (req, res) => {
+  const isApi = API_PREFIXES.some((p) => req.url === p || req.url.startsWith(p + '/'));
+  if (isApi) {
+    const chunks = [];
+    req.on('data', (c) => chunks.push(c));
+    req.on('end', () => proxyToBackend(req, res, Buffer.concat(chunks)));
+    return;
+  }
+
   // Normalize request url
   let reqPath = req.url.split('?')[0];
   let filePath = path.join(FRONTEND_DIR, reqPath);
