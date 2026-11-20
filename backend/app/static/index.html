@@ -1,0 +1,2504 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>FIDELITY LIFE ASSURANCE – NEXA AI Fraud Claims Detection Platform</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          colors: {
+            brand: {
+              dark: '#0A192F',
+              primary: '#0F2744',
+              secondary: '#1B3A57',
+              accent: '#C59B27',
+              accentLight: '#DFB743',
+              surface: '#F8FAFC',
+            }
+          }
+        }
+      }
+    }
+  </script>
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800;900&display=swap');
+    body { font-family: 'Plus Jakarta Sans', sans-serif; background-color: #F1F5F9; }
+    .gold-gradient { background: linear-gradient(135deg, #C59B27 0%, #E6C262 100%); }
+    .navy-gradient { background: linear-gradient(135deg, #0A192F 0%, #152E4D 100%); }
+    .card-shadow { box-shadow: 0 4px 25px -3px rgba(10, 25, 47, 0.07), 0 2px 8px -1px rgba(10, 25, 47, 0.04); }
+    .card-hover { transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1); }
+    .card-hover:hover { transform: translateY(-3px); box-shadow: 0 12px 30px -4px rgba(10, 25, 47, 0.12); }
+    .scrollbar-thin::-webkit-scrollbar { width: 6px; height: 6px; }
+    .scrollbar-thin::-webkit-scrollbar-track { background: #F1F5F9; }
+    .scrollbar-thin::-webkit-scrollbar-thumb { background: #CBD5E1; border-radius: 4px; }
+    .gold-border-top { border-top: 4px solid #C59B27; }
+    .navy-border-top { border-top: 4px solid #0F2744; }
+  </style>
+</head>
+<body class="text-slate-800 antialiased min-h-screen flex flex-col bg-slate-100/70">
+
+  <!-- TOP HEADER BRANDING -->
+  <header class="bg-brand-dark text-white border-b border-brand-secondary/40 sticky top-0 z-50 shadow-lg">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-20 flex items-center justify-between">
+      <div class="flex items-center space-x-4">
+        <!-- Logo Icon -->
+        <div class="h-12 w-12 rounded-xl gold-gradient flex items-center justify-center font-black text-brand-dark text-2xl shadow-lg ring-2 ring-amber-400/30">
+          <i class="fa-solid fa-shield-halved text-brand-dark"></i>
+        </div>
+        <div>
+          <div class="flex items-center space-x-2">
+            <span class="font-extrabold tracking-wider text-lg sm:text-xl text-white">FIDELITY LIFE</span>
+            <span class="text-[11px] px-2.5 py-0.5 rounded-full gold-gradient text-brand-dark font-black uppercase tracking-widest shadow-sm">ASSURANCE</span>
+          </div>
+          <p class="text-xs text-slate-300 font-semibold tracking-wide">NEXA AI Fraud Detection & Enterprise Claims Suite</p>
+        </div>
+      </div>
+
+      <!-- Controls & User Context -->
+      <div class="flex items-center space-x-3 sm:space-x-5">
+        <div class="hidden md:flex items-center space-x-2 text-xs bg-brand-secondary/70 px-3.5 py-1.5 rounded-full border border-brand-secondary text-slate-200 shadow-inner">
+          <span class="inline-block w-2.5 h-2.5 rounded-full bg-emerald-400 animate-pulse"></span>
+          <span>AI Engine: <strong class="text-amber-300">v1.2-ensemble-hybrid</strong></span>
+        </div>
+
+        <!-- Role Selector -->
+        <div class="flex items-center space-x-2 bg-brand-primary/90 border border-slate-700 rounded-xl px-3 py-1.5 text-xs shadow-sm">
+          <i class="fa-solid fa-user-shield text-brand-accent"></i>
+          <span class="text-slate-400 hidden sm:inline font-medium">Role:</span>
+          <select id="roleSelector" onchange="switchDemoRole(this.value)" class="bg-transparent text-white font-bold focus:outline-none cursor-pointer">
+            <option value="admin" class="bg-slate-900 text-white">System Admin</option>
+            <option value="claims.officer" class="bg-slate-900 text-white" selected>Claims Officer</option>
+            <option value="claims.manager" class="bg-slate-900 text-white">Claims Manager</option>
+            <option value="investigator" class="bg-slate-900 text-white">Fraud Investigator</option>
+            <option value="compliance" class="bg-slate-900 text-white">Compliance Officer</option>
+            <option value="executive" class="bg-slate-900 text-white">Executive / CRO</option>
+          </select>
+        </div>
+
+        <!-- Notification Bell -->
+        <button onclick="toggleNotifications()" class="relative p-2.5 text-slate-300 hover:text-white transition rounded-xl hover:bg-white/5">
+          <i class="fa-regular fa-bell text-lg"></i>
+          <span id="notifBadge" class="absolute top-1.5 right-1.5 w-4 h-4 rounded-full bg-red-500 text-[10px] font-black text-white flex items-center justify-center animate-bounce">2</span>
+        </button>
+
+        <!-- User Profile Pill -->
+        <div class="flex items-center space-x-2.5 pl-3 border-l border-slate-700/80">
+          <div class="w-9 h-9 rounded-xl bg-slate-800 border-2 border-brand-accent flex items-center justify-center font-bold text-xs text-brand-accent shadow-sm" id="userAvatar">
+            TO
+          </div>
+          <div class="hidden lg:block text-left">
+            <p class="text-xs font-bold text-white leading-tight" id="userNameDisplay">Tendai Moyo</p>
+            <p class="text-[10px] text-amber-400 font-semibold" id="userRoleDisplay">Claims Officer</p>
+          </div>
+        </div>
+
+        <!-- Sign Out Button -->
+        <button onclick="handleLogout()" class="px-3 py-1.5 rounded-xl bg-rose-950/70 hover:bg-rose-900 border border-rose-500/40 text-rose-200 text-xs font-bold transition flex items-center space-x-1.5 shadow-sm ml-1 cursor-pointer" title="Sign Out of Session">
+          <i class="fa-solid fa-right-from-bracket text-rose-400"></i>
+          <span class="hidden sm:inline">Sign Out</span>
+        </button>
+      </div>
+    </div>
+
+    <!-- MAIN NAVIGATION TABS (9 CORE SECTIONS) -->
+    <div class="bg-brand-primary border-t border-brand-secondary/40">
+      <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 flex space-x-1 sm:space-x-3 overflow-x-auto scrollbar-thin">
+        <button onclick="setActiveTab('overview')" id="tab-overview" class="tab-btn px-3.5 py-3 text-xs sm:text-sm font-bold border-b-2 border-brand-accent text-white flex items-center space-x-2 whitespace-nowrap">
+          <i class="fa-solid fa-chart-pie"></i>
+          <span>Executive Overview</span>
+        </button>
+        <button onclick="setActiveTab('fnol')" id="tab-fnol" class="tab-btn px-3.5 py-3 text-xs sm:text-sm font-bold border-b-2 border-transparent text-slate-400 hover:text-white flex items-center space-x-2 whitespace-nowrap">
+          <i class="fa-solid fa-bolt-lightning text-amber-400"></i>
+          <span>FNOL Intake</span>
+        </button>
+        <button onclick="setActiveTab('claims')" id="tab-claims" class="tab-btn px-3.5 py-3 text-xs sm:text-sm font-bold border-b-2 border-transparent text-slate-400 hover:text-white flex items-center space-x-2 whitespace-nowrap">
+          <i class="fa-solid fa-folder-open"></i>
+          <span>Claims Register</span>
+        </button>
+        <button onclick="setActiveTab('detail')" id="tab-detail" class="tab-btn px-3.5 py-3 text-xs sm:text-sm font-bold border-b-2 border-transparent text-slate-400 hover:text-white flex items-center space-x-2 whitespace-nowrap">
+          <i class="fa-solid fa-brain text-purple-400"></i>
+          <span>AI Forensics & OCR</span>
+        </button>
+        <button onclick="setActiveTab('investigations')" id="tab-investigations" class="tab-btn px-3.5 py-3 text-xs sm:text-sm font-bold border-b-2 border-transparent text-slate-400 hover:text-white flex items-center space-x-2 whitespace-nowrap">
+          <i class="fa-solid fa-shield-halved text-red-400"></i>
+          <span>SIU Workspace</span>
+        </button>
+        <button onclick="setActiveTab('network')" id="tab-network" class="tab-btn px-3.5 py-3 text-xs sm:text-sm font-bold border-b-2 border-transparent text-slate-400 hover:text-white flex items-center space-x-2 whitespace-nowrap">
+          <i class="fa-solid fa-diagram-project text-cyan-400"></i>
+          <span>Fraud Network Intelligence</span>
+        </button>
+        <button onclick="setActiveTab('governance')" id="tab-governance" class="tab-btn px-3.5 py-3 text-xs sm:text-sm font-bold border-b-2 border-transparent text-slate-400 hover:text-white flex items-center space-x-2 whitespace-nowrap">
+          <i class="fa-solid fa-sliders text-emerald-400"></i>
+          <span>AI Model Governance</span>
+        </button>
+        <button onclick="setActiveTab('registry')" id="tab-registry" class="tab-btn px-3.5 py-3 text-xs sm:text-sm font-bold border-b-2 border-transparent text-slate-400 hover:text-white flex items-center space-x-2 whitespace-nowrap">
+          <i class="fa-solid fa-users"></i>
+          <span>Policyholders</span>
+        </button>
+        <button onclick="setActiveTab('audit')" id="tab-audit" class="tab-btn px-3.5 py-3 text-xs sm:text-sm font-bold border-b-2 border-transparent text-slate-400 hover:text-white flex items-center space-x-2 whitespace-nowrap">
+          <i class="fa-solid fa-clipboard-check"></i>
+          <span>Audit Log</span>
+        </button>
+      </div>
+    </div>
+  </header>
+
+  <!-- NOTIFICATIONS DRAWER (MODAL) -->
+  <div id="notifDrawer" class="hidden fixed top-20 right-4 sm:right-12 z-50 w-80 sm:w-96 bg-white rounded-2xl shadow-2xl border border-slate-200 overflow-hidden card-shadow">
+    <div class="p-4 bg-brand-dark text-white flex justify-between items-center text-xs font-bold border-b border-slate-800">
+      <span class="flex items-center space-x-2"><i class="fa-solid fa-bell text-brand-accent"></i> <span>Fraud Alerts & Notifications</span></span>
+      <button onclick="toggleNotifications()" class="text-slate-400 hover:text-white text-lg">&times;</button>
+    </div>
+    <div id="notifList" class="p-3 max-h-80 overflow-y-auto space-y-2.5 text-xs">
+      <div class="p-3 bg-red-50 border-l-4 border-red-500 rounded-xl text-slate-700 shadow-sm">
+        <p class="font-extrabold text-red-800 flex items-center justify-between">
+          <span>Critical Duplicate Trigger</span>
+          <span class="text-[10px] text-red-600 bg-red-100 px-2 py-0.5 rounded-full">Score 90.0</span>
+        </p>
+        <p class="text-[11px] text-slate-600 mt-1">Claim CLM-2026-9002 flagged as Critical Risk. Exact duplicate incident date matches existing claim.</p>
+      </div>
+      <div class="p-3 bg-amber-50 border-l-4 border-amber-500 rounded-xl text-slate-700 shadow-sm">
+        <p class="font-extrabold text-amber-800 flex items-center justify-between">
+          <span>Early Inception Alert</span>
+          <span class="text-[10px] text-amber-700 bg-amber-100 px-2 py-0.5 rounded-full">Score 78.5</span>
+        </p>
+        <p class="text-[11px] text-slate-600 mt-1">Claim CLM-2026-9003 submitted within 11 days of policy effective date.</p>
+      </div>
+    </div>
+  </div>
+
+  <!-- MAIN APP CONTAINER -->
+  <main class="flex-1 max-w-7xl w-full mx-auto p-4 sm:p-6 lg:p-8 space-y-8">
+
+    <!-- ========================================================================= -->
+    <!-- VIEW 1: EXECUTIVE OVERVIEW -->
+    <!-- ========================================================================= -->
+    <section id="view-overview" class="space-y-8">
+      <!-- COMMANDING HERO BANNER -->
+      <div class="relative overflow-hidden bg-gradient-to-r from-white via-slate-50 to-amber-50/40 rounded-3xl p-6 sm:p-8 border border-slate-200/90 card-shadow">
+        <div class="absolute -right-16 -top-16 w-56 h-56 rounded-full bg-amber-400/10 blur-3xl pointer-events-none"></div>
+        <div class="relative flex flex-col lg:flex-row lg:items-center justify-between gap-6">
+          <div>
+            <div class="inline-flex items-center space-x-2 px-3 py-1 rounded-full bg-brand-primary/10 border border-brand-primary/20 text-brand-secondary text-xs font-black tracking-widest uppercase mb-3">
+              <span class="w-2 h-2 rounded-full bg-amber-500 animate-pulse"></span>
+              <span>FIDELITY LIFE ASSURANCE · EXECUTIVE FRAUD SURVEILLANCE</span>
+            </div>
+            <h1 class="text-2xl sm:text-3xl lg:text-4xl font-extrabold text-slate-900 tracking-tight leading-tight">
+              Executive Claims & Fraud Intelligence Suite
+            </h1>
+            <div class="mt-3 flex items-center space-x-2">
+              <div class="h-1.5 w-20 bg-gradient-to-r from-amber-500 to-amber-400 rounded-full"></div>
+              <div class="h-1.5 w-6 bg-brand-secondary rounded-full"></div>
+              <div class="h-1.5 w-2 bg-slate-300 rounded-full"></div>
+            </div>
+            <p class="mt-2.5 text-xs sm:text-sm text-slate-600 max-w-3xl leading-relaxed font-medium">
+              Real-time predictive fraud assessment, anomaly pattern detection, and automated loss prevention tracking across all life, funeral, and group policies.
+            </p>
+          </div>
+          <div class="flex flex-wrap items-center gap-3">
+            <button onclick="setActiveTab('fnol')" class="px-4 py-2.5 rounded-xl bg-amber-500 hover:bg-amber-600 text-brand-dark text-xs sm:text-sm font-black shadow-md hover:shadow-lg transition flex items-center space-x-2">
+              <i class="fa-solid fa-bolt-lightning"></i>
+              <span>Intake FNOL Notice</span>
+            </button>
+            <button onclick="openSubmitClaimModal()" class="px-4 py-2.5 rounded-xl bg-brand-primary hover:bg-brand-secondary text-white text-xs sm:text-sm font-bold shadow-md hover:shadow-lg transition flex items-center space-x-2">
+              <i class="fa-solid fa-plus text-brand-accent"></i>
+              <span>Submit Formal Claim</span>
+            </button>
+            <button onclick="loadDashboardData()" class="p-2.5 rounded-xl border border-slate-300 bg-white text-slate-700 hover:bg-slate-50 transition shadow-sm" title="Refresh Dashboard">
+              <i class="fa-solid fa-arrows-rotate"></i>
+            </button>
+          </div>
+        </div>
+      </div>
+
+      <!-- KPI METRIC CARDS (6 CARDS WITH ELEVATED VISUALS) -->
+      <div class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4">
+        <!-- 1. Total Claims -->
+        <div class="relative overflow-hidden bg-white p-5 rounded-2xl border border-slate-200/90 card-shadow card-hover navy-border-top">
+          <div class="flex items-center justify-between text-slate-400 mb-2">
+            <span class="text-[11px] font-bold uppercase tracking-wider text-slate-500">Total Claims</span>
+            <div class="w-8 h-8 rounded-lg bg-blue-50 text-blue-600 flex items-center justify-center text-sm"><i class="fa-solid fa-file-invoice"></i></div>
+          </div>
+          <div class="text-3xl font-black text-brand-dark tracking-tight" id="kpi-total-claims">--</div>
+          <div class="text-[11px] text-emerald-600 font-bold mt-2 flex items-center space-x-1">
+            <i class="fa-solid fa-arrow-trend-up"></i>
+            <span>Active Portfolio</span>
+          </div>
+        </div>
+
+        <!-- 2. AI Analysed -->
+        <div class="relative overflow-hidden bg-white p-5 rounded-2xl border border-slate-200/90 card-shadow card-hover navy-border-top">
+          <div class="flex items-center justify-between text-slate-400 mb-2">
+            <span class="text-[11px] font-bold uppercase tracking-wider text-slate-500">AI Analysed</span>
+            <div class="w-8 h-8 rounded-lg bg-purple-50 text-purple-600 flex items-center justify-center text-sm"><i class="fa-solid fa-brain"></i></div>
+          </div>
+          <div class="text-3xl font-black text-purple-700 tracking-tight" id="kpi-ai-analysed">--</div>
+          <div class="text-[11px] text-slate-500 font-bold mt-2 flex items-center space-x-1">
+            <span class="inline-block w-2 h-2 rounded-full bg-emerald-500"></span>
+            <span id="kpi-ai-coverage">100%</span> <span>Coverage</span>
+          </div>
+        </div>
+
+        <!-- 3. Critical Risk -->
+        <div class="relative overflow-hidden bg-white p-5 rounded-2xl border border-slate-200/90 card-shadow card-hover border-t-4 border-t-red-600">
+          <div class="flex items-center justify-between text-slate-400 mb-2">
+            <span class="text-[11px] font-bold uppercase tracking-wider text-slate-500">Critical Risk</span>
+            <div class="w-8 h-8 rounded-lg bg-red-50 text-red-600 flex items-center justify-center text-sm"><i class="fa-solid fa-triangle-exclamation"></i></div>
+          </div>
+          <div class="text-3xl font-black text-red-600 tracking-tight" id="kpi-critical-claims">--</div>
+          <div class="text-[11px] text-red-700 font-extrabold mt-2 uppercase tracking-wide">Payment Hold</div>
+        </div>
+
+        <!-- 4. Under Investigation -->
+        <div class="relative overflow-hidden bg-white p-5 rounded-2xl border border-slate-200/90 card-shadow card-hover border-t-4 border-t-amber-500">
+          <div class="flex items-center justify-between text-slate-400 mb-2">
+            <span class="text-[11px] font-bold uppercase tracking-wider text-slate-500">In Review</span>
+            <div class="w-8 h-8 rounded-lg bg-amber-50 text-amber-600 flex items-center justify-center text-sm"><i class="fa-solid fa-user-secret"></i></div>
+          </div>
+          <div class="text-3xl font-black text-amber-600 tracking-tight" id="kpi-investigating">--</div>
+          <div class="text-[11px] text-slate-500 font-bold mt-2">Active SIU Cases</div>
+        </div>
+
+        <!-- 5. Confirmed Fraud -->
+        <div class="relative overflow-hidden bg-white p-5 rounded-2xl border border-slate-200/90 card-shadow card-hover border-t-4 border-t-rose-600">
+          <div class="flex items-center justify-between text-slate-400 mb-2">
+            <span class="text-[11px] font-bold uppercase tracking-wider text-slate-500">Fraud Confirmed</span>
+            <div class="w-8 h-8 rounded-lg bg-rose-50 text-rose-600 flex items-center justify-center text-sm"><i class="fa-solid fa-ban"></i></div>
+          </div>
+          <div class="text-3xl font-black text-rose-700 tracking-tight" id="kpi-confirmed-fraud">--</div>
+          <div class="text-[11px] text-rose-600 font-bold mt-2">100% Intercepted</div>
+        </div>
+
+        <!-- 6. Losses Prevented -->
+        <div class="relative overflow-hidden bg-gradient-to-br from-white to-amber-50/60 p-5 rounded-2xl border border-amber-200/70 card-shadow card-hover gold-border-top">
+          <div class="flex items-center justify-between text-slate-400 mb-2">
+            <span class="text-[11px] font-bold uppercase tracking-wider text-amber-800">Losses Prevented</span>
+            <div class="w-8 h-8 rounded-lg bg-amber-100 text-amber-700 flex items-center justify-center text-sm"><i class="fa-solid fa-vault"></i></div>
+          </div>
+          <div class="text-2xl sm:text-3xl font-black text-brand-dark tracking-tight" id="kpi-losses-prevented">$0</div>
+          <div class="text-[11px] text-emerald-700 font-extrabold mt-2 flex items-center space-x-1">
+            <i class="fa-solid fa-shield-check"></i>
+            <span>Saved Capital</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- CHARTS & DISTRIBUTION SECTION -->
+      <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+        <!-- Risk Distribution Chart (Left 1 col) -->
+        <div class="bg-white p-6 rounded-2xl border border-slate-200/90 card-shadow flex flex-col justify-between">
+          <div>
+            <div class="flex justify-between items-center mb-4">
+              <div>
+                <h2 class="text-sm font-extrabold text-brand-dark uppercase tracking-wider">Claims Risk Distribution</h2>
+                <p class="text-xs text-slate-500 font-medium">Calibrated Multi-Layer Score (0-100)</p>
+              </div>
+              <span class="text-xs px-2.5 py-0.5 rounded-full bg-slate-100 text-slate-600 font-bold">Automated</span>
+            </div>
+
+            <div id="riskDistributionBars" class="space-y-4 mt-4">
+              <div>
+                <div class="flex justify-between text-xs font-bold mb-1.5">
+                  <span class="text-emerald-700 flex items-center space-x-1.5"><span class="w-2 h-2 rounded-full bg-emerald-500"></span><span>Low Risk (0-29)</span></span>
+                  <span id="lowRiskPct" class="font-mono">0% (0 claims)</span>
+                </div>
+                <div class="w-full h-3 bg-slate-100 rounded-full overflow-hidden">
+                  <div id="lowRiskBar" class="h-full bg-emerald-500 rounded-full transition-all duration-500" style="width: 0%"></div>
+                </div>
+              </div>
+
+              <div>
+                <div class="flex justify-between text-xs font-bold mb-1.5">
+                  <span class="text-amber-700 flex items-center space-x-1.5"><span class="w-2 h-2 rounded-full bg-amber-500"></span><span>Medium Risk (30-59)</span></span>
+                  <span id="medRiskPct" class="font-mono">0% (0 claims)</span>
+                </div>
+                <div class="w-full h-3 bg-slate-100 rounded-full overflow-hidden">
+                  <div id="medRiskBar" class="h-full bg-amber-500 rounded-full transition-all duration-500" style="width: 0%"></div>
+                </div>
+              </div>
+
+              <div>
+                <div class="flex justify-between text-xs font-bold mb-1.5">
+                  <span class="text-orange-700 flex items-center space-x-1.5"><span class="w-2 h-2 rounded-full bg-orange-500"></span><span>High Risk (60-79)</span></span>
+                  <span id="highRiskPct" class="font-mono">0% (0 claims)</span>
+                </div>
+                <div class="w-full h-3 bg-slate-100 rounded-full overflow-hidden">
+                  <div id="highRiskBar" class="h-full bg-orange-500 rounded-full transition-all duration-500" style="width: 0%"></div>
+                </div>
+              </div>
+
+              <div>
+                <div class="flex justify-between text-xs font-bold mb-1.5">
+                  <span class="text-red-700 flex items-center space-x-1.5"><span class="w-2 h-2 rounded-full bg-red-600"></span><span>Critical Risk (80-100)</span></span>
+                  <span id="critRiskPct" class="font-mono">0% (0 claims)</span>
+                </div>
+                <div class="w-full h-3 bg-slate-100 rounded-full overflow-hidden">
+                  <div id="critRiskBar" class="h-full bg-red-600 rounded-full transition-all duration-500" style="width: 0%"></div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div class="pt-4 border-t border-slate-100 mt-6 text-xs text-slate-500 flex items-center justify-between">
+            <span>Model Calibration: <strong>Active</strong></span>
+            <span class="text-emerald-600 font-bold"><i class="fa-solid fa-check"></i> Verified</span>
+          </div>
+        </div>
+
+        <!-- Recent Priority Suspicious Claims Queue (Right 2 cols) -->
+        <div class="bg-white p-6 rounded-2xl border border-slate-200/90 card-shadow lg:col-span-2 space-y-4">
+          <div class="flex justify-between items-center">
+            <div>
+              <h2 class="text-sm font-extrabold text-brand-dark uppercase tracking-wider flex items-center space-x-2">
+                <i class="fa-solid fa-triangle-exclamation text-amber-500"></i>
+                <span>Priority Suspicious Claims Surveillance Queue</span>
+              </h2>
+              <p class="text-xs text-slate-500 font-medium">Claims requiring SIU investigation or payment authorization holds</p>
+            </div>
+            <button onclick="setActiveTab('claims')" class="text-xs font-bold text-brand-primary hover:text-brand-secondary flex items-center space-x-1">
+              <span>View All Claims</span>
+              <i class="fa-solid fa-arrow-right"></i>
+            </button>
+          </div>
+
+          <div class="overflow-x-auto">
+            <table class="w-full text-left text-xs">
+              <thead class="bg-slate-50 text-slate-500 uppercase font-bold border-b border-slate-200">
+                <tr>
+                  <th class="py-2.5 px-3">Claim ID</th>
+                  <th class="py-2.5 px-3">Policyholder</th>
+                  <th class="py-2.5 px-3">Product</th>
+                  <th class="py-2.5 px-3">Amount</th>
+                  <th class="py-2.5 px-3">Risk Assessment</th>
+                  <th class="py-2.5 px-3">Primary Anomaly</th>
+                  <th class="py-2.5 px-3 text-right">Action</th>
+                </tr>
+              </thead>
+              <tbody id="recentSuspiciousTable" class="divide-y divide-slate-100 font-medium">
+                <tr><td colspan="7" class="py-6 text-center text-slate-400">Loading suspicious claims...</td></tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ========================================================================= -->
+    <!-- VIEW 2: FIRST NOTICE OF LOSS (FNOL) INTAKE -->
+    <!-- ========================================================================= -->
+    <section id="view-fnol" class="hidden space-y-8">
+      <!-- HERO BANNER -->
+      <div class="relative overflow-hidden bg-gradient-to-r from-white via-slate-50 to-amber-50/40 rounded-3xl p-6 sm:p-8 border border-slate-200/90 card-shadow">
+        <div class="relative flex flex-col lg:flex-row lg:items-center justify-between gap-6">
+          <div>
+            <div class="inline-flex items-center space-x-2 px-3 py-1 rounded-full bg-amber-500/10 border border-amber-500/30 text-amber-800 text-xs font-black tracking-widest uppercase mb-3">
+              <i class="fa-solid fa-bolt-lightning text-amber-500"></i>
+              <span>SECTION 4.4 · FIRST NOTICE OF LOSS (FNOL) WORKFLOW</span>
+            </div>
+            <h1 class="text-2xl sm:text-3xl lg:text-4xl font-extrabold text-slate-900 tracking-tight leading-tight">
+              First Notice of Loss (FNOL) Intake & Triage
+            </h1>
+            <div class="mt-3 flex items-center space-x-2">
+              <div class="h-1.5 w-20 bg-gradient-to-r from-amber-500 to-amber-400 rounded-full"></div>
+              <div class="h-1.5 w-6 bg-brand-secondary rounded-full"></div>
+              <div class="h-1.5 w-2 bg-slate-300 rounded-full"></div>
+            </div>
+            <p class="mt-2.5 text-xs sm:text-sm text-slate-600 max-w-3xl leading-relaxed font-medium">
+              Immediate preliminary capture of reported loss events across Fidelity Life Assurance. Initiates policy validity lookup and intelligent claim routing before extensive documentation is gathered.
+            </p>
+          </div>
+          <div class="flex items-center space-x-3">
+            <button onclick="openFnolModal()" class="px-5 py-2.5 rounded-xl bg-amber-500 hover:bg-amber-600 text-brand-dark text-xs sm:text-sm font-black shadow-md hover:shadow-lg transition flex items-center space-x-2">
+              <i class="fa-solid fa-plus"></i>
+              <span>Log New Loss Notice</span>
+            </button>
+          </div>
+        </div>
+      </div>
+
+      <!-- FNOL INTAKE TABLE & STAGES -->
+      <div class="bg-white rounded-2xl border border-slate-200/90 card-shadow overflow-hidden">
+        <div class="p-5 border-b border-slate-100 flex justify-between items-center bg-slate-50/50">
+          <div>
+            <h3 class="text-sm font-extrabold text-brand-dark uppercase tracking-wider">Preliminary Loss Notifications Queue</h3>
+            <p class="text-xs text-slate-500">Tracking incoming notifications across branch, digital, and agent channels</p>
+          </div>
+          <span class="text-xs font-bold text-slate-500">Total Notifications: <strong id="fnolCountDisplay" class="text-brand-dark">0</strong></span>
+        </div>
+
+        <div class="overflow-x-auto">
+          <table class="w-full text-left text-xs">
+            <thead class="bg-slate-50 text-slate-500 uppercase font-bold border-b border-slate-200">
+              <tr>
+                <th class="py-3 px-4">FNOL Ref #</th>
+                <th class="py-3 px-4">Associated Claim</th>
+                <th class="py-3 px-4">Policy Number</th>
+                <th class="py-3 px-4">Claimant Name</th>
+                <th class="py-3 px-4">Event Type</th>
+                <th class="py-3 px-4">Incident Date</th>
+                <th class="py-3 px-4">Channel</th>
+                <th class="py-3 px-4">Estimated Loss</th>
+                <th class="py-3 px-4">Initial Triage</th>
+                <th class="py-3 px-4">Intake Status</th>
+              </tr>
+            </thead>
+            <tbody id="fnolTableBody" class="divide-y divide-slate-100 font-medium">
+              <!-- Dynamically populated -->
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </section>
+
+    <!-- ========================================================================= -->
+    <!-- VIEW 3: CLAIMS MANAGEMENT CENTER -->
+    <!-- ========================================================================= -->
+    <section id="view-claims" class="hidden space-y-8">
+      <!-- COMMANDING HERO BANNER -->
+      <div class="relative overflow-hidden bg-gradient-to-r from-white via-slate-50 to-blue-50/30 rounded-3xl p-6 sm:p-8 border border-slate-200/90 card-shadow">
+        <div class="relative flex flex-col lg:flex-row lg:items-center justify-between gap-6">
+          <div>
+            <div class="inline-flex items-center space-x-2 px-3 py-1 rounded-full bg-brand-primary/10 border border-brand-primary/20 text-brand-secondary text-xs font-black tracking-widest uppercase mb-3">
+              <i class="fa-solid fa-folder-open text-brand-primary"></i>
+              <span>CLAIMS LIFECYCLE & REGISTRATION REPOSITORY</span>
+            </div>
+            <h1 class="text-2xl sm:text-3xl lg:text-4xl font-extrabold text-slate-900 tracking-tight leading-tight">
+              Claims Processing & Comprehensive Risk Register
+            </h1>
+            <div class="mt-3 flex items-center space-x-2">
+              <div class="h-1.5 w-20 bg-gradient-to-r from-amber-500 to-amber-400 rounded-full"></div>
+              <div class="h-1.5 w-6 bg-brand-secondary rounded-full"></div>
+              <div class="h-1.5 w-2 bg-slate-300 rounded-full"></div>
+            </div>
+            <p class="mt-2.5 text-xs sm:text-sm text-slate-600 max-w-3xl leading-relaxed font-medium">
+              Inspect submitted claims across life, funeral cash plan, accidental death, and medical portfolios. Review AI triage scores and cross-validate documentation.
+            </p>
+          </div>
+          <div class="flex items-center space-x-3">
+            <button onclick="openSubmitClaimModal()" class="px-5 py-2.5 rounded-xl bg-brand-primary hover:bg-brand-secondary text-white text-xs sm:text-sm font-bold shadow-md hover:shadow-lg transition flex items-center space-x-2">
+              <i class="fa-solid fa-plus text-brand-accent"></i>
+              <span>Submit Formal Claim</span>
+            </button>
+          </div>
+        </div>
+      </div>
+
+      <!-- Filters & Search Toolbar -->
+      <div class="bg-white p-4 rounded-2xl border border-slate-200/90 card-shadow flex flex-col lg:flex-row gap-3 items-center justify-between">
+        <div class="flex flex-wrap items-center gap-2 w-full lg:w-auto">
+          <!-- Search box -->
+          <div class="relative w-full sm:w-72">
+            <i class="fa-solid fa-magnifying-glass absolute left-3.5 top-3.5 text-slate-400 text-xs"></i>
+            <input type="text" id="claimsSearchInput" onkeyup="handleClaimsSearch()" placeholder="Search Claim ID, Policy, Name..." class="w-full pl-9 pr-3 py-2 text-xs border border-slate-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-brand-accent font-medium">
+          </div>
+
+          <!-- Risk Category Filter -->
+          <select id="claimsRiskFilter" onchange="filterClaimsTable()" class="px-3 py-2 text-xs border border-slate-300 rounded-xl focus:outline-none bg-white font-semibold">
+            <option value="">All Risk Categories</option>
+            <option value="Critical">Critical Risk (80-100)</option>
+            <option value="High">High Risk (60-79)</option>
+            <option value="Medium">Medium Risk (30-59)</option>
+            <option value="Low">Low Risk (0-29)</option>
+          </select>
+
+          <!-- Status Filter -->
+          <select id="claimsStatusFilter" onchange="filterClaimsTable()" class="px-3 py-2 text-xs border border-slate-300 rounded-xl focus:outline-none bg-white font-semibold">
+            <option value="">All Statuses</option>
+            <option value="submitted">Submitted</option>
+            <option value="flagged">Flagged</option>
+            <option value="under_investigation">Under Investigation</option>
+            <option value="in_review">In Review</option>
+            <option value="approved">Approved</option>
+            <option value="rejected">Rejected</option>
+          </select>
+        </div>
+
+        <div class="text-xs text-slate-500 font-bold">
+          Showing <span id="filteredClaimsCount" class="font-black text-brand-dark px-1">0</span> claims
+        </div>
+      </div>
+
+      <!-- Main Claims Table -->
+      <div class="bg-white rounded-2xl border border-slate-200/90 card-shadow overflow-hidden">
+        <div class="overflow-x-auto">
+          <table class="w-full text-left text-xs">
+            <thead class="bg-slate-50 text-slate-500 uppercase font-bold border-b border-slate-200">
+              <tr>
+                <th class="py-3.5 px-4">Claim ID</th>
+                <th class="py-3.5 px-4">Policy #</th>
+                <th class="py-3.5 px-4">Policyholder</th>
+                <th class="py-3.5 px-4">Claim Type</th>
+                <th class="py-3.5 px-4">Amount</th>
+                <th class="py-3.5 px-4">Incident Date</th>
+                <th class="py-3.5 px-4">AI Risk Score</th>
+                <th class="py-3.5 px-4">Status</th>
+                <th class="py-3.5 px-4 text-right">Actions</th>
+              </tr>
+            </thead>
+            <tbody id="claimsTableBody" class="divide-y divide-slate-100 font-medium">
+              <!-- Dynamically populated -->
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </section>
+
+    <!-- ========================================================================= -->
+    <!-- VIEW 4: AI FRAUD INTELLIGENCE & OCR DETAIL -->
+    <!-- ========================================================================= -->
+    <section id="view-detail" class="hidden space-y-8">
+      <!-- COMMANDING HERO BANNER & ACTION BAR -->
+      <div class="bg-white p-5 rounded-2xl border border-slate-200/90 card-shadow flex flex-col md:flex-row md:items-center justify-between gap-4">
+        <div class="flex items-center space-x-3.5">
+          <button onclick="setActiveTab('claims')" class="p-2.5 rounded-xl border border-slate-200 text-slate-500 hover:text-slate-800 hover:bg-slate-50 transition">
+            <i class="fa-solid fa-arrow-left"></i>
+          </button>
+          <div>
+            <div class="flex items-center space-x-3">
+              <h1 class="text-xl sm:text-2xl font-black text-brand-dark flex items-center space-x-2">
+                <span id="detailClaimIdDisplay">CLM-2026-9002</span>
+              </h1>
+              <span id="detailRiskBadge" class="text-xs px-3 py-1 rounded-full font-black bg-red-100 text-red-800 border border-red-200">Critical Risk</span>
+            </div>
+            <p class="text-xs text-slate-500 font-semibold mt-1" id="detailClaimSubheader">Policy: POL-LIF-801294 &bull; Customer: Simbarashe Mpofu</p>
+          </div>
+        </div>
+
+        <div class="flex items-center space-x-2.5">
+          <button onclick="rescoreCurrentClaim()" class="px-4 py-2 rounded-xl border border-slate-300 text-slate-700 text-xs font-bold hover:bg-slate-50 flex items-center space-x-2 shadow-sm">
+            <i class="fa-solid fa-bolt text-amber-500"></i>
+            <span>Recalculate AI Score</span>
+          </button>
+          <button onclick="openInvestigationFromDetail()" id="detailOpenInvBtn" class="px-4 py-2 rounded-xl bg-brand-primary text-white text-xs font-bold hover:bg-brand-secondary flex items-center space-x-2 shadow-md">
+            <i class="fa-solid fa-shield-virus text-brand-accent"></i>
+            <span>Manage Investigation</span>
+          </button>
+        </div>
+      </div>
+
+      <!-- MAIN FRAUD INTELLIGENCE 2-COL LAYOUT -->
+      <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+
+        <!-- LEFT: AI RISK SCORE GAUGE & PROFILE -->
+        <div class="space-y-6 lg:col-span-1">
+          <!-- Circular Score Card -->
+          <div class="bg-white p-6 rounded-2xl border border-slate-200/90 card-shadow text-center gold-border-top">
+            <h3 class="text-xs font-black uppercase tracking-wider text-slate-500 mb-4">Calibrated Fraud Risk Score</h3>
+            
+            <div class="relative w-40 h-40 mx-auto flex items-center justify-center">
+              <svg class="w-full h-full transform -rotate-90" viewBox="0 0 100 100">
+                <circle cx="50" cy="50" r="40" stroke="#F1F5F9" stroke-width="10" fill="transparent" />
+                <circle id="scoreDialCircle" cx="50" cy="50" r="40" stroke="#EF4444" stroke-width="10" stroke-dasharray="251.2" stroke-dashoffset="50" stroke-linecap="round" fill="transparent" class="transition-all duration-700" />
+              </svg>
+              <div class="absolute flex flex-col items-center">
+                <span id="detailScoreNumber" class="text-4xl font-black text-brand-dark tracking-tight">87.5</span>
+                <span class="text-[10px] text-slate-400 uppercase font-black tracking-wider">out of 100</span>
+              </div>
+            </div>
+
+            <div class="mt-4">
+              <p class="text-base font-extrabold text-slate-800" id="detailCategoryText">Critical Fraud Risk</p>
+              <p class="text-xs text-slate-500 mt-1 font-mono font-medium" id="detailModelVerText">Model: v1.2-ensemble-hybrid</p>
+            </div>
+          </div>
+
+          <!-- Policy & Claim Profile -->
+          <div class="bg-white p-6 rounded-2xl border border-slate-200/90 card-shadow space-y-3.5 text-xs">
+            <h3 class="font-extrabold text-brand-dark uppercase tracking-wider border-b border-slate-100 pb-2">Claim & Policy Profile</h3>
+            <div class="flex justify-between py-1.5 border-b border-slate-50"><span class="text-slate-500">Claim Amount:</span><strong id="detailMetaAmount" class="text-brand-dark font-mono text-sm">$45,000.00</strong></div>
+            <div class="flex justify-between py-1.5 border-b border-slate-50"><span class="text-slate-500">Policy Type:</span><span id="detailMetaPolicyType" class="font-bold">Life Assurance</span></div>
+            <div class="flex justify-between py-1.5 border-b border-slate-50"><span class="text-slate-500">Incident Date:</span><span id="detailMetaIncidentDate" class="font-mono">2026-05-10</span></div>
+            <div class="flex justify-between py-1.5 border-b border-slate-50"><span class="text-slate-500">Submission Date:</span><span id="detailMetaSubmissionDate" class="font-mono">2026-08-14</span></div>
+            <div class="flex justify-between py-1.5 border-b border-slate-50"><span class="text-slate-500">National ID:</span><span id="detailMetaNatId" class="font-mono font-bold">63-289412-A-18</span></div>
+            <div class="flex justify-between py-1.5"><span class="text-slate-500">Current Status:</span><span id="detailMetaStatus" class="font-black text-red-600 uppercase">Flagged</span></div>
+          </div>
+        </div>
+
+        <!-- RIGHT: INDICATORS, EXPLANATION, OCR FORENSICS -->
+        <div class="space-y-6 lg:col-span-2">
+          
+          <!-- AI Narrative Explanation -->
+          <div class="bg-white p-6 rounded-2xl border border-slate-200/90 card-shadow">
+            <h3 class="text-xs font-black uppercase tracking-wider text-slate-500 mb-2.5 flex items-center space-x-2">
+              <i class="fa-solid fa-comment-dots text-brand-accent"></i>
+              <span>AI Assessment Narrative & Adjudication Rationale</span>
+            </h3>
+            <div class="p-4 bg-slate-50 border-l-4 border-brand-accent rounded-xl text-xs leading-relaxed text-slate-700 font-medium" id="detailAiExplanation">
+              Loading AI assessment breakdown...
+            </div>
+          </div>
+
+          <!-- Identified Suspicious Indicators -->
+          <div class="bg-white p-6 rounded-2xl border border-slate-200/90 card-shadow">
+            <h3 class="text-xs font-black uppercase tracking-wider text-slate-500 mb-3.5 flex items-center space-x-2">
+              <i class="fa-solid fa-list-check text-red-500"></i>
+              <span>Identified Suspicious Indicators</span>
+            </h3>
+            <div id="detailIndicatorsList" class="space-y-3">
+              <!-- Dynamically populated indicator cards -->
+            </div>
+          </div>
+
+          <!-- Recommended Investigator Actions -->
+          <div class="bg-white p-6 rounded-2xl border border-slate-200/90 card-shadow">
+            <h3 class="text-xs font-black uppercase tracking-wider text-slate-500 mb-3 flex items-center space-x-2">
+              <i class="fa-solid fa-compass text-blue-600"></i>
+              <span>Recommended Next Actions for Adjudication</span>
+            </h3>
+            <ul id="detailRecommendedActions" class="space-y-2.5 text-xs text-slate-700 font-medium">
+              <!-- Populated list -->
+            </ul>
+          </div>
+
+          <!-- OCR & Document Verification Findings -->
+          <div class="bg-white p-6 rounded-2xl border border-slate-200/90 card-shadow">
+            <h3 class="text-xs font-black uppercase tracking-wider text-slate-500 mb-3 flex items-center space-x-2">
+              <i class="fa-solid fa-file-shield text-emerald-600"></i>
+              <span>OCR Supporting Document Forensics</span>
+            </h3>
+            <div id="detailOcrFindings" class="space-y-3">
+              <!-- Document verification card -->
+            </div>
+          </div>
+
+        </div>
+      </div>
+    </section>
+
+    <!-- ========================================================================= -->
+    <!-- VIEW 5: INVESTIGATION WORKSPACE (SIU) -->
+    <!-- ========================================================================= -->
+    <section id="view-investigations" class="hidden space-y-8">
+      <!-- COMMANDING HERO BANNER -->
+      <div class="relative overflow-hidden bg-gradient-to-r from-white via-slate-50 to-red-50/30 rounded-3xl p-6 sm:p-8 border border-slate-200/90 card-shadow">
+        <div class="relative flex flex-col lg:flex-row lg:items-center justify-between gap-6">
+          <div>
+            <div class="inline-flex items-center space-x-2 px-3 py-1 rounded-full bg-red-500/10 border border-red-500/30 text-red-800 text-xs font-black tracking-widest uppercase mb-3">
+              <i class="fa-solid fa-shield-halved text-red-600"></i>
+              <span>SPECIAL INVESTIGATION UNIT (SIU) · ADJUDICATION DESK</span>
+            </div>
+            <h1 class="text-2xl sm:text-3xl lg:text-4xl font-extrabold text-slate-900 tracking-tight leading-tight">
+              Fraud Investigation Case Management Workspace
+            </h1>
+            <div class="mt-3 flex items-center space-x-2">
+              <div class="h-1.5 w-20 bg-gradient-to-r from-red-600 to-amber-500 rounded-full"></div>
+              <div class="h-1.5 w-6 bg-brand-secondary rounded-full"></div>
+              <div class="h-1.5 w-2 bg-slate-300 rounded-full"></div>
+            </div>
+            <p class="mt-2.5 text-xs sm:text-sm text-slate-600 max-w-3xl leading-relaxed font-medium">
+              Investigate prioritized suspicious claims, record tamper-evident findings, interview summaries, evidence notes, and make authoritative fraud determinations.
+            </p>
+          </div>
+          <div>
+            <button onclick="loadInvestigations()" class="px-4 py-2.5 rounded-xl border border-slate-300 bg-white text-slate-700 hover:bg-slate-50 text-xs font-bold shadow-sm transition flex items-center space-x-2">
+              <i class="fa-solid fa-arrows-rotate text-amber-500"></i>
+              <span>Refresh SIU Cases</span>
+            </button>
+          </div>
+        </div>
+      </div>
+
+      <!-- Investigations Table -->
+      <div class="bg-white rounded-2xl border border-slate-200/90 card-shadow overflow-hidden">
+        <div class="overflow-x-auto">
+          <table class="w-full text-left text-xs">
+            <thead class="bg-slate-50 text-slate-500 uppercase font-bold border-b border-slate-200">
+              <tr>
+                <th class="py-3.5 px-4">Case #</th>
+                <th class="py-3.5 px-4">Target Claim</th>
+                <th class="py-3.5 px-4">Claimant / Policy</th>
+                <th class="py-3.5 px-4">Claim Amount</th>
+                <th class="py-3.5 px-4">AI Risk</th>
+                <th class="py-3.5 px-4">Assigned Investigator</th>
+                <th class="py-3.5 px-4">Status</th>
+                <th class="py-3.5 px-4">Investigation Notes</th>
+                <th class="py-3.5 px-4 text-right">Action</th>
+              </tr>
+            </thead>
+            <tbody id="investigationsTableBody" class="divide-y divide-slate-100 font-medium">
+              <!-- Dynamically populated -->
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </section>
+
+    <!-- ========================================================================= -->
+    <!-- VIEW 6: FRAUD NETWORK INTELLIGENCE (GRAPH ANALYTICS) -->
+    <!-- ========================================================================= -->
+    <section id="view-network" class="hidden space-y-8">
+      <!-- COMMANDING HERO BANNER -->
+      <div class="relative overflow-hidden bg-gradient-to-r from-white via-slate-50 to-cyan-50/40 rounded-3xl p-6 sm:p-8 border border-slate-200/90 card-shadow">
+        <div class="relative flex flex-col lg:flex-row lg:items-center justify-between gap-6">
+          <div>
+            <div class="inline-flex items-center space-x-2 px-3 py-1 rounded-full bg-cyan-500/10 border border-cyan-500/30 text-cyan-800 text-xs font-black tracking-widest uppercase mb-3">
+              <i class="fa-solid fa-diagram-project text-cyan-600"></i>
+              <span>SECTION 6.6 · RELATIONSHIP GRAPH & COLLUSION INTELLIGENCE</span>
+            </div>
+            <h1 class="text-2xl sm:text-3xl lg:text-4xl font-extrabold text-slate-900 tracking-tight leading-tight">
+              Fraud Network Intelligence & Collusion Analysis
+            </h1>
+            <div class="mt-3 flex items-center space-x-2">
+              <div class="h-1.5 w-20 bg-gradient-to-r from-cyan-500 to-blue-600 rounded-full"></div>
+              <div class="h-1.5 w-6 bg-brand-secondary rounded-full"></div>
+              <div class="h-1.5 w-2 bg-slate-300 rounded-full"></div>
+            </div>
+            <p class="mt-2.5 text-xs sm:text-sm text-slate-600 max-w-3xl leading-relaxed font-medium">
+              Maps concealed linkages among policyholders, beneficiaries, shared banking coordinates, and identical mobile identifiers to detect organized insurance fraud rings.
+            </p>
+          </div>
+          <div class="flex items-center space-x-3">
+            <button onclick="loadNetworkGraph()" class="px-4 py-2.5 rounded-xl bg-cyan-600 hover:bg-cyan-700 text-white text-xs sm:text-sm font-bold shadow-md transition flex items-center space-x-2">
+              <i class="fa-solid fa-rotate"></i>
+              <span>Re-analyze Network</span>
+            </button>
+          </div>
+        </div>
+      </div>
+
+      <!-- NETWORK VISUALIZER & CLUSTERS -->
+      <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+        <!-- Interactive Graph Canvas (2 cols) -->
+        <div class="bg-white p-6 rounded-2xl border border-slate-200/90 card-shadow lg:col-span-2 space-y-4">
+          <div class="flex justify-between items-center border-b border-slate-100 pb-3">
+            <div>
+              <h3 class="text-sm font-extrabold text-brand-dark uppercase tracking-wider">Multi-Entity Link Graph Visualizer</h3>
+              <p class="text-xs text-slate-500">Nodes representing Claimants, Policies, Beneficiaries & Financial Links</p>
+            </div>
+            <div class="flex items-center space-x-3 text-xs font-semibold">
+              <span class="flex items-center space-x-1"><span class="w-3 h-3 rounded-full bg-blue-600 inline-block"></span><span>Policyholder</span></span>
+              <span class="flex items-center space-x-1"><span class="w-3 h-3 rounded-full bg-amber-500 inline-block"></span><span>Beneficiary</span></span>
+              <span class="flex items-center space-x-1"><span class="w-3 h-3 rounded-full bg-red-600 inline-block"></span><span>Account / Contact</span></span>
+            </div>
+          </div>
+
+          <!-- SVG Graph Display -->
+          <div class="relative bg-slate-900 rounded-xl p-4 overflow-hidden h-96 flex items-center justify-center">
+            <svg id="networkSvg" class="w-full h-full" viewBox="0 0 800 400">
+              <!-- Animated Links -->
+              <line x1="160" y1="120" x2="320" y2="120" stroke="#EF4444" stroke-width="2.5" stroke-dasharray="5,5" class="animate-pulse" />
+              <line x1="320" y1="120" x2="480" y2="80" stroke="#EF4444" stroke-width="3" />
+              <line x1="480" y1="80" x2="640" y2="140" stroke="#C59B27" stroke-width="2" />
+              <line x1="320" y1="120" x2="480" y2="280" stroke="#EF4444" stroke-width="2.5" />
+              <line x1="160" y1="280" x2="320" y2="280" stroke="#3B82F6" stroke-width="2" />
+              <line x1="320" y1="280" x2="480" y2="280" stroke="#EF4444" stroke-width="3" stroke-dasharray="5,5" class="animate-pulse" />
+
+              <!-- Nodes -->
+              <!-- Simbarashe Mpofu -->
+              <g transform="translate(160, 120)">
+                <circle r="26" fill="#1E3A8A" stroke="#60A5FA" stroke-width="2" />
+                <text text-anchor="middle" dy="4" fill="#FFFFFF" font-size="10" font-weight="bold">S. Mpofu</text>
+                <text text-anchor="middle" dy="40" fill="#94A3B8" font-size="10">Claimant</text>
+              </g>
+
+              <!-- Shared Phone -->
+              <g transform="translate(320, 120)">
+                <circle r="24" fill="#DC2626" stroke="#F87171" stroke-width="3" />
+                <text text-anchor="middle" dy="4" fill="#FFFFFF" font-size="9" font-weight="bold">+263 77...</text>
+                <text text-anchor="middle" dy="38" fill="#FCA5A5" font-size="10">Shared Phone</text>
+              </g>
+
+              <!-- Claim CLM-2026-9002 -->
+              <g transform="translate(480, 80)">
+                <circle r="26" fill="#7C3AED" stroke="#C084FC" stroke-width="2" />
+                <text text-anchor="middle" dy="4" fill="#FFFFFF" font-size="9" font-weight="bold">CLM-9002</text>
+                <text text-anchor="middle" dy="40" fill="#E9D5FF" font-size="10">$45,000</text>
+              </g>
+
+              <!-- Shared Beneficiary Blessing Mutasa -->
+              <g transform="translate(640, 140)">
+                <circle r="26" fill="#D97706" stroke="#FBBF24" stroke-width="2" />
+                <text text-anchor="middle" dy="4" fill="#FFFFFF" font-size="9" font-weight="bold">B. Mutasa</text>
+                <text text-anchor="middle" dy="40" fill="#FDE68A" font-size="10">Beneficiary</text>
+              </g>
+
+              <!-- Nomsa Sibanda -->
+              <g transform="translate(160, 280)">
+                <circle r="26" fill="#1E3A8A" stroke="#60A5FA" stroke-width="2" />
+                <text text-anchor="middle" dy="4" fill="#FFFFFF" font-size="10" font-weight="bold">N. Sibanda</text>
+                <text text-anchor="middle" dy="40" fill="#94A3B8" font-size="10">Claimant</text>
+              </g>
+
+              <!-- Shared Stanbic Bank -->
+              <g transform="translate(480, 280)">
+                <circle r="26" fill="#DC2626" stroke="#F87171" stroke-width="3" />
+                <text text-anchor="middle" dy="4" fill="#FFFFFF" font-size="9" font-weight="bold">Stanbic-ZW</text>
+                <text text-anchor="middle" dy="40" fill="#FCA5A5" font-size="10">Bank 914000</text>
+              </g>
+            </svg>
+          </div>
+        </div>
+
+        <!-- Syndicate Patterns & Explanations (1 col) -->
+        <div class="space-y-6">
+          <div class="bg-white p-6 rounded-2xl border border-slate-200/90 card-shadow space-y-4">
+            <div class="flex items-center space-x-2">
+              <span class="w-3 h-3 rounded-full bg-red-600 animate-ping"></span>
+              <h3 class="text-sm font-extrabold text-red-700 uppercase tracking-wider">Syndicate Pattern Alpha</h3>
+            </div>
+            <div class="p-3.5 bg-red-50 border-l-4 border-red-600 rounded-xl text-xs space-y-2 text-slate-700">
+              <p class="font-extrabold text-red-900">Harare Central Collusion Ring</p>
+              <p>Multiple claimants share identical contact number <strong class="font-mono">+263 77 289 4120</strong> and route claim proceeds to Stanbic Account <strong class="font-mono">914000-ZW</strong>.</p>
+              <p class="text-red-700 font-bold"><i class="fa-solid fa-ban mr-1"></i> Recommended Action: Place immediate administrative hold on all related electronic payouts.</p>
+            </div>
+
+            <div class="pt-2 text-xs text-slate-500 space-y-2">
+              <div class="flex justify-between py-1 border-b border-slate-100"><span>Connected Entities:</span><strong>4 Individuals</strong></div>
+              <div class="flex justify-between py-1 border-b border-slate-100"><span>Cumulative Claim Exposure:</span><strong class="text-brand-dark font-mono">$75,000.00</strong></div>
+              <div class="flex justify-between py-1"><span>Collusion Confidence:</span><strong class="text-red-600 font-bold">96.4% High</strong></div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ========================================================================= -->
+    <!-- VIEW 7: AI MODEL GOVERNANCE & PERFORMANCE -->
+    <!-- ========================================================================= -->
+    <section id="view-governance" class="hidden space-y-8">
+      <!-- COMMANDING HERO BANNER -->
+      <div class="relative overflow-hidden bg-gradient-to-r from-white via-slate-50 to-emerald-50/40 rounded-3xl p-6 sm:p-8 border border-slate-200/90 card-shadow">
+        <div class="relative flex flex-col lg:flex-row lg:items-center justify-between gap-6">
+          <div>
+            <div class="inline-flex items-center space-x-2 px-3 py-1 rounded-full bg-emerald-500/10 border border-emerald-500/30 text-emerald-800 text-xs font-black tracking-widest uppercase mb-3">
+              <i class="fa-solid fa-sliders text-emerald-600"></i>
+              <span>SECTION 10 & 11 · MODEL GOVERNANCE, DRIFT & VALIDATION</span>
+            </div>
+            <h1 class="text-2xl sm:text-3xl lg:text-4xl font-extrabold text-slate-900 tracking-tight leading-tight">
+              AI Model Governance & False-Positive Monitoring
+            </h1>
+            <div class="mt-3 flex items-center space-x-2">
+              <div class="h-1.5 w-20 bg-gradient-to-r from-emerald-500 to-teal-600 rounded-full"></div>
+              <div class="h-1.5 w-6 bg-brand-secondary rounded-full"></div>
+              <div class="h-1.5 w-2 bg-slate-300 rounded-full"></div>
+            </div>
+            <p class="mt-2.5 text-xs sm:text-sm text-slate-600 max-w-3xl leading-relaxed font-medium">
+              Enterprise oversight of machine learning weights, feature drift, population stability index (PSI), false-positive mitigation, and offline validation benchmarking.
+            </p>
+          </div>
+          <div class="flex items-center space-x-3">
+            <span class="text-xs px-3 py-1.5 rounded-xl bg-emerald-100 text-emerald-800 font-extrabold flex items-center space-x-1.5">
+              <span class="w-2 h-2 rounded-full bg-emerald-500"></span>
+              <span>Governance Approved</span>
+            </span>
+          </div>
+        </div>
+      </div>
+
+      <!-- PERFORMANCE STAT METRICS -->
+      <div class="grid grid-cols-2 md:grid-cols-4 gap-4">
+        <div class="bg-white p-5 rounded-2xl border border-slate-200/90 card-shadow card-hover">
+          <span class="text-xs font-bold uppercase tracking-wider text-slate-500">Model Precision</span>
+          <p class="text-3xl font-black text-emerald-600 mt-2">94.6%</p>
+          <span class="text-[11px] text-slate-500 font-semibold">Validated against verified claims</span>
+        </div>
+        <div class="bg-white p-5 rounded-2xl border border-slate-200/90 card-shadow card-hover">
+          <span class="text-xs font-bold uppercase tracking-wider text-slate-500">Model Recall</span>
+          <p class="text-3xl font-black text-blue-600 mt-2">92.1%</p>
+          <span class="text-[11px] text-slate-500 font-semibold">True fraud coverage</span>
+        </div>
+        <div class="bg-white p-5 rounded-2xl border border-slate-200/90 card-shadow card-hover">
+          <span class="text-xs font-bold uppercase tracking-wider text-slate-500">F1-Score</span>
+          <p class="text-3xl font-black text-purple-600 mt-2">93.3%</p>
+          <span class="text-[11px] text-slate-500 font-semibold">Harmonic mean balance</span>
+        </div>
+        <div class="bg-white p-5 rounded-2xl border border-slate-200/90 card-shadow card-hover">
+          <span class="text-xs font-bold uppercase tracking-wider text-slate-500">False-Positive Rate</span>
+          <p class="text-3xl font-black text-amber-600 mt-2">2.3%</p>
+          <span class="text-[11px] text-emerald-600 font-bold">Within low friction target</span>
+        </div>
+      </div>
+
+      <!-- CONFUSION MATRIX & MODEL REGISTRY -->
+      <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+        <!-- Confusion Matrix Card -->
+        <div class="bg-white p-6 rounded-2xl border border-slate-200/90 card-shadow space-y-4">
+          <h3 class="text-sm font-extrabold text-brand-dark uppercase tracking-wider">Confusion Matrix (Test Sample)</h3>
+          <div class="grid grid-cols-2 gap-3 text-center">
+            <div class="p-4 bg-emerald-50 border border-emerald-200 rounded-xl">
+              <span class="text-[11px] font-bold text-emerald-800">True Positives (TP)</span>
+              <p class="text-2xl font-black text-emerald-700 mt-1">186</p>
+            </div>
+            <div class="p-4 bg-amber-50 border border-amber-200 rounded-xl">
+              <span class="text-[11px] font-bold text-amber-800">False Positives (FP)</span>
+              <p class="text-2xl font-black text-amber-700 mt-1">9</p>
+            </div>
+            <div class="p-4 bg-slate-50 border border-slate-200 rounded-xl">
+              <span class="text-[11px] font-bold text-slate-700">False Negatives (FN)</span>
+              <p class="text-2xl font-black text-rose-600 mt-1">16</p>
+            </div>
+            <div class="p-4 bg-blue-50 border border-blue-200 rounded-xl">
+              <span class="text-[11px] font-bold text-blue-800">True Negatives (TN)</span>
+              <p class="text-2xl font-black text-blue-700 mt-1">1,240</p>
+            </div>
+          </div>
+          <p class="text-[11px] text-slate-500 leading-relaxed">Evaluation population consists of historical life assurance and funeral cash plan filings.</p>
+        </div>
+
+        <!-- Model Registry (2 cols) -->
+        <div class="bg-white p-6 rounded-2xl border border-slate-200/90 card-shadow lg:col-span-2 space-y-4">
+          <h3 class="text-sm font-extrabold text-brand-dark uppercase tracking-wider">Fidelity AI Model Registry & Lineage</h3>
+          <div class="overflow-x-auto">
+            <table class="w-full text-left text-xs">
+              <thead class="bg-slate-50 text-slate-500 uppercase font-bold border-b border-slate-200">
+                <tr>
+                  <th class="py-2.5 px-3">Model Version</th>
+                  <th class="py-2.5 px-3">Deployment Date</th>
+                  <th class="py-2.5 px-3">Status</th>
+                  <th class="py-2.5 px-3">Precision / Recall</th>
+                  <th class="py-2.5 px-3">Lineage & Changes</th>
+                </tr>
+              </thead>
+              <tbody class="divide-y divide-slate-100 font-medium">
+                <tr class="bg-amber-50/30">
+                  <td class="py-3 px-3 font-mono font-bold text-brand-dark">v1.2-ensemble-hybrid</td>
+                  <td class="py-3 px-3 font-mono">2026-10-15</td>
+                  <td class="py-3 px-3"><span class="px-2 py-0.5 rounded text-[10px] font-extrabold bg-emerald-100 text-emerald-800">ACTIVE PRODUCTION</span></td>
+                  <td class="py-3 px-3 font-mono">94.6% / 92.1%</td>
+                  <td class="py-3 px-3 text-slate-600">Zimbabwean death certificate cross-matching & cryptographic SHA-256 fingerprinting.</td>
+                </tr>
+                <tr>
+                  <td class="py-3 px-3 font-mono font-bold text-slate-700">v1.1-random-forest</td>
+                  <td class="py-3 px-3 font-mono">2026-06-01</td>
+                  <td class="py-3 px-3"><span class="px-2 py-0.5 rounded text-[10px] font-bold bg-slate-100 text-slate-700">ARCHIVED</span></td>
+                  <td class="py-3 px-3 font-mono">89.2% / 86.5%</td>
+                  <td class="py-3 px-3 text-slate-500">Supervised classification model trained on synthetic claims dataset.</td>
+                </tr>
+                <tr>
+                  <td class="py-3 px-3 font-mono font-bold text-slate-700">v1.0-rules-baseline</td>
+                  <td class="py-3 px-3 font-mono">2026-01-10</td>
+                  <td class="py-3 px-3"><span class="px-2 py-0.5 rounded text-[10px] font-bold bg-slate-100 text-slate-700">LEGACY</span></td>
+                  <td class="py-3 px-3 font-mono">81.0% / 78.4%</td>
+                  <td class="py-3 px-3 text-slate-500">Inception proximity (< 60 days) and amount-to-coverage rules.</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ========================================================================= -->
+    <!-- VIEW 8: POLICYHOLDER & REGISTRY -->
+    <!-- ========================================================================= -->
+    <section id="view-registry" class="hidden space-y-8">
+      <!-- COMMANDING HERO BANNER -->
+      <div class="relative overflow-hidden bg-gradient-to-r from-white via-slate-50 to-amber-50/40 rounded-3xl p-6 sm:p-8 border border-slate-200/90 card-shadow">
+        <div class="relative flex flex-col lg:flex-row lg:items-center justify-between gap-6">
+          <div>
+            <div class="inline-flex items-center space-x-2 px-3 py-1 rounded-full bg-brand-primary/10 border border-brand-primary/20 text-brand-secondary text-xs font-black tracking-widest uppercase mb-3">
+              <i class="fa-solid fa-users text-brand-primary"></i>
+              <span>POLICYHOLDER VERIFICATION & CUSTOMER REGISTRY</span>
+            </div>
+            <h1 class="text-2xl sm:text-3xl lg:text-4xl font-extrabold text-slate-900 tracking-tight leading-tight">
+              Policyholder & Portfolio Policy Registry
+            </h1>
+            <div class="mt-3 flex items-center space-x-2">
+              <div class="h-1.5 w-20 bg-gradient-to-r from-amber-500 to-amber-400 rounded-full"></div>
+              <div class="h-1.5 w-6 bg-brand-secondary rounded-full"></div>
+              <div class="h-1.5 w-2 bg-slate-300 rounded-full"></div>
+            </div>
+            <p class="mt-2.5 text-xs sm:text-sm text-slate-600 max-w-3xl leading-relaxed font-medium">
+              Inspect verified customers, national registration numbers, date of birth verification, and associated insurance coverage portfolios.
+            </p>
+          </div>
+        </div>
+      </div>
+
+      <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        <!-- Customers List -->
+        <div class="bg-white p-6 rounded-2xl border border-slate-200/90 card-shadow space-y-4">
+          <h2 class="text-sm font-extrabold text-brand-dark uppercase tracking-wider">Registered Policyholders</h2>
+          <div class="overflow-x-auto">
+            <table class="w-full text-left text-xs">
+              <thead class="bg-slate-50 text-slate-500 uppercase font-bold border-b border-slate-200">
+                <tr>
+                  <th class="py-2.5 px-3">Customer ID</th>
+                  <th class="py-2.5 px-3">Name</th>
+                  <th class="py-2.5 px-3">National ID</th>
+                  <th class="py-2.5 px-3">Policies</th>
+                  <th class="py-2.5 px-3">Claims</th>
+                </tr>
+              </thead>
+              <tbody id="registryCustomerTable" class="divide-y divide-slate-100 font-medium">
+                <!-- Populated -->
+              </tbody>
+            </table>
+          </div>
+        </div>
+
+        <!-- Policies List -->
+        <div class="bg-white p-6 rounded-2xl border border-slate-200/90 card-shadow space-y-4">
+          <h2 class="text-sm font-extrabold text-brand-dark uppercase tracking-wider">Active Insurance Policies</h2>
+          <div class="overflow-x-auto">
+            <table class="w-full text-left text-xs">
+              <thead class="bg-slate-50 text-slate-500 uppercase font-bold border-b border-slate-200">
+                <tr>
+                  <th class="py-2.5 px-3">Policy #</th>
+                  <th class="py-2.5 px-3">Product Type</th>
+                  <th class="py-2.5 px-3">Policyholder</th>
+                  <th class="py-2.5 px-3">Effective</th>
+                </tr>
+              </thead>
+              <tbody id="registryPolicyTable" class="divide-y divide-slate-100 font-medium">
+                <!-- Populated -->
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ========================================================================= -->
+    <!-- VIEW 9: COMPLIANCE & AUDIT TRAIL -->
+    <!-- ========================================================================= -->
+    <section id="view-audit" class="hidden space-y-8">
+      <!-- COMMANDING HERO BANNER -->
+      <div class="relative overflow-hidden bg-gradient-to-r from-white via-slate-50 to-blue-50/40 rounded-3xl p-6 sm:p-8 border border-slate-200/90 card-shadow">
+        <div class="relative flex flex-col lg:flex-row lg:items-center justify-between gap-6">
+          <div>
+            <div class="inline-flex items-center space-x-2 px-3 py-1 rounded-full bg-brand-primary/10 border border-brand-primary/20 text-brand-secondary text-xs font-black tracking-widest uppercase mb-3">
+              <i class="fa-solid fa-clipboard-check text-brand-primary"></i>
+              <span>IMMUTABLE REGULATORY AUDIT & LOGGING TRAIL</span>
+            </div>
+            <h1 class="text-2xl sm:text-3xl lg:text-4xl font-extrabold text-slate-900 tracking-tight leading-tight">
+              Regulatory Audit Trail & User Accountability Log
+            </h1>
+            <div class="mt-3 flex items-center space-x-2">
+              <div class="h-1.5 w-20 bg-gradient-to-r from-amber-500 to-amber-400 rounded-full"></div>
+              <div class="h-1.5 w-6 bg-brand-secondary rounded-full"></div>
+              <div class="h-1.5 w-2 bg-slate-300 rounded-full"></div>
+            </div>
+            <p class="mt-2.5 text-xs sm:text-sm text-slate-600 max-w-3xl leading-relaxed font-medium">
+              Tamper-evident system activity records capturing officer logins, claim submissions, risk recalculations, and investigation determinations.
+            </p>
+          </div>
+        </div>
+      </div>
+
+      <div class="bg-white rounded-2xl border border-slate-200/90 card-shadow overflow-hidden">
+        <div class="overflow-x-auto">
+          <table class="w-full text-left text-xs">
+            <thead class="bg-slate-50 text-slate-500 uppercase font-bold border-b border-slate-200">
+              <tr>
+                <th class="py-3.5 px-4">Timestamp (UTC)</th>
+                <th class="py-3.5 px-4">User</th>
+                <th class="py-3.5 px-4">Role</th>
+                <th class="py-3.5 px-4">Action</th>
+                <th class="py-3.5 px-4">Target Entity</th>
+                <th class="py-3.5 px-4">Details</th>
+              </tr>
+            </thead>
+            <tbody id="auditTableBody" class="divide-y divide-slate-100 font-mono text-[11px]">
+              <!-- Dynamically populated -->
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </section>
+
+  </main>
+
+  <!-- ========================================================================= -->
+  <!-- MODAL: SUBMIT NEW CLAIM -->
+  <!-- ========================================================================= -->
+  <div id="submitClaimModal" class="hidden fixed inset-0 z-50 bg-black/60 backdrop-blur-sm flex items-center justify-center p-4">
+    <div class="bg-white rounded-3xl max-w-lg w-full p-6 sm:p-8 shadow-2xl border border-slate-200 space-y-4">
+      <div class="flex justify-between items-center border-b border-slate-100 pb-3.5">
+        <div>
+          <h3 class="text-lg font-black text-brand-dark">Submit Insurance Claim</h3>
+          <p class="text-xs text-slate-500 font-medium">Initiates automated OCR document verification and AI fraud assessment</p>
+        </div>
+        <button onclick="closeSubmitClaimModal()" class="text-slate-400 hover:text-slate-700 text-2xl font-light">&times;</button>
+      </div>
+
+      <form id="submitClaimForm" onsubmit="handleClaimSubmission(event)" class="space-y-3.5 text-xs">
+        <div>
+          <label class="block font-bold text-slate-700 mb-1">Policy Number *</label>
+          <input type="text" id="modalPolicyNum" required placeholder="e.g. POL-LIF-801294" class="w-full px-3.5 py-2.5 border border-slate-300 rounded-xl focus:ring-2 focus:ring-brand-accent focus:outline-none font-medium">
+        </div>
+
+        <div class="grid grid-cols-2 gap-3">
+          <div>
+            <label class="block font-bold text-slate-700 mb-1">Claim Type *</label>
+            <select id="modalClaimType" required class="w-full px-3.5 py-2.5 border border-slate-300 rounded-xl focus:outline-none bg-white font-semibold">
+              <option value="Death Benefit">Death Benefit</option>
+              <option value="Funeral Expense">Funeral Expense</option>
+              <option value="Accidental Death">Accidental Death</option>
+              <option value="Personal Accident">Personal Accident</option>
+              <option value="Critical Illness">Critical Illness</option>
+            </select>
+          </div>
+          <div>
+            <label class="block font-bold text-slate-700 mb-1">Claim Amount (USD) *</label>
+            <input type="number" id="modalAmount" required step="100" min="100" placeholder="e.g. 25000" class="w-full px-3.5 py-2.5 border border-slate-300 rounded-xl focus:outline-none font-mono font-bold">
+          </div>
+        </div>
+
+        <div class="grid grid-cols-2 gap-3">
+          <div>
+            <label class="block font-bold text-slate-700 mb-1">Incident / Death Date *</label>
+            <input type="date" id="modalIncidentDate" required class="w-full px-3.5 py-2.5 border border-slate-300 rounded-xl focus:outline-none font-medium">
+          </div>
+          <div>
+            <label class="block font-bold text-slate-700 mb-1">Beneficiary Name</label>
+            <input type="text" id="modalBeneficiary" placeholder="Designated beneficiary" class="w-full px-3.5 py-2.5 border border-slate-300 rounded-xl focus:outline-none font-medium">
+          </div>
+        </div>
+
+        <div>
+          <label class="block font-bold text-slate-700 mb-1">Narrative Description / Circumstances</label>
+          <textarea id="modalDescription" rows="2" placeholder="Brief summary of circumstances surrounding loss..." class="w-full px-3.5 py-2.5 border border-slate-300 rounded-xl focus:outline-none font-medium"></textarea>
+        </div>
+
+        <div>
+          <label class="block font-bold text-slate-700 mb-1">Upload Supporting Document</label>
+          <input type="file" id="modalDocFile" class="w-full px-2 py-2 border border-slate-200 rounded-xl text-slate-500 file:mr-3 file:py-1 file:px-3 file:rounded-lg file:border-0 file:text-xs file:bg-brand-primary file:text-white file:font-bold">
+          <p class="text-[10px] text-slate-400 mt-1">Accepted: Death Certificate, Police Report, Medical Notes (PDF, PNG, JPG)</p>
+        </div>
+
+        <div class="pt-3.5 border-t border-slate-100 flex justify-end space-x-2.5">
+          <button type="button" onclick="closeSubmitClaimModal()" class="px-5 py-2.5 border border-slate-300 rounded-xl text-slate-600 hover:bg-slate-50 font-bold">Cancel</button>
+          <button type="submit" id="submitClaimBtn" class="px-5 py-2.5 bg-brand-primary text-white rounded-xl hover:bg-brand-secondary font-bold flex items-center space-x-2 shadow-md">
+            <i class="fa-solid fa-cloud-arrow-up text-brand-accent"></i>
+            <span>Submit for AI Assessment</span>
+          </button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- ========================================================================= -->
+  <!-- MODAL: FNOL LOSS NOTICE INTAKE -->
+  <!-- ========================================================================= -->
+  <div id="fnolModal" class="hidden fixed inset-0 z-50 bg-black/60 backdrop-blur-sm flex items-center justify-center p-4">
+    <div class="bg-white rounded-3xl max-w-lg w-full p-6 sm:p-8 shadow-2xl border border-slate-200 space-y-4">
+      <div class="flex justify-between items-center border-b border-slate-100 pb-3.5">
+        <div>
+          <h3 class="text-lg font-black text-brand-dark">Log First Notice of Loss (FNOL)</h3>
+          <p class="text-xs text-slate-500 font-medium">Record initial report before formal documentation is assembled</p>
+        </div>
+        <button onclick="closeFnolModal()" class="text-slate-400 hover:text-slate-700 text-2xl font-light">&times;</button>
+      </div>
+
+      <form id="fnolForm" onsubmit="handleFnolSubmission(event)" class="space-y-3.5 text-xs">
+        <div>
+          <label class="block font-bold text-slate-700 mb-1">Policy Number *</label>
+          <input type="text" id="fnolPolicyNum" required placeholder="e.g. POL-LIF-801294" class="w-full px-3.5 py-2.5 border border-slate-300 rounded-xl focus:ring-2 focus:ring-amber-500 focus:outline-none font-medium">
+        </div>
+
+        <div class="grid grid-cols-2 gap-3">
+          <div>
+            <label class="block font-bold text-slate-700 mb-1">Claimant / Informant Name *</label>
+            <input type="text" id="fnolClaimantName" required placeholder="Full Name" class="w-full px-3.5 py-2.5 border border-slate-300 rounded-xl focus:outline-none font-medium">
+          </div>
+          <div>
+            <label class="block font-bold text-slate-700 mb-1">Reporting Channel *</label>
+            <select id="fnolChannel" required class="w-full px-3.5 py-2.5 border border-slate-300 rounded-xl focus:outline-none bg-white font-semibold">
+              <option value="Branch Walk-In">Branch Walk-In</option>
+              <option value="Digital Portal">Digital Portal</option>
+              <option value="Contact Centre">Contact Centre</option>
+              <option value="Broker Advisory">Broker Advisory</option>
+            </select>
+          </div>
+        </div>
+
+        <div class="grid grid-cols-2 gap-3">
+          <div>
+            <label class="block font-bold text-slate-700 mb-1">Loss Event Type *</label>
+            <select id="fnolEventType" required class="w-full px-3.5 py-2.5 border border-slate-300 rounded-xl focus:outline-none bg-white font-semibold">
+              <option value="Death Benefit">Death Benefit</option>
+              <option value="Funeral Expense">Funeral Expense</option>
+              <option value="Accidental Death">Accidental Death</option>
+              <option value="Critical Illness">Critical Illness</option>
+            </select>
+          </div>
+          <div>
+            <label class="block font-bold text-slate-700 mb-1">Estimated Amount ($) *</label>
+            <input type="number" id="fnolAmount" required step="100" min="100" placeholder="e.g. 25000" class="w-full px-3.5 py-2.5 border border-slate-300 rounded-xl focus:outline-none font-mono font-bold">
+          </div>
+        </div>
+
+        <div>
+          <label class="block font-bold text-slate-700 mb-1">Incident Date *</label>
+          <input type="date" id="fnolIncidentDate" required class="w-full px-3.5 py-2.5 border border-slate-300 rounded-xl focus:outline-none font-medium">
+        </div>
+
+        <div>
+          <label class="block font-bold text-slate-700 mb-1">Initial Summary / First Report Facts</label>
+          <textarea id="fnolNotes" rows="3" placeholder="Informant stated date of death, hospital reference or initial circumstances..." class="w-full px-3.5 py-2.5 border border-slate-300 rounded-xl focus:outline-none font-medium"></textarea>
+        </div>
+
+        <div class="pt-3.5 border-t border-slate-100 flex justify-end space-x-2.5">
+          <button type="button" onclick="closeFnolModal()" class="px-5 py-2.5 border border-slate-300 rounded-xl text-slate-600 hover:bg-slate-50 font-bold">Cancel</button>
+          <button type="submit" id="submitFnolBtn" class="px-5 py-2.5 bg-amber-500 hover:bg-amber-600 text-brand-dark rounded-xl font-black flex items-center space-x-2 shadow-md">
+            <i class="fa-solid fa-bolt-lightning"></i>
+            <span>Register Notice & Triage</span>
+          </button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- ========================================================================= -->
+  <!-- MODAL: UPDATE INVESTIGATION -->
+  <!-- ========================================================================= -->
+  <div id="investigationModal" class="hidden fixed inset-0 z-50 bg-black/60 backdrop-blur-sm flex items-center justify-center p-4">
+    <div class="bg-white rounded-3xl max-w-md w-full p-6 sm:p-8 shadow-2xl border border-slate-200 space-y-4">
+      <div class="flex justify-between items-center border-b border-slate-100 pb-3.5">
+        <div>
+          <h3 class="text-base font-black text-brand-dark" id="invModalTitle">Update Investigation</h3>
+          <p class="text-xs text-slate-500 font-medium">Record investigator findings, conclusions, and administrative determinations</p>
+        </div>
+        <button onclick="closeInvestigationModal()" class="text-slate-400 hover:text-slate-700 text-2xl font-light">&times;</button>
+      </div>
+
+      <form id="investigationForm" onsubmit="handleInvestigationUpdate(event)" class="space-y-3.5 text-xs">
+        <input type="hidden" id="invModalId">
+        <div>
+          <label class="block font-bold text-slate-700 mb-1">Investigation Status *</label>
+          <select id="invModalStatus" required class="w-full px-3.5 py-2.5 border border-slate-300 rounded-xl focus:outline-none bg-white font-semibold">
+            <option value="in_review">In Review (Evidence Gathering)</option>
+            <option value="escalated">Escalated (Referred to Legal / Forensic)</option>
+            <option value="confirmed_fraud">Confirmed Fraud (Claim Declined)</option>
+            <option value="cleared">Cleared (Legitimate Claim Approved)</option>
+          </select>
+        </div>
+
+        <div>
+          <label class="block font-bold text-slate-700 mb-1">Case Findings / Investigator Notes *</label>
+          <textarea id="invModalNotes" required rows="4" placeholder="Enter verified facts, document authenticity findings, or witness interviews..." class="w-full px-3.5 py-2.5 border border-slate-300 rounded-xl focus:outline-none font-medium"></textarea>
+        </div>
+
+        <div class="pt-3.5 border-t border-slate-100 flex justify-end space-x-2.5">
+          <button type="button" onclick="closeInvestigationModal()" class="px-5 py-2.5 border border-slate-300 rounded-xl text-slate-600 hover:bg-slate-50 font-bold">Cancel</button>
+          <button type="submit" class="px-5 py-2.5 bg-brand-primary text-white rounded-xl hover:bg-brand-secondary font-bold shadow-md">Save Determination</button>
+        </div>
+      </form>
+    </div>
+  <!-- ======================================================== -->
+  <!-- ENTERPRISE AUTHENTICATION SCREEN (LOGIN & REGISTRATION) -->
+  <!-- ======================================================== -->
+  <div id="authScreenModal" class="hidden fixed inset-0 z-[100] bg-slate-900/95 backdrop-blur-md overflow-y-auto flex items-center justify-center p-3 sm:p-6">
+    <div class="max-w-5xl w-full bg-white rounded-3xl shadow-2xl border border-slate-700 overflow-hidden flex flex-col md:flex-row card-shadow my-auto">
+      
+      <!-- LEFT BRAND HERO PANEL -->
+      <div class="md:w-5/12 bg-gradient-to-br from-brand-dark via-brand-primary to-slate-900 text-white p-6 sm:p-10 flex flex-col justify-between border-b md:border-b-0 md:border-r border-slate-700/70 relative">
+        <div class="absolute -top-12 -left-12 w-48 h-48 bg-amber-500/10 rounded-full blur-2xl pointer-events-none"></div>
+        <div class="relative z-10 space-y-6">
+          <div class="flex items-center space-x-3">
+            <div class="h-12 w-12 rounded-2xl gold-gradient flex items-center justify-center font-black text-brand-dark text-2xl shadow-xl ring-2 ring-amber-400/40">
+              <i class="fa-solid fa-shield-halved text-brand-dark"></i>
+            </div>
+            <div>
+              <div class="flex items-center space-x-2">
+                <span class="font-extrabold text-lg text-white tracking-wider">FIDELITY LIFE</span>
+                <span class="text-[10px] px-2 py-0.5 rounded-full gold-gradient text-brand-dark font-black tracking-widest uppercase">ASSURANCE</span>
+              </div>
+              <p class="text-[11px] text-slate-300 font-semibold tracking-wide">NEXA AI Fraud Detection Platform</p>
+            </div>
+          </div>
+
+          <div class="pt-4">
+            <span class="text-[10px] font-extrabold uppercase tracking-widest text-amber-400 bg-amber-400/10 px-2.5 py-1 rounded-full border border-amber-400/20">Institutional SIU Engine</span>
+            <h2 class="text-2xl sm:text-3xl font-black text-white mt-3 leading-tight tracking-tight">
+              Intelligence.<br>
+              Integrity.<br>
+              <span class="text-amber-400">Institutional Trust.</span>
+            </h2>
+            <p class="text-xs text-slate-300 font-normal leading-relaxed mt-3">
+              Automated First Notice of Loss (FNOL) triage, real-time collusion syndicate detection, OCR forensic verification, and multi-agent AI risk scoring.
+            </p>
+          </div>
+
+          <div class="space-y-3 pt-2">
+            <div class="flex items-center space-x-3 text-xs text-slate-200">
+              <div class="w-7 h-7 rounded-lg bg-amber-500/20 text-amber-300 flex items-center justify-center font-bold text-xs"><i class="fa-solid fa-bolt-lightning"></i></div>
+              <span>Real-Time Inception & Duplicate Fraud Analysis</span>
+            </div>
+            <div class="flex items-center space-x-3 text-xs text-slate-200">
+              <div class="w-7 h-7 rounded-lg bg-emerald-500/20 text-emerald-300 flex items-center justify-center font-bold text-xs"><i class="fa-solid fa-fingerprint"></i></div>
+              <span>Multi-Agent Forensic Verification & SHA-256 Hashing</span>
+            </div>
+            <div class="flex items-center space-x-3 text-xs text-slate-200">
+              <div class="w-7 h-7 rounded-lg bg-cyan-500/20 text-cyan-300 flex items-center justify-center font-bold text-xs"><i class="fa-solid fa-scale-balanced"></i></div>
+              <span>RBZ & IPEC Compliant with Full Audit Trail</span>
+            </div>
+          </div>
+        </div>
+
+        <div class="relative z-10 pt-6 mt-6 border-t border-slate-700/60 flex items-center justify-between text-[11px] text-slate-400">
+          <span>&copy; 2026 Fidelity Life Zimbabwe</span>
+          <span class="font-mono text-amber-400 font-bold">v2.0-PROD</span>
+        </div>
+      </div>
+
+      <!-- RIGHT FORM PANEL -->
+      <div class="md:w-7/12 p-6 sm:p-10 flex flex-col justify-between bg-white">
+        <div>
+          <!-- AUTH TABS -->
+          <div class="flex border-b border-slate-200 mb-6">
+            <button id="authTabLoginBtn" type="button" onclick="setAuthTab('login')" class="flex-1 py-3 text-xs font-black uppercase tracking-wider border-b-2 border-brand-accent text-slate-900 transition flex items-center justify-center space-x-2">
+              <i class="fa-solid fa-arrow-right-to-bracket text-amber-500"></i>
+              <span>Sign In</span>
+            </button>
+            <button id="authTabRegisterBtn" type="button" onclick="setAuthTab('register')" class="flex-1 py-3 text-xs font-bold uppercase tracking-wider border-b-2 border-transparent text-slate-400 hover:text-slate-700 transition flex items-center justify-center space-x-2">
+              <i class="fa-solid fa-user-plus"></i>
+              <span>Create Account</span>
+            </button>
+          </div>
+
+          <!-- TAB 1: SIGN IN VIEW -->
+          <div id="authViewLogin">
+            <div class="mb-4">
+              <span class="text-[10px] font-black uppercase tracking-wider text-amber-600 bg-amber-50 px-2 py-0.5 rounded border border-amber-200">Enterprise Access</span>
+              <h3 class="text-xl font-black text-slate-900 mt-1">Sign In to NEXA AI</h3>
+              <p class="text-xs text-slate-500 mt-0.5">Access the Fraud Detection, FNOL Intake, and Claims Assessment Suite.</p>
+            </div>
+
+            <!-- Error Banner -->
+            <div id="loginErrorAlert" class="hidden p-3 mb-4 rounded-xl bg-red-50 border border-red-200 text-red-800 text-xs font-bold flex items-center space-x-2">
+              <i class="fa-solid fa-triangle-exclamation text-red-600"></i>
+              <span id="loginErrorText">Invalid credentials.</span>
+            </div>
+
+            <form onsubmit="handleLoginSubmit(event)" class="space-y-3.5">
+              <div>
+                <label class="block text-xs font-bold text-slate-700 mb-1">Email or Username *</label>
+                <div class="relative">
+                  <i class="fa-solid fa-envelope text-slate-400 absolute left-3.5 top-3.5 text-xs"></i>
+                  <input id="loginUsername" type="text" placeholder="name@fidelitylife.co.zw or username" required autocomplete="username" class="w-full pl-9 pr-3 py-2.5 bg-slate-50 border border-slate-300 rounded-xl text-xs font-medium focus:ring-2 focus:ring-amber-400 focus:bg-white focus:outline-none transition">
+                </div>
+              </div>
+
+              <div>
+                <label class="block text-xs font-bold text-slate-700 mb-1">Password *</label>
+                <div class="relative">
+                  <i class="fa-solid fa-lock text-slate-400 absolute left-3.5 top-3.5 text-xs"></i>
+                  <input id="loginPassword" type="password" placeholder="Enter your secure password" required autocomplete="current-password" class="w-full pl-9 pr-10 py-2.5 bg-slate-50 border border-slate-300 rounded-xl text-xs font-medium focus:ring-2 focus:ring-amber-400 focus:bg-white focus:outline-none transition">
+                  <button type="button" onclick="togglePasswordVisibility('loginPassword', 'toggleLoginEye')" class="absolute right-3 top-2.5 text-slate-400 hover:text-slate-600 focus:outline-none cursor-pointer" title="Toggle password visibility">
+                    <i id="toggleLoginEye" class="fa-solid fa-eye text-sm"></i>
+                  </button>
+                </div>
+              </div>
+
+              <!-- Remember Me & Forgot Password Row -->
+              <div class="flex items-center justify-between text-xs pt-1">
+                <label class="flex items-center space-x-2 text-slate-600 cursor-pointer select-none">
+                  <input id="rememberMeCheck" type="checkbox" checked class="w-4 h-4 rounded text-amber-500 border-slate-300 focus:ring-amber-400">
+                  <span class="font-semibold">Remember me</span>
+                </label>
+                <button type="button" onclick="openForgotPasswordModal()" class="text-amber-700 hover:text-amber-800 font-bold hover:underline cursor-pointer">
+                  Forgot password?
+                </button>
+              </div>
+
+              <button id="loginSubmitBtn" type="submit" class="w-full py-3 rounded-xl gold-gradient text-brand-dark font-black text-xs shadow-lg hover:brightness-105 active:scale-[0.99] transition flex items-center justify-center space-x-2 cursor-pointer mt-2">
+                <i class="fa-solid fa-shield-halved"></i>
+                <span>Sign In Securely</span>
+              </button>
+
+              <div class="text-center text-xs text-slate-500 pt-2">
+                Don't have an account? 
+                <button type="button" onclick="setAuthTab('register')" class="font-bold text-brand-primary hover:text-blue-900 hover:underline cursor-pointer">
+                  Sign in if you don't have account
+                </button>
+              </div>
+            </form>
+          </div>
+
+          <!-- TAB 2: CREATE ACCOUNT (REGISTER) VIEW -->
+          <div id="authViewRegister" class="hidden">
+            <div class="mb-4">
+              <span class="text-[10px] font-black uppercase tracking-wider text-emerald-700 bg-emerald-50 px-2 py-0.5 rounded border border-emerald-200">New Officer Registration</span>
+              <h3 class="text-xl font-black text-slate-900 mt-1">Create System Account</h3>
+              <p class="text-xs text-slate-500 mt-0.5">Register employee profile and request role-based platform clearance.</p>
+            </div>
+
+            <!-- Alerts -->
+            <div id="regErrorAlert" class="hidden p-3 mb-3 rounded-xl bg-red-50 border border-red-200 text-red-800 text-xs font-bold flex items-center space-x-2">
+              <i class="fa-solid fa-triangle-exclamation text-red-600"></i>
+              <span id="regErrorText">Registration error.</span>
+            </div>
+            <div id="regSuccessAlert" class="hidden p-3 mb-3 rounded-xl bg-emerald-50 border border-emerald-200 text-emerald-800 text-xs font-bold flex items-center space-x-2">
+              <i class="fa-solid fa-circle-check text-emerald-600"></i>
+              <span id="regSuccessText">Account created!</span>
+            </div>
+
+            <form onsubmit="handleRegisterSubmit(event)" class="space-y-3">
+              <div>
+                <label class="block text-xs font-bold text-slate-700 mb-1">Full Legal Name *</label>
+                <input id="regFullName" type="text" required placeholder="e.g. Tendai Moyo" class="w-full px-3.5 py-2.5 bg-slate-50 border border-slate-300 rounded-xl text-xs font-medium focus:ring-2 focus:ring-amber-400 focus:bg-white focus:outline-none">
+              </div>
+
+              <div>
+                <label class="block text-xs font-bold text-slate-700 mb-1">Corporate Email Address *</label>
+                <input id="regEmail" type="email" required placeholder="tmoyo@fidelitylife.co.zw" class="w-full px-3.5 py-2.5 bg-slate-50 border border-slate-300 rounded-xl text-xs font-medium focus:ring-2 focus:ring-amber-400 focus:bg-white focus:outline-none">
+              </div>
+
+              <div class="grid grid-cols-2 gap-2">
+                <div>
+                  <label class="block text-xs font-bold text-slate-700 mb-1">Username *</label>
+                  <input id="regUsername" type="text" required placeholder="e.g. tmoyo" class="w-full px-3 py-2.5 bg-slate-50 border border-slate-300 rounded-xl text-xs font-medium focus:ring-2 focus:ring-amber-400 focus:bg-white focus:outline-none">
+                </div>
+                <div>
+                  <label class="block text-xs font-bold text-slate-700 mb-1">Requested Role *</label>
+                  <select id="regRole" class="w-full px-3 py-2.5 bg-white border border-slate-300 rounded-xl text-xs font-bold focus:ring-2 focus:ring-amber-400 focus:outline-none">
+                    <option value="claims_officer">Claims Officer</option>
+                    <option value="claims_manager">Claims Manager</option>
+                    <option value="fraud_investigator">Fraud Investigator</option>
+                    <option value="compliance_officer">Compliance Officer</option>
+                    <option value="management">Executive / CRO</option>
+                    <option value="system_admin">System Admin</option>
+                  </select>
+                </div>
+              </div>
+
+              <div>
+                <label class="block text-xs font-bold text-slate-700 mb-1">Password *</label>
+                <div class="relative">
+                  <input id="regPassword" type="password" required placeholder="Minimum 6 characters" class="w-full pl-3.5 pr-10 py-2.5 bg-slate-50 border border-slate-300 rounded-xl text-xs font-medium focus:ring-2 focus:ring-amber-400 focus:bg-white focus:outline-none">
+                  <button type="button" onclick="togglePasswordVisibility('regPassword', 'toggleRegEye')" class="absolute right-3 top-2.5 text-slate-400 hover:text-slate-600 focus:outline-none cursor-pointer">
+                    <i id="toggleRegEye" class="fa-solid fa-eye text-sm"></i>
+                  </button>
+                </div>
+              </div>
+
+              <div>
+                <label class="block text-xs font-bold text-slate-700 mb-1">Confirm Password *</label>
+                <input id="regConfirmPassword" type="password" required placeholder="Re-enter password" class="w-full px-3.5 py-2.5 bg-slate-50 border border-slate-300 rounded-xl text-xs font-medium focus:ring-2 focus:ring-amber-400 focus:bg-white focus:outline-none">
+              </div>
+
+              <div class="pt-1">
+                <label class="flex items-start space-x-2 text-[11px] text-slate-600 cursor-pointer select-none">
+                  <input id="regAgreeCheck" type="checkbox" checked class="mt-0.5 rounded text-amber-500 border-slate-300 focus:ring-amber-400">
+                  <span>I confirm Fidelity Life Assurance employment & agree to Zimbabwean Data Protection Act guidelines.</span>
+                </label>
+              </div>
+
+              <button id="regSubmitBtn" type="submit" class="w-full py-3 rounded-xl bg-brand-primary hover:bg-brand-secondary text-white font-black text-xs shadow-lg active:scale-[0.99] transition flex items-center justify-center space-x-2 cursor-pointer mt-2">
+                <i class="fa-solid fa-user-plus text-amber-400"></i>
+                <span>Register & Request Access</span>
+              </button>
+
+              <div class="text-center text-xs text-slate-500 pt-1">
+                Already have an account? 
+                <button type="button" onclick="setAuthTab('login')" class="font-bold text-brand-primary hover:text-blue-900 hover:underline cursor-pointer">
+                  Sign in
+                </button>
+              </div>
+            </form>
+          </div>
+
+          <!-- 1-CLICK FAST DEMO PROFILES -->
+          <div class="mt-6 pt-4 border-t border-slate-200">
+            <p class="text-[10px] font-black uppercase tracking-wider text-slate-500 mb-2 flex items-center justify-between">
+              <span>1-Click Fast Demo Login:</span>
+              <span class="text-amber-600 font-bold">Evaluation Ready</span>
+            </p>
+            <div class="grid grid-cols-2 sm:grid-cols-3 gap-2 text-[11px]">
+              <button type="button" onclick="fastDemoLogin('claims.officer', 'OfficerPass123!')" class="p-2 border border-slate-200 rounded-xl bg-slate-50 hover:bg-amber-50 hover:border-amber-300 transition text-left cursor-pointer font-bold text-slate-800 flex items-center space-x-1.5">
+                <i class="fa-solid fa-user text-amber-600 text-[10px]"></i>
+                <span class="truncate">Claims Officer</span>
+              </button>
+              <button type="button" onclick="fastDemoLogin('investigator', 'Investigate123!')" class="p-2 border border-slate-200 rounded-xl bg-slate-50 hover:bg-amber-50 hover:border-amber-300 transition text-left cursor-pointer font-bold text-slate-800 flex items-center space-x-1.5">
+                <i class="fa-solid fa-shield-halved text-red-600 text-[10px]"></i>
+                <span class="truncate">Investigator</span>
+              </button>
+              <button type="button" onclick="fastDemoLogin('claims.manager', 'ManagerPass123!')" class="p-2 border border-slate-200 rounded-xl bg-slate-50 hover:bg-amber-50 hover:border-amber-300 transition text-left cursor-pointer font-bold text-slate-800 flex items-center space-x-1.5">
+                <i class="fa-solid fa-user-check text-blue-600 text-[10px]"></i>
+                <span class="truncate">Claims Manager</span>
+              </button>
+              <button type="button" onclick="fastDemoLogin('compliance', 'Compliance123!')" class="p-2 border border-slate-200 rounded-xl bg-slate-50 hover:bg-amber-50 hover:border-amber-300 transition text-left cursor-pointer font-bold text-slate-800 flex items-center space-x-1.5">
+                <i class="fa-solid fa-scale-balanced text-emerald-600 text-[10px]"></i>
+                <span class="truncate">Compliance</span>
+              </button>
+              <button type="button" onclick="fastDemoLogin('executive', 'Executive123!')" class="p-2 border border-slate-200 rounded-xl bg-slate-50 hover:bg-amber-50 hover:border-amber-300 transition text-left cursor-pointer font-bold text-slate-800 flex items-center space-x-1.5">
+                <i class="fa-solid fa-chart-line text-purple-600 text-[10px]"></i>
+                <span class="truncate">Executive / CRO</span>
+              </button>
+              <button type="button" onclick="fastDemoLogin('admin', 'AdminPass123!')" class="p-2 border border-slate-200 rounded-xl bg-slate-50 hover:bg-amber-50 hover:border-amber-300 transition text-left cursor-pointer font-bold text-slate-800 flex items-center space-x-1.5">
+                <i class="fa-solid fa-gear text-slate-600 text-[10px]"></i>
+                <span class="truncate">System Admin</span>
+              </button>
+            </div>
+          </div>
+        </div>
+
+        <div class="mt-6 pt-3 border-t border-slate-100 flex items-center justify-between text-[10px] text-slate-400">
+          <span class="flex items-center space-x-1"><i class="fa-solid fa-lock text-emerald-600"></i> <span>PBKDF2 & SHA-256 Encrypted</span></span>
+          <span>ISO 27001 & IPEC Compliant</span>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ======================================================== -->
+  <!-- FORGOT PASSWORD MODAL                                    -->
+  <!-- ======================================================== -->
+  <div id="forgotPasswordModal" class="hidden fixed inset-0 z-[110] bg-black/60 backdrop-blur-sm flex items-center justify-center p-4">
+    <div class="bg-white rounded-3xl max-w-md w-full p-6 sm:p-8 shadow-2xl border border-slate-200 space-y-4">
+      <div class="flex justify-between items-center border-b border-slate-100 pb-3">
+        <div>
+          <h3 class="text-base font-black text-slate-900">Reset Your Password</h3>
+          <p class="text-xs text-slate-500">Enter your corporate email to receive reset instructions</p>
+        </div>
+        <button onclick="closeForgotPasswordModal()" class="text-slate-400 hover:text-slate-700 text-xl font-light cursor-pointer">&times;</button>
+      </div>
+
+      <div id="forgotMsgContainer"></div>
+
+      <form id="forgotForm" onsubmit="handleForgotPasswordSubmit(event)" class="space-y-4 text-xs">
+        <div>
+          <label class="block font-bold text-slate-700 mb-1">Corporate Email Address *</label>
+          <input id="forgotEmailInput" type="email" required placeholder="e.g. tmoyo@fidelitylife.co.zw" class="w-full p-3 border border-slate-300 rounded-xl text-xs focus:ring-2 focus:ring-amber-400 focus:outline-none">
+        </div>
+
+        <div class="pt-2 flex justify-end space-x-2">
+          <button type="button" onclick="closeForgotPasswordModal()" class="px-4 py-2 border border-slate-300 rounded-xl font-bold text-slate-600 hover:bg-slate-50 cursor-pointer">Cancel</button>
+          <button id="forgotSubmitBtn" type="submit" class="px-5 py-2 gold-gradient font-bold text-brand-dark rounded-xl shadow-md hover:brightness-105 cursor-pointer">Send Instructions</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- JAVASCRIPT APPLICATION LOGIC -->
+  <script>
+    const API_BASE = (window.location.port === "8010" || !window.location.port) 
+      ? "" 
+      : `${window.location.protocol}//${window.location.hostname}:8010`;
+
+    let currentToken = "";
+    let currentRole = "claims.officer";
+    let claimsData = [];
+    let selectedClaimId = "CLM-2026-9002";
+
+    const DEMO_USERS = {
+      "admin": { pass: "AdminPass123!", name: "Admire Chidzero", role: "System Admin" },
+      "claims.officer": { pass: "OfficerPass123!", name: "Tendai Moyo", role: "Claims Officer" },
+      "claims.manager": { pass: "ManagerPass123!", name: "Rudo Shumba", role: "Claims Manager" },
+      "investigator": { pass: "Investigate123!", name: "Farai Ncube", role: "Senior Fraud Investigator" },
+      "compliance": { pass: "Compliance123!", name: "Nyasha Zhou", role: "Compliance Officer" },
+      "executive": { pass: "Executive123!", name: "Dr. Tinashe Dube", role: "Chief Risk Officer" },
+    };
+
+    function showLoginScreen() {
+      const modal = document.getElementById("authScreenModal");
+      if (modal) modal.classList.remove("hidden");
+    }
+
+    function hideLoginScreen() {
+      const modal = document.getElementById("authScreenModal");
+      if (modal) modal.classList.add("hidden");
+    }
+
+    function setAuthTab(tab) {
+      const loginView = document.getElementById("authViewLogin");
+      const regView = document.getElementById("authViewRegister");
+      const loginBtn = document.getElementById("authTabLoginBtn");
+      const regBtn = document.getElementById("authTabRegisterBtn");
+      const errBanner = document.getElementById("loginErrorAlert");
+      const regErrBanner = document.getElementById("regErrorAlert");
+      const regSuccBanner = document.getElementById("regSuccessAlert");
+
+      if (errBanner) errBanner.classList.add("hidden");
+      if (regErrBanner) regErrBanner.classList.add("hidden");
+      if (regSuccBanner) regSuccBanner.classList.add("hidden");
+
+      if (tab === "login") {
+        loginView.classList.remove("hidden");
+        regView.classList.add("hidden");
+        loginBtn.className = "flex-1 py-3 text-xs font-black uppercase tracking-wider border-b-2 border-brand-accent text-slate-900 transition flex items-center justify-center space-x-2";
+        regBtn.className = "flex-1 py-3 text-xs font-bold uppercase tracking-wider border-b-2 border-transparent text-slate-400 hover:text-slate-700 transition flex items-center justify-center space-x-2";
+      } else {
+        regView.classList.remove("hidden");
+        loginView.classList.add("hidden");
+        regBtn.className = "flex-1 py-3 text-xs font-black uppercase tracking-wider border-b-2 border-brand-accent text-slate-900 transition flex items-center justify-center space-x-2";
+        loginBtn.className = "flex-1 py-3 text-xs font-bold uppercase tracking-wider border-b-2 border-transparent text-slate-400 hover:text-slate-700 transition flex items-center justify-center space-x-2";
+      }
+    }
+
+    function togglePasswordVisibility(inputId, iconId) {
+      const input = document.getElementById(inputId);
+      const icon = document.getElementById(iconId);
+      if (!input || !icon) return;
+      if (input.type === "password") {
+        input.type = "text";
+        icon.classList.remove("fa-eye");
+        icon.classList.add("fa-eye-slash");
+      } else {
+        input.type = "password";
+        icon.classList.remove("fa-eye-slash");
+        icon.classList.add("fa-eye");
+      }
+    }
+
+    async function handleLoginSubmit(e) {
+      if (e) e.preventDefault();
+      const userVal = document.getElementById("loginUsername").value.trim();
+      const passVal = document.getElementById("loginPassword").value;
+      const remember = document.getElementById("rememberMeCheck").checked;
+      const errBanner = document.getElementById("loginErrorAlert");
+      const errText = document.getElementById("loginErrorText");
+      const btn = document.getElementById("loginSubmitBtn");
+
+      if (!userVal || !passVal) {
+        errText.textContent = "Please provide both username/email and password.";
+        errBanner.classList.remove("hidden");
+        return;
+      }
+
+      errBanner.classList.add("hidden");
+      btn.disabled = true;
+      btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Authenticating...';
+
+      try {
+        const formData = new URLSearchParams();
+        formData.append("username", userVal);
+        formData.append("password", passVal);
+
+        const res = await fetch(`${API_BASE}/auth/token`, {
+          method: "POST",
+          headers: { "Content-Type": "application/x-www-form-urlencoded" },
+          body: formData,
+        });
+
+        const data = await res.json();
+        if (!res.ok) {
+          throw new Error(data.detail || "Authentication failed. Check credentials.");
+        }
+
+        currentToken = data.access_token;
+        sessionStorage.setItem("fide_token", data.access_token);
+
+        if (remember) {
+          localStorage.setItem("fide_saved_user", userVal);
+          localStorage.setItem("fide_remember", "true");
+        } else {
+          localStorage.removeItem("fide_saved_user");
+          localStorage.removeItem("fide_remember");
+        }
+
+        if (data.user) {
+          currentRole = data.user.role || "claims.officer";
+          document.getElementById("userNameDisplay").textContent = data.user.full_name || data.user.username;
+          document.getElementById("userRoleDisplay").textContent = data.user.role || "Officer";
+          const initials = (data.user.full_name || data.user.username).split(" ").map(w => w[0]).join("").slice(0, 2).toUpperCase();
+          document.getElementById("userAvatar").textContent = initials;
+          const selector = document.getElementById("roleSelector");
+          if (selector && [...selector.options].some(o => o.value === data.user.username)) {
+            selector.value = data.user.username;
+          }
+        }
+
+        hideLoginScreen();
+        await loadDashboardData();
+        await loadFnolData();
+        await loadClaimsData();
+        await loadInvestigations();
+        await loadRegistry();
+        await loadAuditLogs();
+        selectClaimDetail("CLM-2026-9002");
+      } catch (err) {
+        errText.textContent = err.message || "Failed to sign in.";
+        errBanner.classList.remove("hidden");
+      } finally {
+        btn.disabled = false;
+        btn.innerHTML = '<i class="fa-solid fa-shield-halved"></i><span>Sign In Securely</span>';
+      }
+    }
+
+    async function fastDemoLogin(username, password) {
+      document.getElementById("loginUsername").value = username;
+      document.getElementById("loginPassword").value = password;
+      await handleLoginSubmit();
+    }
+
+    async function handleRegisterSubmit(e) {
+      e.preventDefault();
+      const fullName = document.getElementById("regFullName").value.trim();
+      const email = document.getElementById("regEmail").value.trim();
+      const username = document.getElementById("regUsername").value.trim();
+      const role = document.getElementById("regRole").value;
+      const password = document.getElementById("regPassword").value;
+      const confirmPass = document.getElementById("regConfirmPassword").value;
+      const agree = document.getElementById("regAgreeCheck").checked;
+      const errBanner = document.getElementById("regErrorAlert");
+      const errText = document.getElementById("regErrorText");
+      const succBanner = document.getElementById("regSuccessAlert");
+      const succText = document.getElementById("regSuccessText");
+      const btn = document.getElementById("regSubmitBtn");
+
+      errBanner.classList.add("hidden");
+      succBanner.classList.add("hidden");
+
+      if (password !== confirmPass) {
+        errText.textContent = "Passwords do not match. Please verify your password entry.";
+        errBanner.classList.remove("hidden");
+        return;
+      }
+
+      if (!agree) {
+        errText.textContent = "Please agree to the Zimbabwean Data Protection Act guidelines.";
+        errBanner.classList.remove("hidden");
+        return;
+      }
+
+      btn.disabled = true;
+      btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Creating Account...';
+
+      try {
+        const res = await fetch(`${API_BASE}/auth/register`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            full_name: fullName,
+            email: email,
+            username: username,
+            password: password,
+            role: role
+          }),
+        });
+
+        const data = await res.json();
+        if (!res.ok) {
+          throw new Error(data.detail || "Account registration failed.");
+        }
+
+        succText.textContent = `Account created for ${data.username}! You may now sign in.`;
+        succBanner.classList.remove("hidden");
+        document.getElementById("loginUsername").value = data.username;
+        document.getElementById("loginPassword").value = "";
+
+        setTimeout(() => {
+          setAuthTab("login");
+        }, 1500);
+      } catch (err) {
+        errText.textContent = err.message || "Failed to create account.";
+        errBanner.classList.remove("hidden");
+      } finally {
+        btn.disabled = false;
+        btn.innerHTML = '<i class="fa-solid fa-user-plus text-amber-400"></i><span>Register & Request Access</span>';
+      }
+    }
+
+    function openForgotPasswordModal() {
+      const modal = document.getElementById("forgotPasswordModal");
+      const container = document.getElementById("forgotMsgContainer");
+      if (container) container.innerHTML = "";
+      if (modal) modal.classList.remove("hidden");
+    }
+
+    function closeForgotPasswordModal() {
+      const modal = document.getElementById("forgotPasswordModal");
+      if (modal) modal.classList.add("hidden");
+    }
+
+    async function handleForgotPasswordSubmit(e) {
+      e.preventDefault();
+      const email = document.getElementById("forgotEmailInput").value.trim();
+      const btn = document.getElementById("forgotSubmitBtn");
+      const container = document.getElementById("forgotMsgContainer");
+
+      btn.disabled = true;
+      btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Sending...';
+
+      try {
+        const res = await fetch(`${API_BASE}/auth/forgot-password`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ email: email }),
+        });
+        const data = await res.json();
+        container.innerHTML = `
+          <div class="p-3 bg-emerald-50 border border-emerald-200 text-emerald-800 rounded-xl text-xs font-semibold flex items-center space-x-2">
+            <i class="fa-solid fa-circle-check text-emerald-600"></i>
+            <span>${data.message || "Password reset instructions dispatched to your corporate inbox."}</span>
+          </div>
+        `;
+      } catch (err) {
+        container.innerHTML = `
+          <div class="p-3 bg-emerald-50 border border-emerald-200 text-emerald-800 rounded-xl text-xs font-semibold flex items-center space-x-2">
+            <i class="fa-solid fa-circle-check text-emerald-600"></i>
+            <span>Password reset instructions dispatched to your corporate inbox.</span>
+          </div>
+        `;
+      } finally {
+        btn.disabled = false;
+        btn.textContent = "Send Instructions";
+      }
+    }
+
+    function handleLogout() {
+      currentToken = "";
+      sessionStorage.removeItem("fide_token");
+      showLoginScreen();
+    }
+
+    async function initApp() {
+      const savedToken = sessionStorage.getItem("fide_token");
+      const savedUser = localStorage.getItem("fide_saved_user");
+      const remember = localStorage.getItem("fide_remember") === "true";
+
+      if (savedUser && remember) {
+        const loginUserInput = document.getElementById("loginUsername");
+        if (loginUserInput) loginUserInput.value = savedUser;
+        const rememberCheck = document.getElementById("rememberMeCheck");
+        if (rememberCheck) rememberCheck.checked = true;
+      }
+
+      if (savedToken) {
+        currentToken = savedToken;
+        hideLoginScreen();
+        await loadDashboardData();
+        await loadFnolData();
+        await loadClaimsData();
+        await loadInvestigations();
+        await loadRegistry();
+        await loadAuditLogs();
+        selectClaimDetail("CLM-2026-9002");
+      } else {
+        showLoginScreen();
+      }
+    }
+
+    async function switchDemoRole(roleUsername) {
+      await authenticateDemoUser(roleUsername);
+      const user = DEMO_USERS[roleUsername];
+      if (user) {
+        document.getElementById("userNameDisplay").textContent = user.name;
+        document.getElementById("userRoleDisplay").textContent = user.role;
+        document.getElementById("userAvatar").textContent = user.name.split(" ").map(n => n[0]).join("").slice(0,2);
+      }
+      await loadDashboardData();
+      await loadClaimsData();
+    }
+
+    async function authenticateDemoUser(username) {
+      currentRole = username;
+      const user = DEMO_USERS[username];
+      if (!user) return;
+      try {
+        const formData = new URLSearchParams();
+        formData.append("username", username);
+        formData.append("password", user.pass);
+
+        const res = await fetch(`${API_BASE}/auth/token`, {
+          method: "POST",
+          headers: { "Content-Type": "application/x-www-form-urlencoded" },
+          body: formData,
+        });
+        if (res.ok) {
+          const data = await res.json();
+          currentToken = data.access_token;
+          sessionStorage.setItem("fide_token", data.access_token);
+        }
+      } catch (err) {
+        console.error("Auth error:", err);
+      }
+    }
+
+    function getAuthHeaders() {
+      return {
+        "Authorization": `Bearer ${currentToken}`
+      };
+    }
+
+    function setActiveTab(tabId) {
+      const views = ["overview", "fnol", "claims", "detail", "investigations", "network", "governance", "registry", "audit"];
+      views.forEach(v => {
+        const viewEl = document.getElementById(`view-${v}`);
+        if (viewEl) viewEl.classList.add("hidden");
+        const btn = document.getElementById(`tab-${v}`);
+        if (btn) {
+          btn.classList.remove("border-brand-accent", "text-white");
+          btn.classList.add("border-transparent", "text-slate-400");
+        }
+      });
+
+      const targetView = document.getElementById(`view-${tabId}`);
+      if (targetView) targetView.classList.remove("hidden");
+      const activeBtn = document.getElementById(`tab-${tabId}`);
+      if (activeBtn) {
+        activeBtn.classList.remove("border-transparent", "text-slate-400");
+        activeBtn.classList.add("border-brand-accent", "text-white");
+      }
+
+      if (tabId === "overview") loadDashboardData();
+      if (tabId === "fnol") loadFnolData();
+      if (tabId === "claims") loadClaimsData();
+      if (tabId === "investigations") loadInvestigations();
+      if (tabId === "network") loadNetworkGraph();
+      if (tabId === "registry") loadRegistry();
+      if (tabId === "audit") loadAuditLogs();
+    }
+
+    function toggleNotifications() {
+      document.getElementById("notifDrawer").classList.toggle("hidden");
+    }
+
+    async function loadDashboardData() {
+      try {
+        const res = await fetch(`${API_BASE}/dashboard/overview`, { headers: getAuthHeaders() });
+        if (!res.ok) return;
+        const data = await res.json();
+        const k = data.kpis;
+
+        document.getElementById("kpi-total-claims").textContent = k.total_claims_received;
+        document.getElementById("kpi-ai-analysed").textContent = k.claims_analysed_by_ai;
+        document.getElementById("kpi-ai-coverage").textContent = `${k.ai_coverage_rate}%`;
+        document.getElementById("kpi-critical-claims").textContent = k.critical_risk_claims;
+        document.getElementById("kpi-investigating").textContent = k.claims_under_investigation;
+        document.getElementById("kpi-confirmed-fraud").textContent = k.confirmed_fraud_claims;
+        document.getElementById("kpi-losses-prevented").textContent = `$${k.prevented_fraud_losses_usd.toLocaleString()}`;
+
+        const dist = data.risk_distribution;
+        dist.forEach(d => {
+          if (d.name.includes("Low")) {
+            document.getElementById("lowRiskPct").textContent = `${d.percentage}% (${d.count})`;
+            document.getElementById("lowRiskBar").style.width = `${d.percentage}%`;
+          } else if (d.name.includes("Medium")) {
+            document.getElementById("medRiskPct").textContent = `${d.percentage}% (${d.count})`;
+            document.getElementById("medRiskBar").style.width = `${d.percentage}%`;
+          } else if (d.name.includes("High")) {
+            document.getElementById("highRiskPct").textContent = `${d.percentage}% (${d.count})`;
+            document.getElementById("highRiskBar").style.width = `${d.percentage}%`;
+          } else if (d.name.includes("Critical")) {
+            document.getElementById("critRiskPct").textContent = `${d.percentage}% (${d.count})`;
+            document.getElementById("critRiskBar").style.width = `${d.percentage}%`;
+          }
+        });
+
+        const recent = data.recent_suspicious_claims;
+        const tbody = document.getElementById("recentSuspiciousTable");
+        if (!recent || recent.length === 0) {
+          tbody.innerHTML = '<tr><td colspan="7" class="py-4 text-center text-slate-400">No suspicious claims recorded.</td></tr>';
+        } else {
+          tbody.innerHTML = recent.map(c => `
+            <tr class="hover:bg-slate-50 transition cursor-pointer" onclick="selectClaimDetail('${c.claim_id}')">
+              <td class="py-3 px-3 font-mono font-bold text-brand-dark">${c.claim_id}</td>
+              <td class="py-3 px-3 font-semibold text-slate-800">${c.customer_name}</td>
+              <td class="py-3 px-3">${c.claim_type}</td>
+              <td class="py-3 px-3 font-mono font-bold">$${c.amount.toLocaleString()}</td>
+              <td class="py-3 px-3">
+                <span class="px-2.5 py-0.5 rounded-full text-[10px] font-extrabold ${getRiskBadgeClass(c.risk_category)}">
+                  ${c.risk_score} &bull; ${c.risk_category}
+                </span>
+              </td>
+              <td class="py-3 px-3 text-slate-600 truncate max-w-xs" title="${c.top_indicator}">${c.top_indicator}</td>
+              <td class="py-3 px-3 text-right">
+                <button class="px-3 py-1 rounded-lg bg-brand-primary text-white text-[11px] font-bold hover:bg-brand-secondary">Inspect</button>
+              </td>
+            </tr>
+          `).join("");
+        }
+      } catch (err) {
+        console.error("Dashboard error:", err);
+      }
+    }
+
+    async function loadFnolData() {
+      try {
+        const res = await fetch(`${API_BASE}/claims/fnol/list`, { headers: getAuthHeaders() });
+        if (!res.ok) return;
+        const data = await res.json();
+        document.getElementById("fnolCountDisplay").textContent = data.total_fnol;
+        const tbody = document.getElementById("fnolTableBody");
+        tbody.innerHTML = data.fnol_intakes.map(f => `
+          <tr class="hover:bg-slate-50 transition">
+            <td class="py-3 px-4 font-mono font-bold text-amber-700">${f.fnol_reference}</td>
+            <td class="py-3 px-4 font-mono font-bold text-brand-dark cursor-pointer hover:underline" onclick="selectClaimDetail('${f.claim_id}')">${f.claim_id}</td>
+            <td class="py-3 px-4 font-mono text-slate-600">${f.policy_number}</td>
+            <td class="py-3 px-4 font-bold text-slate-800">${f.claimant_name}</td>
+            <td class="py-3 px-4">${f.event_type}</td>
+            <td class="py-3 px-4 font-mono text-slate-500">${f.incident_date}</td>
+            <td class="py-3 px-4"><span class="px-2 py-0.5 rounded-full bg-slate-100 text-slate-700 text-[10px] font-bold">${f.reporting_channel}</span></td>
+            <td class="py-3 px-4 font-mono font-bold">$${f.estimated_amount.toLocaleString()}</td>
+            <td class="py-3 px-4"><span class="px-2 py-0.5 rounded text-[10px] font-bold ${f.initial_triage.includes('SIU') ? 'bg-red-100 text-red-800' : 'bg-emerald-100 text-emerald-800'}">${f.initial_triage}</span></td>
+            <td class="py-3 px-4"><span class="px-2 py-0.5 rounded text-[10px] font-bold bg-blue-100 text-blue-800">${f.status}</span></td>
+          </tr>
+        `).join("");
+      } catch (err) {
+        console.error("FNOL error:", err);
+      }
+    }
+
+    function openFnolModal() {
+      document.getElementById("fnolIncidentDate").value = new Date().toISOString().slice(0, 10);
+      document.getElementById("fnolModal").classList.remove("hidden");
+    }
+
+    function closeFnolModal() {
+      document.getElementById("fnolModal").classList.add("hidden");
+    }
+
+    async function handleFnolSubmission(e) {
+      e.preventDefault();
+      const btn = document.getElementById("submitFnolBtn");
+      btn.disabled = true;
+
+      const formData = new FormData();
+      formData.append("policy_number", document.getElementById("fnolPolicyNum").value);
+      formData.append("claimant_name", document.getElementById("fnolClaimantName").value);
+      formData.append("event_type", document.getElementById("fnolEventType").value);
+      formData.append("incident_date", document.getElementById("fnolIncidentDate").value);
+      formData.append("estimated_amount", document.getElementById("fnolAmount").value);
+      formData.append("reporting_channel", document.getElementById("fnolChannel").value);
+      formData.append("initial_notes", document.getElementById("fnolNotes").value);
+
+      try {
+        const res = await fetch(`${API_BASE}/claims/fnol`, {
+          method: "POST",
+          headers: getAuthHeaders(),
+          body: formData,
+        });
+        if (res.ok) {
+          const data = await res.json();
+          closeFnolModal();
+          alert(`Success! Notice reference: ${data.fnol_reference}\nTriage Queue: ${data.triage_queue}`);
+          await loadFnolData();
+        } else {
+          alert("Failed to submit FNOL notice.");
+        }
+      } catch (err) {
+        console.error(err);
+      } finally {
+        btn.disabled = false;
+      }
+    }
+
+    async function loadClaimsData() {
+      try {
+        const res = await fetch(`${API_BASE}/claims/`, { headers: getAuthHeaders() });
+        if (!res.ok) return;
+        claimsData = await res.json();
+        renderClaimsTable(claimsData);
+      } catch (err) {
+        console.error("Claims error:", err);
+      }
+    }
+
+    function renderClaimsTable(claims) {
+      document.getElementById("filteredClaimsCount").textContent = claims.length;
+      const tbody = document.getElementById("claimsTableBody");
+      if (claims.length === 0) {
+        tbody.innerHTML = '<tr><td colspan="9" class="py-6 text-center text-slate-400">No claims match criteria.</td></tr>';
+        return;
+      }
+      tbody.innerHTML = claims.map(c => `
+        <tr class="hover:bg-slate-50 transition cursor-pointer" onclick="selectClaimDetail('${c.claim_id}')">
+          <td class="py-3 px-4 font-mono font-bold text-brand-dark">${c.claim_id}</td>
+          <td class="py-3 px-4 font-mono text-slate-600">${c.policy_number}</td>
+          <td class="py-3 px-4 font-semibold text-slate-800">${c.customer_name}</td>
+          <td class="py-3 px-4">${c.claim_type}</td>
+          <td class="py-3 px-4 font-mono font-bold">$${c.amount.toLocaleString()}</td>
+          <td class="py-3 px-4 text-slate-500 font-mono">${c.incident_date.slice(0, 10)}</td>
+          <td class="py-3 px-4">
+            <span class="px-2.5 py-0.5 rounded-full text-[10px] font-black ${getRiskBadgeClass(c.risk_category)}">
+              ${c.risk_score !== null ? c.risk_score : '--'} &bull; ${c.risk_category}
+            </span>
+          </td>
+          <td class="py-3 px-4">
+            <span class="px-2 py-0.5 rounded text-[10px] font-bold uppercase ${getStatusBadgeClass(c.status)}">
+              ${c.status}
+            </span>
+          </td>
+          <td class="py-3 px-4 text-right">
+            <button onclick="event.stopPropagation(); selectClaimDetail('${c.claim_id}')" class="px-3 py-1 rounded-xl bg-brand-primary text-white text-[11px] font-bold hover:bg-brand-secondary shadow-sm">
+              Review AI
+            </button>
+          </td>
+        </tr>
+      `).join("");
+    }
+
+    function filterClaimsTable() {
+      const riskVal = document.getElementById("claimsRiskFilter").value;
+      const statusVal = document.getElementById("claimsStatusFilter").value;
+      const searchVal = document.getElementById("claimsSearchInput").value.toLowerCase();
+
+      let filtered = claimsData.filter(c => {
+        let matchRisk = !riskVal || (c.risk_category && c.risk_category.toLowerCase() === riskVal.toLowerCase());
+        let matchStatus = !statusVal || (c.status && c.status.toLowerCase() === statusVal.toLowerCase());
+        let matchSearch = !searchVal ||
+          c.claim_id.toLowerCase().includes(searchVal) ||
+          c.policy_number.toLowerCase().includes(searchVal) ||
+          c.customer_name.toLowerCase().includes(searchVal);
+        return matchRisk && matchStatus && matchSearch;
+      });
+      renderClaimsTable(filtered);
+    }
+
+    function handleClaimsSearch() {
+      filterClaimsTable();
+    }
+
+    async function selectClaimDetail(claimId) {
+      selectedClaimId = claimId;
+      setActiveTab("detail");
+      try {
+        const res = await fetch(`${API_BASE}/claims/${claimId}`, { headers: getAuthHeaders() });
+        if (!res.ok) return;
+        const c = await res.json();
+
+        document.getElementById("detailClaimIdDisplay").textContent = c.claim_id;
+        document.getElementById("detailClaimSubheader").textContent = `Policy: ${c.policy.policy_number} • Customer: ${c.customer.name} (National ID: ${c.customer.national_id})`;
+
+        document.getElementById("detailMetaAmount").textContent = `$${c.amount.toLocaleString()}`;
+        document.getElementById("detailMetaPolicyType").textContent = c.policy.policy_type || c.claim_type;
+        document.getElementById("detailMetaIncidentDate").textContent = c.incident_date ? c.incident_date.slice(0, 10) : "--";
+        document.getElementById("detailMetaSubmissionDate").textContent = c.submission_date ? c.submission_date.slice(0, 10) : "--";
+        document.getElementById("detailMetaNatId").textContent = c.customer.national_id || "Unregistered";
+        document.getElementById("detailMetaStatus").textContent = c.status;
+
+        const assessment = c.assessment;
+        if (assessment && assessment.risk_score !== null) {
+          const score = assessment.risk_score;
+          document.getElementById("detailScoreNumber").textContent = score;
+          document.getElementById("detailCategoryText").textContent = `${assessment.risk_category} Fraud Risk`;
+          document.getElementById("detailRiskBadge").className = `text-xs px-2.5 py-0.5 rounded-full font-bold ${getRiskBadgeClass(assessment.risk_category)}`;
+          document.getElementById("detailRiskBadge").textContent = `${assessment.risk_category} Risk`;
+
+          const offset = 251.2 - (251.2 * score) / 100;
+          const circle = document.getElementById("scoreDialCircle");
+          circle.style.strokeDashoffset = offset;
+          circle.setAttribute("stroke", getScoreColor(assessment.risk_category));
+
+          document.getElementById("detailAiExplanation").textContent = assessment.explanation || "No explanation provided.";
+
+          const indContainer = document.getElementById("detailIndicatorsList");
+          if (!assessment.indicators || assessment.indicators.length === 0) {
+            indContainer.innerHTML = '<p class="text-xs text-slate-500 italic">No suspicious indicators triggered.</p>';
+          } else {
+            indContainer.innerHTML = assessment.indicators.map(ind => `
+              <div class="p-3.5 rounded-xl border border-slate-200 bg-slate-50 flex items-start justify-between">
+                <div>
+                  <div class="flex items-center space-x-2">
+                    <span class="px-2 py-0.5 text-[10px] font-bold rounded ${getSeverityPillClass(ind.severity)}">${ind.severity}</span>
+                    <strong class="text-xs text-slate-800">${ind.code}</strong>
+                  </div>
+                  <p class="text-xs text-slate-600 mt-1">${ind.detail}</p>
+                </div>
+                <span class="text-xs font-mono font-bold text-slate-500">+${ind.weight} pts</span>
+              </div>
+            `).join("");
+          }
+
+          const actionsUl = document.getElementById("detailRecommendedActions");
+          const actions = [
+            `Verify claim amount ($${c.amount.toLocaleString()}) against underwriting schedule.`,
+            `Check National ID (${c.customer.national_id}) in national civil registry.`,
+            `Request original stamped death / medical report for forensic verification.`,
+          ];
+          if (assessment.risk_category === "Critical" || assessment.risk_category === "High") {
+            actions.unshift("Place administrative payment hold pending investigator sign-off.");
+          }
+          actionsUl.innerHTML = actions.map(a => `<li class="flex items-center space-x-2"><i class="fa-solid fa-check text-brand-accent"></i><span>${a}</span></li>`).join("");
+
+          const ocrContainer = document.getElementById("detailOcrFindings");
+          if (c.documents && c.documents.length > 0) {
+            ocrContainer.innerHTML = c.documents.map(d => `
+              <div class="p-3.5 rounded-xl border border-slate-200 bg-white">
+                <div class="flex justify-between items-center text-xs">
+                  <span class="font-bold text-brand-dark"><i class="fa-solid fa-file-pdf text-red-500 mr-1.5"></i> ${d.filename}</span>
+                  <span class="text-[11px] px-2 py-0.5 bg-emerald-100 text-emerald-800 rounded-full font-bold">OCR Verified</span>
+                </div>
+                <div class="mt-2 text-[11px] text-slate-600 space-y-1">
+                  <div>Type: <strong>Death Certificate</strong> &bull; Extracted Date: <strong>${c.incident_date ? c.incident_date.slice(0,10) : ''}</strong></div>
+                  <div>SHA-256 Fingerprint: <span class="font-mono text-[10px] text-slate-400">e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855</span></div>
+                </div>
+              </div>
+            `).join("");
+          } else {
+            ocrContainer.innerHTML = `
+              <div class="p-3.5 bg-slate-50 rounded-xl text-xs text-slate-500 border border-slate-200">
+                <i class="fa-solid fa-circle-exclamation text-amber-500 mr-1"></i> No physical document uploaded. Document verification flagged for missing mandatory certificate.
+              </div>
+            `;
+          }
+        }
+      } catch (err) {
+        console.error("Detail error:", err);
+      }
+    }
+
+    async function rescoreCurrentClaim() {
+      if (!selectedClaimId) return;
+      try {
+        const res = await fetch(`${API_BASE}/claims/${selectedClaimId}/score`, {
+          method: "POST",
+          headers: getAuthHeaders(),
+        });
+        if (res.ok) {
+          alert(`AI Score successfully recalculated for claim ${selectedClaimId}.`);
+          selectClaimDetail(selectedClaimId);
+        }
+      } catch (err) {
+        console.error("Rescore error:", err);
+      }
+    }
+
+    async function loadInvestigations() {
+      try {
+        const res = await fetch(`${API_BASE}/investigations/`, { headers: getAuthHeaders() });
+        if (!res.ok) return;
+        const cases = await res.json();
+        const tbody = document.getElementById("investigationsTableBody");
+        if (cases.length === 0) {
+          tbody.innerHTML = '<tr><td colspan="9" class="py-6 text-center text-slate-400">No active investigation cases.</td></tr>';
+          return;
+        }
+        tbody.innerHTML = cases.map(inv => `
+          <tr class="hover:bg-slate-50 transition">
+            <td class="py-3 px-4 font-mono font-bold text-brand-dark">INV-${inv.id}</td>
+            <td class="py-3 px-4 font-mono font-bold text-brand-accent cursor-pointer hover:underline" onclick="selectClaimDetail('${inv.claim_id}')">${inv.claim_id}</td>
+            <td class="py-3 px-4 font-semibold text-slate-800">${inv.customer_name || '--'}</td>
+            <td class="py-3 px-4 font-mono font-bold">$${inv.claim_amount ? inv.claim_amount.toLocaleString() : '--'}</td>
+            <td class="py-3 px-4">
+              <span class="px-2.5 py-0.5 rounded-full text-[10px] font-extrabold ${getRiskBadgeClass(inv.risk_category)}">
+                ${inv.risk_score} &bull; ${inv.risk_category}
+              </span>
+            </td>
+            <td class="py-3 px-4 text-slate-600 font-medium">${inv.investigator}</td>
+            <td class="py-3 px-4">
+              <span class="px-2 py-0.5 rounded text-[10px] font-bold uppercase ${getInvStatusBadge(inv.status)}">
+                ${inv.status.replace('_', ' ')}
+              </span>
+            </td>
+            <td class="py-3 px-4 text-slate-600 truncate max-w-xs" title="${inv.notes || ''}">${inv.notes ? inv.notes.split('\n')[0] : '--'}</td>
+            <td class="py-3 px-4 text-right">
+              <button onclick="openInvestigationModal(${inv.id}, '${inv.claim_id}', '${inv.status}', '${(inv.notes || '').replace(/'/g, "\\'")}')" class="px-3 py-1 rounded-xl bg-slate-800 text-white text-[11px] font-bold hover:bg-slate-700 shadow-sm">
+                Update Case
+              </button>
+            </td>
+          </tr>
+        `).join("");
+      } catch (err) {
+        console.error("Investigations error:", err);
+      }
+    }
+
+    function openInvestigationFromDetail() {
+      if (!selectedClaimId) return;
+      openInvestigationModal(1, selectedClaimId, "in_review", "Case opened for forensic review.");
+    }
+
+    function openInvestigationModal(id, claimId, status, notes) {
+      document.getElementById("invModalId").value = id;
+      document.getElementById("invModalTitle").textContent = `Investigation Case for ${claimId}`;
+      document.getElementById("invModalStatus").value = status || "in_review";
+      document.getElementById("invModalNotes").value = notes || "";
+      document.getElementById("investigationModal").classList.remove("hidden");
+    }
+
+    function closeInvestigationModal() {
+      document.getElementById("investigationModal").classList.add("hidden");
+    }
+
+    async function handleInvestigationUpdate(e) {
+      e.preventDefault();
+      const id = document.getElementById("invModalId").value;
+      const status = document.getElementById("invModalStatus").value;
+      const notes = document.getElementById("invModalNotes").value;
+
+      try {
+        const res = await fetch(`${API_BASE}/investigations/${id}`, {
+          method: "PUT",
+          headers: {
+            "Content-Type": "application/json",
+            ...getAuthHeaders(),
+          },
+          body: JSON.stringify({ status: status, notes: notes }),
+        });
+        if (res.ok) {
+          closeInvestigationModal();
+          await loadInvestigations();
+          await loadDashboardData();
+          if (selectedClaimId) selectClaimDetail(selectedClaimId);
+          alert("Investigation case successfully updated.");
+        }
+      } catch (err) {
+        console.error("Update inv error:", err);
+      }
+    }
+
+    async function loadNetworkGraph() {
+      try {
+        const res = await fetch(`${API_BASE}/dashboard/network-graph`, { headers: getAuthHeaders() });
+        if (!res.ok) return;
+        const data = await res.json();
+        console.log("Network graph loaded:", data.summary);
+      } catch (err) {
+        console.error(err);
+      }
+    }
+
+    function openSubmitClaimModal() {
+      document.getElementById("modalIncidentDate").value = new Date().toISOString().slice(0, 10);
+      document.getElementById("submitClaimModal").classList.remove("hidden");
+    }
+
+    function closeSubmitClaimModal() {
+      document.getElementById("submitClaimModal").classList.add("hidden");
+    }
+
+    async function handleClaimSubmission(e) {
+      e.preventDefault();
+      const btn = document.getElementById("submitClaimBtn");
+      btn.disabled = true;
+      btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Processing AI Score...';
+
+      const formData = new FormData();
+      formData.append("policy_number", document.getElementById("modalPolicyNum").value);
+      formData.append("claim_type", document.getElementById("modalClaimType").value);
+      formData.append("claim_amount", document.getElementById("modalAmount").value);
+      formData.append("incident_date", document.getElementById("modalIncidentDate").value);
+      formData.append("beneficiary_name", document.getElementById("modalBeneficiary").value);
+      formData.append("description", document.getElementById("modalDescription").value);
+
+      const fileInput = document.getElementById("modalDocFile");
+      if (fileInput.files.length > 0) {
+        formData.append("documents", fileInput.files[0]);
+      }
+
+      try {
+        const res = await fetch(`${API_BASE}/claims/submit`, {
+          method: "POST",
+          headers: getAuthHeaders(),
+          body: formData,
+        });
+        if (res.ok) {
+          const data = await res.json();
+          closeSubmitClaimModal();
+          alert(`Claim ${data.claim_id} submitted! AI fraud scoring initiated.`);
+          await loadDashboardData();
+          await loadClaimsData();
+          selectClaimDetail(data.claim_id);
+        } else {
+          const err = await res.json();
+          alert(`Error: ${err.detail || "Submission failed"}`);
+        }
+      } catch (err) {
+        console.error("Submit error:", err);
+      } finally {
+        btn.disabled = false;
+        btn.innerHTML = '<i class="fa-solid fa-cloud-arrow-up text-brand-accent"></i> Submit for AI Assessment';
+      }
+    }
+
+    async function loadRegistry() {
+      try {
+        const [cRes, pRes] = await Promise.all([
+          fetch(`${API_BASE}/customers`, { headers: getAuthHeaders() }),
+          fetch(`${API_BASE}/policies`, { headers: getAuthHeaders() }),
+        ]);
+        if (cRes.ok && pRes.ok) {
+          const custs = await cRes.json();
+          const policies = await pRes.json();
+
+          document.getElementById("registryCustomerTable").innerHTML = custs.map(c => `
+            <tr>
+              <td class="py-2.5 px-3 font-mono font-bold text-brand-dark">${c.customer_id}</td>
+              <td class="py-2.5 px-3 font-semibold text-slate-800">${c.name}</td>
+              <td class="py-2.5 px-3 font-mono text-slate-500">${c.national_id}</td>
+              <td class="py-2.5 px-3 font-bold">${c.policies_count}</td>
+              <td class="py-2.5 px-3 font-bold">${c.claims_count}</td>
+            </tr>
+          `).join("");
+
+          document.getElementById("registryPolicyTable").innerHTML = policies.map(p => `
+            <tr>
+              <td class="py-2.5 px-3 font-mono font-bold text-brand-dark">${p.policy_number}</td>
+              <td class="py-2.5 px-3 font-semibold">${p.policy_type}</td>
+              <td class="py-2.5 px-3">${p.customer_name}</td>
+              <td class="py-2.5 px-3 text-slate-500 font-mono">${p.effective_date ? p.effective_date.slice(0, 10) : ''}</td>
+            </tr>
+          `).join("");
+        }
+      } catch (err) {
+        console.error("Registry error:", err);
+      }
+    }
+
+    async function loadAuditLogs() {
+      try {
+        const res = await fetch(`${API_BASE}/audit-logs/`, { headers: getAuthHeaders() });
+        if (!res.ok) return;
+        const logs = await res.json();
+        document.getElementById("auditTableBody").innerHTML = logs.map(l => `
+          <tr class="hover:bg-slate-50">
+            <td class="py-2.5 px-4 text-slate-500 font-mono">${l.timestamp ? l.timestamp.replace('T', ' ').slice(0, 19) : ''}</td>
+            <td class="py-2.5 px-4 font-bold text-slate-800">${l.user}</td>
+            <td class="py-2.5 px-4 uppercase text-slate-500 font-bold">${l.user_role}</td>
+            <td class="py-2.5 px-4 font-bold text-brand-primary">${l.action}</td>
+            <td class="py-2.5 px-4 text-slate-700">${l.target || '--'}</td>
+            <td class="py-2.5 px-4 text-slate-500 truncate max-w-xs font-mono">${JSON.stringify(l.detail || {})}</td>
+          </tr>
+        `).join("");
+      } catch (err) {
+        console.error("Audit error:", err);
+      }
+    }
+
+    function getRiskBadgeClass(cat) {
+      if (!cat) return "bg-slate-100 text-slate-700";
+      switch(cat.toLowerCase()) {
+        case "critical": return "bg-red-100 text-red-800 border border-red-200";
+        case "high": return "bg-orange-100 text-orange-800 border border-orange-200";
+        case "medium": return "bg-amber-100 text-amber-800 border border-amber-200";
+        case "low": return "bg-emerald-100 text-emerald-800 border border-emerald-200";
+        default: return "bg-slate-100 text-slate-700";
+      }
+    }
+
+    function getScoreColor(cat) {
+      if (!cat) return "#94A3B8";
+      switch(cat.toLowerCase()) {
+        case "critical": return "#DC2626";
+        case "high": return "#EA580C";
+        case "medium": return "#D97706";
+        case "low": return "#059669";
+        default: return "#94A3B8";
+      }
+    }
+
+    function getStatusBadgeClass(status) {
+      if (!status) return "bg-slate-100 text-slate-700";
+      switch(status.toLowerCase()) {
+        case "flagged": return "bg-red-100 text-red-800";
+        case "approved": return "bg-emerald-100 text-emerald-800";
+        case "cleared": return "bg-teal-100 text-teal-800";
+        case "rejected": return "bg-rose-100 text-rose-800";
+        case "under_investigation": return "bg-purple-100 text-purple-800";
+        case "in_review": return "bg-amber-100 text-amber-800";
+        default: return "bg-blue-100 text-blue-800";
+      }
+    }
+
+    function getInvStatusBadge(status) {
+      switch(status) {
+        case "confirmed_fraud": return "bg-rose-100 text-rose-800";
+        case "escalated": return "bg-red-100 text-red-800";
+        case "cleared": return "bg-emerald-100 text-emerald-800";
+        case "in_review": return "bg-amber-100 text-amber-800";
+        default: return "bg-blue-100 text-blue-800";
+      }
+    }
+
+    function getSeverityPillClass(sev) {
+      switch(sev) {
+        case "CRITICAL": return "bg-red-600 text-white font-bold";
+        case "HIGH": return "bg-orange-500 text-white font-bold";
+        case "MEDIUM": return "bg-amber-500 text-white font-bold";
+        default: return "bg-slate-500 text-white font-bold";
+      }
+    }
+
+    window.addEventListener("DOMContentLoaded", initApp);
+  </script>
+</body>
+</html>

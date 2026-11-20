@@ -1,0 +1,151 @@
+claim_id,policy_number,customer_id,claim_type,amount,incident_date,submission_date,description,status,synthetic_indicators
+CLM-2026-46423,POL-FUN-856227,CUST1038,Disability,68812.64,2023-05-21,2023-06-02,Claim submitted following emergency change in designated beneficiary.,flagged,beneficiary_alteration
+CLM-2026-84666,POL-GRP-576578,CUST1034,Critical Illness,11821.24,2023-10-21,2023-10-27,Claim for Critical Illness under policy POL-GRP-576578.,submitted,
+CLM-2026-52398,POL-FUN-736339,CUST1024,Accidental Death,42436.51,2025-08-22,2025-09-08,Inflated claim value requested exceeding standard product limits.,flagged,inflated_amount
+CLM-2026-23188,POL-GRP-957944,CUST1039,Disability,13054.9,2025-01-07,2025-01-22,Claim for Disability under policy POL-GRP-957944.,submitted,
+CLM-2026-10586,POL-ACC-377624,CUST1037,Death Benefit,33214.66,2026-09-27,2026-10-15,Claim for Death Benefit under policy POL-ACC-377624.,submitted,
+CLM-2026-44257,POL-FUN-856227,CUST1038,Critical Illness,15748.65,2023-08-12,2023-09-01,Claim for Critical Illness under policy POL-FUN-856227.,submitted,
+CLM-2026-99064,POL-GRP-350423,CUST1044,Disability,15484.34,2025-03-31,2025-04-24,Claim submitted following emergency change in designated beneficiary.,flagged,beneficiary_alteration
+CLM-2026-67607,POL-ACC-592058,CUST1017,Critical Illness,15484.34,2025-03-31,2022-01-08,Resubmitted claim duplicate of incident on 2025-03-31,flagged,duplicate_claim
+CLM-2026-30369,POL-ACC-529447,CUST1005,Accidental Death,38010.55,2026-10-22,2026-10-27,Claim for Accidental Death under policy POL-ACC-529447.,submitted,
+CLM-2026-42129,POL-GRP-607893,CUST1038,Critical Illness,9226.89,2026-09-15,2026-09-25,Claim for Critical Illness under policy POL-GRP-607893.,submitted,
+CLM-2026-31227,POL-FUN-576125,CUST1056,Critical Illness,17575.99,2026-03-08,2026-03-11,Claim for Critical Illness under policy POL-FUN-576125.,submitted,
+CLM-2026-46548,POL-LIF-589741,CUST1013,Critical Illness,15423.96,2024-01-18,2024-02-09,Claim for Critical Illness under policy POL-LIF-589741.,submitted,
+CLM-2026-21399,POL-FUN-940489,CUST1018,Accidental Death,15807.01,2026-02-20,2026-02-23,Claim for Accidental Death under policy POL-FUN-940489.,submitted,
+CLM-2026-13010,POL-ACC-802465,CUST1032,Funeral Expense,15473.0,2025-10-14,2025-11-07,Claim for Funeral Expense under policy POL-ACC-802465.,submitted,
+CLM-2026-90758,POL-FUN-843690,CUST1055,Disability,8367.35,2025-11-27,2025-12-03,Claim for Disability under policy POL-FUN-843690.,submitted,
+CLM-2026-65561,POL-ACC-546306,CUST1040,Death Benefit,23347.43,2021-10-12,2021-10-14,Claim for Death Benefit under policy POL-ACC-546306.,submitted,
+CLM-2026-17098,POL-ACC-454506,CUST1029,Accidental Death,40580.7,2023-03-09,2023-03-30,Claim for Accidental Death under policy POL-ACC-454506.,submitted,
+CLM-2026-21530,POL-ACC-438082,CUST1017,Critical Illness,17176.64,2024-06-24,2024-07-08,Claim for Critical Illness under policy POL-ACC-438082.,submitted,
+CLM-2026-70357,POL-ACC-160046,CUST1043,Accidental Death,17171.13,2026-02-02,2026-02-14,Claim for Accidental Death under policy POL-ACC-160046.,submitted,
+CLM-2026-30552,POL-FUN-275525,CUST1004,Death Benefit,161711.88,2026-07-08,2026-07-28,Claim for Death Benefit under policy POL-FUN-275525.,submitted,
+CLM-2026-33921,POL-LIF-652765,CUST1040,Disability,20940.31,2021-04-23,2021-05-03,Claim for Disability under policy POL-LIF-652765.,submitted,
+CLM-2026-52947,POL-GRP-885717,CUST1030,Death Benefit,116740.73,2026-10-19,2026-10-30,Claim for Death Benefit under policy POL-GRP-885717.,submitted,
+CLM-2026-91753,POL-FUN-286275,CUST1003,Death Benefit,68812.64,2023-05-21,2026-10-29,Resubmitted claim duplicate of incident on 2023-05-21,flagged,duplicate_claim
+CLM-2026-21546,POL-LIF-191735,CUST1010,Funeral Expense,7476.86,2022-05-26,2022-06-03,Claim for Funeral Expense under policy POL-LIF-191735.,submitted,
+CLM-2026-93453,POL-FUN-686732,CUST1019,Accidental Death,33363.89,2025-07-03,2025-07-19,Claim for Accidental Death under policy POL-FUN-686732.,submitted,
+CLM-2026-53936,POL-LIF-376561,CUST1002,Disability,16631.53,2022-04-01,2022-04-11,Claim for Disability under policy POL-LIF-376561.,submitted,
+CLM-2026-21875,POL-ACC-726484,CUST1048,Critical Illness,66780.67,2024-03-02,2024-03-13,Claim for Critical Illness under policy POL-ACC-726484.,submitted,
+CLM-2026-80487,POL-GRP-195824,CUST1028,Critical Illness,19966.84,2023-10-04,2023-10-29,Claim for Critical Illness under policy POL-GRP-195824.,submitted,
+CLM-2026-45444,POL-FUN-423361,CUST1023,Disability,13028.83,2026-02-26,2026-03-02,Claim for Disability under policy POL-FUN-423361.,submitted,
+CLM-2026-41580,POL-GRP-885717,CUST1030,Critical Illness,55758.82,2026-04-08,2026-04-25,Claim for Critical Illness under policy POL-GRP-885717.,submitted,
+CLM-2026-71855,POL-GRP-734672,CUST1045,Funeral Expense,38839.15,2026-10-20,2026-11-14,Claim for Funeral Expense under policy POL-GRP-734672.,submitted,
+CLM-2026-65059,POL-GRP-877922,CUST1010,Accidental Death,37351.83,2025-04-17,2025-05-07,Claim for Accidental Death under policy POL-GRP-877922.,submitted,
+CLM-2026-47766,POL-LIF-503650,CUST1049,Funeral Expense,27814.15,2025-02-12,2025-02-17,Claim for Funeral Expense under policy POL-LIF-503650.,submitted,
+CLM-2026-56934,POL-GRP-350423,CUST1044,Funeral Expense,42392.55,2025-01-17,2025-02-05,Claim for Funeral Expense under policy POL-GRP-350423.,submitted,
+CLM-2026-92326,POL-LIF-834201,CUST1012,Accidental Death,189371.59,2026-07-16,2026-07-21,Claim for Accidental Death under policy POL-LIF-834201.,submitted,
+CLM-2026-45603,POL-GRP-152486,CUST1054,Funeral Expense,9891.28,2023-05-31,2023-06-16,Claim for Funeral Expense under policy POL-GRP-152486.,submitted,
+CLM-2026-31963,POL-FUN-686732,CUST1019,Funeral Expense,28904.73,2024-12-14,2024-12-26,Claim for Funeral Expense under policy POL-FUN-686732.,submitted,
+CLM-2026-73672,POL-GRP-754940,CUST1001,Death Benefit,34974.62,2026-10-18,2026-11-12,Claim for Death Benefit under policy POL-GRP-754940.,submitted,
+CLM-2026-22920,POL-FUN-938195,CUST1020,Death Benefit,32788.6,2024-12-05,2024-12-10,Claim submitted following emergency change in designated beneficiary.,flagged,beneficiary_alteration
+CLM-2026-71391,POL-ACC-410577,CUST1041,Disability,5812.17,2021-04-27,2021-04-30,Death claim filed immediately following policy inception.,flagged,early_policy_inception
+CLM-2026-48460,POL-GRP-877922,CUST1010,Disability,34128.16,2025-10-25,2025-11-16,Claim for Disability under policy POL-GRP-877922.,submitted,
+CLM-2026-60998,POL-GRP-924484,CUST1050,Accidental Death,21670.5,2026-03-03,2026-03-12,Claim for Accidental Death under policy POL-GRP-924484.,submitted,
+CLM-2026-63779,POL-ACC-957865,CUST1027,Critical Illness,24362.05,2021-05-23,2021-06-11,Claim submitted following emergency change in designated beneficiary.,flagged,beneficiary_alteration
+CLM-2026-28581,POL-GRP-754940,CUST1001,Critical Illness,40046.32,2026-10-14,2026-11-06,Claim for Critical Illness under policy POL-GRP-754940.,submitted,
+CLM-2026-48576,POL-GRP-350423,CUST1044,Disability,25483.25,2025-07-03,2025-07-20,Claim for Disability under policy POL-GRP-350423.,submitted,
+CLM-2026-34671,POL-FUN-768547,CUST1044,Accidental Death,30108.56,2024-04-17,2024-04-28,Claim for Accidental Death under policy POL-FUN-768547.,submitted,
+CLM-2026-70518,POL-GRP-970560,CUST1052,Critical Illness,70654.48,2025-12-06,2025-12-31,Claim for Critical Illness under policy POL-GRP-970560.,submitted,
+CLM-2026-69272,POL-LIF-862651,CUST1039,Disability,137088.64,2024-09-03,2024-09-21,Claim for Disability under policy POL-LIF-862651.,submitted,
+CLM-2026-32561,POL-LIF-104169,CUST1016,Funeral Expense,45319.76,2026-10-27,2026-11-20,Claim submitted following emergency change in designated beneficiary.,flagged,beneficiary_alteration
+CLM-2026-81105,POL-ACC-410577,CUST1041,Critical Illness,72410.59,2021-10-28,2021-11-09,Claim for Critical Illness under policy POL-ACC-410577.,submitted,
+CLM-2026-44423,POL-ACC-714898,CUST1050,Critical Illness,33123.47,2022-06-30,2022-07-05,Claim for Critical Illness under policy POL-ACC-714898.,submitted,
+CLM-2026-68991,POL-FUN-540170,CUST1008,Critical Illness,30948.98,2022-05-02,2022-05-05,Claim for Critical Illness under policy POL-FUN-540170.,submitted,
+CLM-2026-14495,POL-LIF-862651,CUST1039,Disability,33363.89,2025-07-03,2023-02-25,Resubmitted claim duplicate of incident on 2025-07-03,flagged,duplicate_claim
+CLM-2026-18546,POL-GRP-195824,CUST1028,Accidental Death,30334.25,2024-01-08,2024-01-16,Claim for Accidental Death under policy POL-GRP-195824.,submitted,
+CLM-2026-31182,POL-FUN-679430,CUST1021,Critical Illness,8066.29,2022-03-27,2022-03-30,Death claim filed immediately following policy inception.,flagged,early_policy_inception
+CLM-2026-93214,POL-GRP-812037,CUST1036,Funeral Expense,36476.17,2026-06-29,2026-07-02,Claim for Funeral Expense under policy POL-GRP-812037.,submitted,
+CLM-2026-32057,POL-GRP-773669,CUST1015,Funeral Expense,6924.58,2025-01-25,2025-02-06,Claim for Funeral Expense under policy POL-GRP-773669.,submitted,
+CLM-2026-73300,POL-ACC-951153,CUST1009,Death Benefit,76633.43,2026-09-15,2026-10-05,Claim for Death Benefit under policy POL-ACC-951153.,submitted,
+CLM-2026-70615,POL-ACC-244264,CUST1051,Funeral Expense,22927.09,2026-10-12,2026-10-16,Claim for Funeral Expense under policy POL-ACC-244264.,submitted,
+CLM-2026-22634,POL-GRP-607957,CUST1028,Funeral Expense,84189.17,2024-03-28,2024-04-15,Claim for Funeral Expense under policy POL-GRP-607957.,submitted,
+CLM-2026-11902,POL-LIF-432397,CUST1026,Disability,35935.65,2023-09-01,2023-09-07,Claim for Disability under policy POL-LIF-432397.,submitted,
+CLM-2026-11509,POL-GRP-773669,CUST1015,Death Benefit,18227.39,2025-06-26,2025-07-04,Claim for Death Benefit under policy POL-GRP-773669.,submitted,
+CLM-2026-70939,POL-GRP-957944,CUST1039,Disability,70654.48,2025-12-06,2024-02-20,Resubmitted claim duplicate of incident on 2025-12-06,flagged,duplicate_claim
+CLM-2026-11984,POL-ACC-335635,CUST1049,Death Benefit,51314.94,2023-03-24,2023-04-18,Claim for Death Benefit under policy POL-ACC-335635.,submitted,
+CLM-2026-70465,POL-FUN-768547,CUST1044,Critical Illness,32790.75,2024-06-03,2024-06-11,Claim for Critical Illness under policy POL-FUN-768547.,submitted,
+CLM-2026-29226,POL-GRP-924484,CUST1050,Accidental Death,28923.41,2025-09-11,2025-09-18,Claim for Accidental Death under policy POL-GRP-924484.,submitted,
+CLM-2026-97833,POL-ACC-132739,CUST1001,Disability,172959.25,2022-10-24,2022-11-17,Claim for Disability under policy POL-ACC-132739.,submitted,
+CLM-2026-38194,POL-ACC-335635,CUST1049,Death Benefit,29397.36,2023-05-07,2023-05-30,Claim for Death Benefit under policy POL-ACC-335635.,submitted,
+CLM-2026-55421,POL-GRP-342598,CUST1046,Funeral Expense,25991.16,2026-10-28,2026-11-11,Claim submitted following emergency change in designated beneficiary.,flagged,beneficiary_alteration
+CLM-2026-58546,POL-GRP-607957,CUST1028,Critical Illness,45912.43,2023-12-05,2023-12-20,Claim for Critical Illness under policy POL-GRP-607957.,submitted,
+CLM-2026-17939,POL-ACC-592058,CUST1017,Disability,65491.98,2023-04-20,2023-05-13,Claim for Disability under policy POL-ACC-592058.,submitted,
+CLM-2026-42678,POL-LIF-814717,CUST1057,Death Benefit,53068.82,2026-02-08,2026-03-01,Claim for Death Benefit under policy POL-LIF-814717.,submitted,
+CLM-2026-80384,POL-LIF-589741,CUST1013,Funeral Expense,17217.22,2023-11-25,2023-12-08,Claim for Funeral Expense under policy POL-LIF-589741.,submitted,
+CLM-2026-86017,POL-GRP-576578,CUST1034,Disability,13826.63,2024-01-16,2024-01-18,Claim for Disability under policy POL-GRP-576578.,submitted,
+CLM-2026-85310,POL-FUN-275525,CUST1004,Accidental Death,89616.54,2026-09-24,2026-10-06,Claim for Accidental Death under policy POL-FUN-275525.,submitted,
+CLM-2026-84362,POL-FUN-843690,CUST1055,Accidental Death,58072.61,2026-05-15,2026-06-07,Inflated claim value requested exceeding standard product limits.,flagged,inflated_amount
+CLM-2026-52489,POL-FUN-620595,CUST1042,Death Benefit,77927.58,2022-08-18,2022-09-03,Claim for Death Benefit under policy POL-FUN-620595.,submitted,
+CLM-2026-27327,POL-ACC-410577,CUST1041,Death Benefit,76078.84,2021-11-29,2021-12-16,Claim for Death Benefit under policy POL-ACC-410577.,submitted,
+CLM-2026-45466,POL-ACC-132739,CUST1001,Critical Illness,15423.96,2024-01-18,2022-01-25,Resubmitted claim duplicate of incident on 2024-01-18,flagged,duplicate_claim
+CLM-2026-12316,POL-FUN-286275,CUST1003,Death Benefit,54172.83,2026-10-10,2026-10-30,Claim for Death Benefit under policy POL-FUN-286275.,submitted,
+CLM-2026-72389,POL-ACC-244264,CUST1051,Death Benefit,77927.58,2022-08-18,2026-10-11,Resubmitted claim duplicate of incident on 2022-08-18,flagged,duplicate_claim
+CLM-2026-18505,POL-LIF-738759,CUST1006,Disability,17682.36,2025-10-23,2025-10-26,Claim for Disability under policy POL-LIF-738759.,submitted,
+CLM-2026-66392,POL-ACC-132739,CUST1001,Death Benefit,95325.41,2022-10-06,2022-10-24,Claim for Death Benefit under policy POL-ACC-132739.,submitted,
+CLM-2026-71790,POL-LIF-862651,CUST1039,Accidental Death,384712.98,2023-07-25,2023-08-03,Inflated claim value requested exceeding standard product limits.,flagged,inflated_amount
+CLM-2026-51891,POL-FUN-843690,CUST1055,Accidental Death,7731.28,2026-10-11,2026-10-22,Claim for Accidental Death under policy POL-FUN-843690.,submitted,
+CLM-2026-33727,POL-FUN-524328,CUST1027,Critical Illness,38538.15,2022-12-01,2022-12-03,Claim submitted following emergency change in designated beneficiary.,flagged,beneficiary_alteration
+CLM-2026-95729,POL-FUN-275525,CUST1004,Funeral Expense,151475.33,2026-10-06,2026-10-29,Claim for Funeral Expense under policy POL-FUN-275525.,submitted,
+CLM-2026-43610,POL-GRP-200513,CUST1005,Accidental Death,81946.24,2026-03-24,2026-04-04,Claim for Accidental Death under policy POL-GRP-200513.,submitted,
+CLM-2026-88094,POL-LIF-752454,CUST1029,Disability,18627.68,2026-09-28,2026-10-23,Claim for Disability under policy POL-LIF-752454.,submitted,
+CLM-2026-12104,POL-GRP-607957,CUST1028,Critical Illness,50520.13,2023-10-16,2023-10-19,Claim for Critical Illness under policy POL-GRP-607957.,submitted,
+CLM-2026-38998,POL-GRP-970560,CUST1052,Critical Illness,42473.41,2026-10-16,2026-10-28,Claim for Critical Illness under policy POL-GRP-970560.,submitted,
+CLM-2026-56849,POL-LIF-432397,CUST1026,Critical Illness,39976.15,2022-02-15,2022-02-18,Death claim filed immediately following policy inception.,flagged,early_policy_inception
+CLM-2026-22969,POL-ACC-723068,CUST1016,Death Benefit,52134.25,2026-10-18,2026-10-21,Death claim filed immediately following policy inception.,flagged,early_policy_inception
+CLM-2026-16752,POL-GRP-880080,CUST1058,Disability,113399.2,2023-02-24,2023-03-16,Claim for Disability under policy POL-GRP-880080.,submitted,
+CLM-2026-86861,POL-LIF-862651,CUST1039,Funeral Expense,73996.48,2024-01-05,2024-01-12,Claim for Funeral Expense under policy POL-LIF-862651.,submitted,
+CLM-2026-46860,POL-ACC-714898,CUST1050,Critical Illness,77255.08,2022-03-24,2022-04-09,Claim for Critical Illness under policy POL-ACC-714898.,submitted,
+CLM-2026-38964,POL-GRP-200513,CUST1005,Critical Illness,87783.53,2025-06-13,2025-06-15,Claim for Critical Illness under policy POL-GRP-200513.,submitted,
+CLM-2026-10539,POL-ACC-727592,CUST1033,Death Benefit,19716.0,2025-10-13,2025-10-22,Claim for Death Benefit under policy POL-ACC-727592.,submitted,
+CLM-2026-34764,POL-ACC-141725,CUST1032,Accidental Death,56001.74,2022-11-21,2022-11-27,Claim for Accidental Death under policy POL-ACC-141725.,submitted,
+CLM-2026-53018,POL-ACC-335635,CUST1049,Accidental Death,46642.78,2022-10-22,2022-10-31,Claim for Accidental Death under policy POL-ACC-335635.,submitted,
+CLM-2026-43026,POL-ACC-650936,CUST1025,Death Benefit,40046.32,2026-10-14,2024-01-08,Resubmitted claim duplicate of incident on 2026-10-14,flagged,duplicate_claim
+CLM-2026-98242,POL-GRP-461664,CUST1000,Disability,18178.74,2024-12-17,2024-12-21,Claim for Disability under policy POL-GRP-461664.,submitted,
+CLM-2026-37714,POL-ACC-714898,CUST1050,Accidental Death,57397.93,2021-02-23,2021-03-07,Claim for Accidental Death under policy POL-ACC-714898.,submitted,
+CLM-2026-21058,POL-FUN-627765,CUST1004,Disability,44389.49,2024-10-18,2024-10-29,Claim for Disability under policy POL-FUN-627765.,submitted,
+CLM-2026-90831,POL-ACC-802465,CUST1032,Funeral Expense,10173.26,2026-07-11,2026-07-16,Claim for Funeral Expense under policy POL-ACC-802465.,submitted,
+CLM-2026-54259,POL-ACC-438082,CUST1017,Death Benefit,7013.13,2024-06-22,2024-06-29,Claim for Death Benefit under policy POL-ACC-438082.,submitted,
+CLM-2026-82717,POL-FUN-423361,CUST1023,Funeral Expense,34563.49,2026-07-06,2026-07-24,Claim for Funeral Expense under policy POL-FUN-423361.,submitted,
+CLM-2026-24485,POL-LIF-950726,CUST1057,Death Benefit,10316.48,2026-10-22,2026-10-24,Claim for Death Benefit under policy POL-LIF-950726.,submitted,
+CLM-2026-91753,POL-FUN-540170,CUST1008,Critical Illness,84189.17,2024-03-28,2022-10-28,Resubmitted claim duplicate of incident on 2024-03-28,flagged,duplicate_claim
+CLM-2026-95599,POL-ACC-592058,CUST1017,Death Benefit,33103.63,2022-08-25,2022-09-07,Claim for Death Benefit under policy POL-ACC-592058.,submitted,
+CLM-2026-93144,POL-FUN-843690,CUST1055,Funeral Expense,12723.41,2024-12-22,2024-12-25,Death claim filed immediately following policy inception.,flagged,early_policy_inception
+CLM-2026-15312,POL-LIF-503650,CUST1049,Disability,38745.3,2025-04-27,2025-05-22,Claim for Disability under policy POL-LIF-503650.,submitted,
+CLM-2026-30925,POL-GRP-773669,CUST1015,Death Benefit,8235.08,2024-08-09,2024-08-12,Death claim filed immediately following policy inception.,flagged,early_policy_inception
+CLM-2026-92963,POL-ACC-951153,CUST1009,Death Benefit,51837.96,2026-10-14,2026-11-02,Claim for Death Benefit under policy POL-ACC-951153.,submitted,
+CLM-2026-78986,POL-GRP-576578,CUST1034,Accidental Death,5958.61,2024-04-09,2024-04-27,Claim for Accidental Death under policy POL-GRP-576578.,submitted,
+CLM-2026-40079,POL-ACC-303945,CUST1007,Accidental Death,99215.2,2022-03-17,2022-04-07,Claim for Accidental Death under policy POL-ACC-303945.,submitted,
+CLM-2026-93152,POL-ACC-141725,CUST1032,Disability,35348.08,2022-06-27,2022-07-03,Claim for Disability under policy POL-ACC-141725.,submitted,
+CLM-2026-96784,POL-LIF-489539,CUST1011,Death Benefit,10490.8,2026-01-05,2026-01-16,Claim for Death Benefit under policy POL-LIF-489539.,submitted,
+CLM-2026-86594,POL-ACC-561205,CUST1011,Death Benefit,119083.32,2026-10-24,2026-10-31,Inflated claim value requested exceeding standard product limits.,flagged,inflated_amount
+CLM-2026-34842,POL-LIF-503650,CUST1049,Funeral Expense,21569.6,2024-10-17,2024-10-23,Claim for Funeral Expense under policy POL-LIF-503650.,submitted,
+CLM-2026-97244,POL-FUN-840662,CUST1019,Funeral Expense,251396.51,2023-01-17,2023-02-07,Inflated claim value requested exceeding standard product limits.,flagged,inflated_amount
+CLM-2026-50391,POL-GRP-773669,CUST1015,Disability,6364.89,2024-11-10,2024-12-05,Claim for Disability under policy POL-GRP-773669.,submitted,
+CLM-2026-45413,POL-LIF-652765,CUST1040,Funeral Expense,29287.98,2021-09-18,2021-09-29,Claim for Funeral Expense under policy POL-LIF-652765.,submitted,
+CLM-2026-95469,POL-GRP-195824,CUST1028,Accidental Death,41659.49,2023-08-07,2023-08-24,Claim for Accidental Death under policy POL-GRP-195824.,submitted,
+CLM-2026-88782,POL-FUN-856227,CUST1038,Disability,75963.2,2022-08-20,2022-08-25,Claim for Disability under policy POL-FUN-856227.,submitted,
+CLM-2026-14400,POL-ACC-335635,CUST1049,Critical Illness,86455.61,2022-10-12,2022-10-27,Claim for Critical Illness under policy POL-ACC-335635.,submitted,
+CLM-2026-62852,POL-GRP-607957,CUST1028,Funeral Expense,103592.35,2023-10-12,2023-10-26,Claim for Funeral Expense under policy POL-GRP-607957.,submitted,
+CLM-2026-97016,POL-ACC-723068,CUST1016,Accidental Death,55687.47,2026-10-22,2026-11-15,Claim for Accidental Death under policy POL-ACC-723068.,submitted,
+CLM-2026-30136,POL-ACC-454506,CUST1029,Disability,17176.64,2024-06-24,2022-06-30,Resubmitted claim duplicate of incident on 2024-06-24,flagged,duplicate_claim
+CLM-2026-48601,POL-LIF-292256,CUST1007,Critical Illness,42356.43,2026-08-14,2026-08-16,Claim for Critical Illness under policy POL-LIF-292256.,submitted,
+CLM-2026-32818,POL-FUN-540493,CUST1053,Disability,10047.05,2026-09-16,2026-10-11,Claim for Disability under policy POL-FUN-540493.,submitted,
+CLM-2026-75120,POL-LIF-503650,CUST1049,Funeral Expense,11792.26,2024-04-26,2024-05-03,Claim for Funeral Expense under policy POL-LIF-503650.,submitted,
+CLM-2026-49290,POL-ACC-244264,CUST1051,Disability,23007.23,2026-10-14,2026-11-07,Claim for Disability under policy POL-ACC-244264.,submitted,
+CLM-2026-75635,POL-LIF-652765,CUST1040,Death Benefit,109475.02,2022-07-08,2022-07-14,Inflated claim value requested exceeding standard product limits.,flagged,inflated_amount
+CLM-2026-72390,POL-LIF-752454,CUST1029,Critical Illness,12715.91,2025-03-13,2025-03-17,Claim for Critical Illness under policy POL-LIF-752454.,submitted,
+CLM-2026-10486,POL-GRP-576578,CUST1034,Accidental Death,9075.02,2023-10-04,2023-10-26,Claim submitted following emergency change in designated beneficiary.,flagged,beneficiary_alteration
+CLM-2026-51776,POL-LIF-581392,CUST1031,Funeral Expense,20429.96,2025-07-22,2025-08-07,Claim for Funeral Expense under policy POL-LIF-581392.,submitted,
+CLM-2026-70189,POL-ACC-453665,CUST1018,Disability,95529.38,2026-11-03,2026-11-14,Claim for Disability under policy POL-ACC-453665.,submitted,
+CLM-2026-48852,POL-LIF-974967,CUST1047,Disability,5397.56,2026-10-28,2026-11-12,Claim for Disability under policy POL-LIF-974967.,submitted,
+CLM-2026-41265,POL-ACC-726484,CUST1048,Accidental Death,9899.48,2025-08-04,2025-08-15,Claim for Accidental Death under policy POL-ACC-726484.,submitted,
+CLM-2026-13040,POL-LIF-911198,CUST1046,Funeral Expense,11562.9,2026-03-15,2026-04-05,Claim for Funeral Expense under policy POL-LIF-911198.,submitted,
+CLM-2026-20369,POL-GRP-970560,CUST1052,Critical Illness,44663.7,2026-04-25,2026-04-28,Claim for Critical Illness under policy POL-GRP-970560.,submitted,
+CLM-2026-21637,POL-LIF-581392,CUST1031,Disability,69286.85,2025-07-01,2025-07-21,Claim for Disability under policy POL-LIF-581392.,submitted,
+CLM-2026-77296,POL-FUN-275525,CUST1004,Critical Illness,84160.74,2026-01-03,2026-01-21,Claim for Critical Illness under policy POL-FUN-275525.,submitted,
+CLM-2026-23038,POL-FUN-604898,CUST1035,Accidental Death,130632.73,2024-09-30,2024-10-04,Claim for Accidental Death under policy POL-FUN-604898.,submitted,
+CLM-2026-79423,POL-LIF-952712,CUST1059,Funeral Expense,18864.3,2024-11-11,2024-11-28,Claim for Funeral Expense under policy POL-LIF-952712.,submitted,
+CLM-2026-23012,POL-LIF-589741,CUST1013,Accidental Death,11601.05,2024-11-17,2024-11-19,Claim for Accidental Death under policy POL-LIF-589741.,submitted,
+CLM-2026-55320,POL-LIF-503650,CUST1049,Disability,26323.98,2024-12-06,2024-12-16,Claim submitted following emergency change in designated beneficiary.,flagged,beneficiary_alteration
+CLM-2026-72068,POL-LIF-489539,CUST1011,Death Benefit,178404.86,2026-09-10,2026-09-25,Inflated claim value requested exceeding standard product limits.,flagged,inflated_amount
+CLM-2026-85773,POL-LIF-432397,CUST1026,Critical Illness,52720.7,2023-03-08,2023-04-02,Claim for Critical Illness under policy POL-LIF-432397.,submitted,

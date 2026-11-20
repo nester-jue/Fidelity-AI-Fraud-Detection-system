@@ -1,0 +1,15 @@
+fastapi
+uvicorn[standard]
+SQLAlchemy
+psycopg2-binary
+psycopg[binary]
+python-multipart
+pydantic
+python-dotenv
+passlib[bcrypt]
+PyJWT
+scikit-learn
+pandas
+numpy
+# Optional OCR libraries (install later if needed)
+# tesseract-ocr (system package) and pytesseract

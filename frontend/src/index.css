@@ -1,0 +1,411 @@
+@import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800;900&display=swap');
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+* {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  font-family: 'Inter', Arial, sans-serif;
+  background: #f4f6fa;
+  color: #17243a;
+}
+
+button, input {
+  font: inherit;
+}
+
+.login-page {
+  min-height: 100vh;
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  background: white;
+}
+
+.login-brand-panel {
+  background: linear-gradient(145deg, #07182e, #102f55);
+  color: white;
+  padding: 55px 9%;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  position: relative;
+  overflow: hidden;
+}
+
+.login-brand-panel::after {
+  content: '';
+  position: absolute;
+  width: 420px;
+  height: 420px;
+  border: 1px solid rgba(255,255,255,.08);
+  border-radius: 50%;
+  right: -160px;
+  bottom: -130px;
+}
+
+.brand-logo {
+  width: 65px;
+  height: 65px;
+  background: #d9a441;
+  color: #07182e;
+  border-radius: 16px;
+  display: grid;
+  place-items: center;
+}
+
+.brand-label {
+  color: #e2b85c;
+  font-size: 12px;
+  font-weight: 800;
+  letter-spacing: 3px;
+}
+
+.brand-content h1 {
+  font-size: clamp(42px, 5vw, 68px);
+  line-height: 1.12;
+  margin: 25px 0;
+  letter-spacing: -2px;
+}
+
+.brand-content h1 span {
+  color: #e2b85c;
+}
+
+.brand-content > p {
+  color: #c0cddd;
+  max-width: 420px;
+  line-height: 1.8;
+  font-size: 15px;
+  margin-bottom: 35px;
+}
+
+.brand-feature {
+  display: flex;
+  align-items: center;
+  gap: 13px;
+  margin: 20px 0;
+  color: #e5edf6;
+  font-size: 14px;
+}
+
+.brand-feature svg {
+  color: #e2b85c;
+}
+
+.brand-footer {
+  color: #8ea3bb;
+  font-size: 10px;
+  letter-spacing: 1.5px;
+}
+
+.login-form-panel {
+  display: grid;
+  place-items: center;
+  padding: 40px 25px;
+}
+
+.login-card {
+  width: 100%;
+  max-width: 420px;
+}
+
+.mobile-logo {
+  display: none;
+}
+
+.welcome-label {
+  color: #b18432;
+  font-size: 11px;
+  font-weight: 800;
+  letter-spacing: 2px;
+}
+
+.login-card h2 {
+  font-size: 29px;
+  margin: 13px 0;
+  color: #10243e;
+}
+
+.login-description {
+  color: #778397;
+  line-height: 1.7;
+  font-size: 13px;
+  margin-bottom: 35px;
+}
+
+.login-card form label {
+  display: block;
+  font-size: 13px;
+  font-weight: 700;
+  margin: 20px 0 9px;
+  color: #26364d;
+}
+
+.login-card input {
+  width: 100%;
+  padding: 15px;
+  border: 1px solid #dce2eb;
+  border-radius: 8px;
+  outline: none;
+  background: #fbfcfe;
+  font-size: 13px;
+}
+
+.login-card input:focus {
+  border-color: #b58a3c;
+  box-shadow: 0 0 0 3px rgba(181,138,60,.12);
+}
+
+.password-field {
+  position: relative;
+}
+
+.password-field input {
+  padding-right: 48px;
+}
+
+.password-toggle {
+  position: absolute;
+  right: 12px;
+  top: 50%;
+  transform: translateY(-50%);
+  border: 0;
+  background: transparent;
+  color: #78869a;
+  cursor: pointer;
+}
+
+.login-button {
+  width: 100%;
+  padding: 16px;
+  margin-top: 30px;
+  background: #102b4d;
+  border: 0;
+  border-radius: 8px;
+  color: white;
+  font-weight: 700;
+  cursor: pointer;
+  transition: .2s;
+}
+
+.login-button:hover {
+  background: #1b416c;
+}
+
+.login-button:disabled {
+  opacity: .6;
+  cursor: wait;
+}
+
+.secure-notice {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: 8px;
+  margin-top: 25px;
+  color: #718096;
+  font-size: 12px;
+}
+
+.login-bottom {
+  text-align: center;
+  margin-top: 55px;
+  color: #9aa4b3;
+  font-size: 11px;
+  line-height: 2;
+}
+
+.login-error {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  background: #fff0f0;
+  color: #bd3030;
+  padding: 12px;
+  border-radius: 8px;
+  font-size: 12px;
+}
+
+.dashboard-page {
+  min-height: 100vh;
+}
+
+.dashboard-header {
+  background: #091b33;
+  color: white;
+  padding: 22px 6%;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.dashboard-brand,
+.user-controls {
+  display: flex;
+  align-items: center;
+  gap: 15px;
+}
+
+.dashboard-brand svg {
+  color: #e2b85c;
+}
+
+.dashboard-brand h1 {
+  font-size: 15px;
+  letter-spacing: 1px;
+  margin: 0;
+}
+
+.dashboard-brand p {
+  font-size: 11px;
+  color: #9fb0c4;
+  margin: 5px 0 0;
+}
+
+.user-info {
+  display: flex;
+  flex-direction: column;
+  text-align: right;
+  gap: 5px;
+  font-size: 12px;
+}
+
+.user-info span {
+  color: #e2b85c;
+  font-size: 10px;
+  text-transform: uppercase;
+}
+
+.logout-button {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 11px 15px;
+  background: #1b3553;
+  color: white;
+  border: 1px solid #38516e;
+  border-radius: 7px;
+  cursor: pointer;
+}
+
+.dashboard-main {
+  max-width: 1250px;
+  margin: auto;
+  padding: 45px 25px;
+}
+
+.dashboard-welcome {
+  background: white;
+  padding: 30px;
+  border-radius: 12px;
+  border: 1px solid #e6eaf0;
+}
+
+.dashboard-welcome span {
+  color: #b18432;
+  font-size: 11px;
+  font-weight: 800;
+  letter-spacing: 2px;
+}
+
+.dashboard-welcome h2 {
+  font-size: 25px;
+  color: #10243e;
+}
+
+.dashboard-welcome p {
+  color: #78869a;
+  font-size: 13px;
+}
+
+.kpi-grid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 18px;
+  margin-top: 25px;
+}
+
+.kpi-card {
+  background: white;
+  padding: 25px;
+  border-radius: 10px;
+  border: 1px solid #e5eaf0;
+}
+
+.kpi-card span {
+  color: #778397;
+  font-size: 12px;
+}
+
+.kpi-card h3 {
+  font-size: 28px;
+  color: #102b4d;
+}
+
+.dashboard-information {
+  margin-top: 25px;
+  padding: 25px;
+  background: #eaf3ee;
+  color: #245b40;
+  display: flex;
+  gap: 15px;
+  align-items: center;
+  border-radius: 10px;
+}
+
+.dashboard-information h3 {
+  margin: 0 0 7px;
+}
+
+.dashboard-information p {
+  margin: 0;
+  font-size: 13px;
+}
+
+@media (max-width: 800px) {
+  .login-page {
+    grid-template-columns: 1fr;
+  }
+
+  .login-brand-panel {
+    display: none;
+  }
+
+  .mobile-logo {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    color: #102b4d;
+    font-weight: 800;
+    margin-bottom: 45px;
+  }
+
+  .mobile-logo svg {
+    color: #b18432;
+  }
+
+  .kpi-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+
+  .dashboard-header {
+    flex-wrap: wrap;
+    gap: 20px;
+  }
+}
+
+@media (max-width: 480px) {
+  .kpi-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .user-controls {
+    width: 100%;
+    justify-content: space-between;
+  }
+}
