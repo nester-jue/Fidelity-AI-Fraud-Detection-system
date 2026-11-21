@@ -1,12 +1,118 @@
 import hashlib
 import json
 import logging
+import math
 from datetime import datetime, timezone
 from typing import Any, Dict, List, Optional, Tuple
 
 from ..core.config import settings
 
 logger = logging.getLogger("fraud_engine")
+
+
+class StatisticalIsolationScorer:
+    """Statistical outlier scorer approximating Isolation Forest principles.
+
+    Purpose (Phase 2): give the engine an unsupervised anomaly component for
+    claim patterns beyond heuristic rules. Scores a feature vector by
+    normalised absolute deviation from population statistics:
+
+        score = mean( min(|z_i|, 3) / 3 )   for i in features
+        z_i = (x_i - mean_i) / (std_i or range_i or 1)
+
+    Output: 0..1 (0 = typical, 1 = extreme).
+
+    Documented limitations:
+    - Single-point deviation from population mean; not a true forest.
+    - Sensitive to extreme outliers in the population baseline.
+    - Limited feature space (amount, latency, frequency, amount ratio).
+    - Validated on synthetic data only; not a decision-maker on its own.
+    """
+
+    FEATURE_NAMES = ["claim_amount", "submission_latency_days", "claim_frequency_30d",
+                     "customer_amount_ratio", "days_since_policy_inception"]
+    # claim_amount shares its baseline key with the current claim amount series
+    FEATURE_KEYS = {
+        "claim_amount": "amount",
+        "submission_latency_days": "latency_days",
+        "claim_frequency_30d": "claim_frequency_30d",
+        "customer_amount_ratio": "amount",
+        "days_since_policy_inception": "days_since_inception",
+    }
+
+    def __init__(self, baseline: Optional[Dict[str, Any]] = None):
+        self.baseline = baseline or {}
+
+    def set_baseline(self, stats: Dict[str, Any]) -> None:
+        self.baseline = stats
+
+    def score(self, features: Dict[str, Any], baseline: Optional[Dict[str, Any]] = None) -> float:
+        stats = baseline or self.baseline
+        if not stats:
+            return 0.0
+        scores: List[float] = []
+        for name in self.FEATURE_NAMES:
+            if name not in features or features.get(name) is None:
+                continue
+            try:
+                x = float(features[name])
+            except (TypeError, ValueError):
+                continue
+            mean = float(stats.get(f"{name}_mean", 0.0) or 0.0)
+            spread = float(stats.get(f"{name}_std", 0.0) or 0.0)
+            if spread <= 1e-9:
+                spread = abs(mean) if mean != 0 else 1.0
+            z = abs(x - mean) / spread
+            scores.append(min(z, 3.0) / 3.0)
+        if not scores:
+            return 0.0
+        return round(sum(scores) / len(scores), 4)
+
+
+def isolation_features_from_claim(claim_data: Dict[str, Any],
+                                   historical_claims: List[Dict[str, Any]]) -> Dict[str, Any]:
+    """Builds the isolation feature vector for a claim (Phase 2)."""
+    def _num(d: Dict[str, Any], key: str, default: float = 0.0) -> float:
+        try:
+            return float(d.get(key, default))
+        except (TypeError, ValueError):
+            return default
+
+    amounts = [_num(c, "amount") for c in historical_claims if _num(c, "amount") > 0]
+    avg_amt = (sum(amounts) / len(amounts)) if amounts else _num(claim_data, "amount", 0.0) or 1.0
+
+    return {
+        "claim_amount": _num(claim_data, "amount", 0.0),
+        "submission_latency_days": _num(claim_data, "latency_days", 0.0),
+        "claim_frequency_30d": _num(claim_data, "claim_frequency_30d", 0.0),
+        "customer_amount_ratio": (_num(claim_data, "amount", 0.0) / avg_amt) if avg_amt else 0.0,
+        "days_since_policy_inception": _num(claim_data, "days_since_inception", 0.0),
+    }
+
+
+def isolation_baseline_from_claims(claims: List[Dict[str, Any]]) -> Dict[str, Any]:
+    """Computes population statistics for the isolation scorer."""
+    import statistics
+
+    def _series(key: str) -> List[float]:
+        vals = []
+        for c in claims:
+            try:
+                v = float(c.get(key, 0) or 0)
+            except (TypeError, ValueError):
+                continue
+            if v > 0:
+                vals.append(v)
+        return vals
+
+    base: Dict[str, Any] = {}
+    for name in StatisticalIsolationScorer.FEATURE_NAMES:
+        key = StatisticalIsolationScorer.FEATURE_KEYS[name]
+        vals = _series(key)
+        if vals:
+            base[f"{name}_mean"] = round(statistics.mean(vals), 4)
+            base[f"{name}_std"] = round(statistics.pstdev(vals), 4) if len(vals) > 1 else max(abs(vals[0]), 1.0)
+    return base
 
 class FraudDetectionEngine:
     """Production AI & Heuristic Fraud Detection Engine for Life Assurance.
@@ -40,6 +146,8 @@ class FraudDetectionEngine:
         ocr_results: Optional[List[Dict[str, Any]]] = None,
         beneficiary_name: Optional[str] = None,
         recent_beneficiary_change: bool = False,
+        isolation_features: Optional[Dict[str, Any]] = None,
+        isolation_stats: Optional[Dict[str, Any]] = None,
     ) -> Dict[str, Any]:
         """Runs the multi-layered fraud detection engine on a submitted claim.
         Returns risk score (0-100), risk category, indicators, breakdown, and recommended actions.
@@ -238,7 +346,26 @@ class FraudDetectionEngine:
                     explanations.append("Low readability or missing legible text on uploaded supporting document; this alone does not establish fraud.")
 
         # ---------------------------------------------------------
-        # 7. SCORE CALIBRATION & CATEGORIZATION
+        # 7. STATISTICAL ISOLATION COMPONENT (Phase 2 upgrade)
+        # ---------------------------------------------------------
+        # Unsupervised anomaly scoring (approximates Isolation Forest
+        # principles; documented limitations in StatisticalIsolationScorer).
+        rule_score_pre_isolation = rule_score
+        isolation_score = 0.0
+        if isolation_features and isolation_stats:
+            isolation_score = StatisticalIsolationScorer().score(isolation_features, isolation_stats)
+            if isolation_score >= 0.5:
+                indicators.append({
+                    "code": "ISOLATION_ANOMALY_DETECTED",
+                    "severity": "HIGH",
+                    "weight": 20.0,
+                    "detail": f"Statistical outlier score {isolation_score:.2f} deviates from portfolio population; recorded as anomaly evidence for human review — not proof of fraud.",
+                })
+                rule_score += min(20.0, isolation_score * 25.0)
+                explanations.append(f"Isolation anomaly score {isolation_score:.2f} higher than typical claims; flagged for human review.")
+
+        # ---------------------------------------------------------
+        # 8. SCORE CALIBRATION & CATEGORIZATION
         # ---------------------------------------------------------
         # Cap score between 0 and 100
         calibrated_score = round(min(100.0, max(0.0, rule_score)), 1)
@@ -276,6 +403,11 @@ class FraudDetectionEngine:
             "recommended_actions": recommended_actions,
             "model_version": self.version,
             "assessed_at": datetime.now(timezone.utc).isoformat(),
+            # Ensemble components (Phase 2 upgrade)
+            "rule_score": round(rule_score_pre_isolation, 2),
+            "isolation_score": isolation_score,
+            "ensemble_score": calibrated_score,
+            "ensemble_method": "rule_ensemble + statistical_isolation_scorer",
         }
 
     def _check_duplicate_claims(

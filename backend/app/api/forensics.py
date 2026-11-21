@@ -281,6 +281,18 @@ async def get_forensic_claim_detail(
     }
 
 
+@router.get("/document-analysis", summary="Cross-document forensic analysis: duplicates, inconsistencies, suspicious flags")
+async def get_document_analysis(
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_active_user),
+) -> Dict[str, Any]:
+    """Returns document-level forensic findings. All findings are for human
+    review — they are not proof of fraud."""
+    from ..services.document_forensics import generate_forensic_analysis
+
+    return generate_forensic_analysis(db)
+
+
 @router.get("/high-risk-queue", summary="Get priority queue of high and critical risk claims")
 async def get_high_risk_forensic_queue(
     limit: int = Query(25, ge=1, le=100),
@@ -321,3 +333,38 @@ async def get_high_risk_forensic_queue(
         })
 
     return results
+
+
+@router.get("/document/{doc_id}/report", summary="Per-document forensic report (Phase 4 format)")
+async def get_document_forensic_report(
+    doc_id: int,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_active_user),
+) -> Dict[str, Any]:
+    """Returns a forensic report per document: suspicious fields, extracted
+    vs expected values, explanations, confidence levels, recommended actions.
+
+    Distinguishes actual evidence, technical anomalies, possible fraud
+    indicators and OCR errors. Never confirms fraud by itself.
+    """
+    from ..services.document_forensics import generate_forensic_report_for_document
+
+    return generate_forensic_report_for_document(db, doc_id)
+
+
+@router.get("/documents/reuse", summary="Cross-claim document reuse detection (text-similarity)")
+async def get_reused_documents(
+    threshold: float = Query(0.9, ge=0.5, le=1.0),
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_active_user),
+) -> Dict[str, Any]:
+    """Detects documents reused across claims via high text similarity."""
+    from ..services.document_forensics import detect_reused_documents
+
+    groups = detect_reused_documents(db, threshold=threshold)
+    return {
+        "threshold": threshold,
+        "reused_groups": groups,
+        "total_groups": len(groups),
+        "honesty_note": "High text similarity is a technical indicator of document reuse; fraud linkage requires human review.",
+    }

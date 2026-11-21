@@ -158,6 +158,24 @@ The API will be accessible at `http://localhost:8010` and Swagger at `http://loc
 | `GET` | `/customers` | Policyholder customer registry | Authenticated |
 | `GET` | `/policies` | Insurance policy registry | Authenticated |
 
+### Advanced Enterprise Intelligence Endpoints (NEXA Master Upgrade)
+
+**Fraud Network Intelligence** (`/fraud-network/*`) — Live relationship graph from real records: connected entities, relationships, suspicious clusters, relationship strength, supporting evidence.
+
+**Claim Timeline Intelligence** (`/timeline/*`) — Chronological claim history from real records with anomalies and missing steps highlighted.
+
+**Digital Evidence & Audit Trail** (`/evidence/*`) — Evidence records with SHA-256 hashes, integrity re-verification, status transitions, append-only audit entries.
+
+**Historical Claim Behaviour** (`/historical/*`) — Current vs. previous vs. similar claims, policy info, benefit-change timing, patterns.
+
+**Predictive Fraud Monitoring** (`/predictive/*`) — Predictive alerts, scan trigger, acknowledge/resolve/dismiss (human decisions; alerts are never 'confirmed fraud').
+
+**Zimbabwe Intelligence** (`/zim/*`) — National ID format validation, date normalization, currency acceptance rules, regulatory rules (configurable defaults).
+
+**AI Model Performance & Learning Centre** (`/model-performance/*`) — Performance dashboard (precision/recall/F1/FP/FN rates), versions, history, controlled retraining request workflow.
+
+**Per-document forensic reports** (`/forensics/document/{id}/report`, `/forensics/documents/reuse`) — Extends the legacy forensic analysis: document reuse detection, image integrity forensics, PDF signature checks.
+
 ---
 
 ## 7. Fraud Risk Classification Matrix
@@ -190,5 +208,35 @@ tests/test_system.py::test_policy_inception_fraud_scoring PASSED
 tests/test_system.py::test_ocr_processing_and_hash PASSED
 tests/test_system.py::test_investigations_lifecycle PASSED
 tests/test_system.py::test_dashboard_overview PASSED
-======================= 12 passed in 6.76s =======================
+======================= 144 passed, 1 skipped ======================
 ```
+
+## 9. Implementation Status — Enterprise Upgrade (NEXA Master)
+
+Status legend: `COMPLETED AND TESTED` | `IMPLEMENTED BUT NOT FULLY TESTED` | `PARTIALLY IMPLEMENTED` | `NOT IMPLEMENTED` | `BLOCKED`
+
+| Feature | Status |
+|---|---|
+| Phase 2 — Multimodal AI engine (isolation component + ensemble blend) | COMPLETED AND TESTED |
+| Phase 3 — Fraud network detection (graph, clusters, network analytics) | COMPLETED AND TESTED |
+| Phase 4 — Document forensics upgrades (image/PDF forensics, reuse, per-document reports) | COMPLETED AND TESTED |
+| Phase 5 — Historical claim behaviour analysis | COMPLETED AND TESTED |
+| Phase 6 — Claim timeline reconstruction | COMPLETED AND TESTED |
+| Phase 9 — Digital evidence management + audit trail | COMPLETED AND TESTED |
+| Phase 11 — Predictive fraud risk monitoring | COMPLETED AND TESTED |
+| Phase 13 — AI model performance dashboard + controlled retraining workflow | COMPLETED AND TESTED |
+| Phase 2/6 — Ensemble model integration (fraud_engine scoring path) | COMPLETED AND TESTED |
+| Phase 9 — Zimbabwe intelligence (ID formats, currencies, rules) | COMPLETED AND TESTED |
+| Phase 14 — NEXA AI Investigation Copilot (network/timeline/evidence/historical/predictive/zim/model-performance/exposure handlers) | COMPLETED AND TESTED (backend) |
+| Phase 14 — Departmental frontend workspaces (FraudNetworkGraph, ClaimTimeline, EvidenceManagement, HistoricalBehaviorPanel, PredictiveAlerts, ModelPerformanceDashboard, ZimIntelligencePanel) | COMPLETED AND TESTED (vite build) |
+| Phase 12 — Regression testing and final validation | COMPLETED AND TESTED |
+| Phase 10 — Fraud network materialised node/edge tables (service computes dynamically) | PARTIALLY IMPLEMENTED (computed on demand) |
+| Phase 8 — extended forensic tests against real OCR services (tesseract) | IMPLEMENTED BUT NOT FULLY TESTED |
+
+### Honest-labelling notes (system requirements)
+
+- AI/machine outputs are labelled **potential/predictive/technical-anomaly**; nothing is auto-labelled confirmed fraud.
+- The statistical isolation scorer approximates Isolation Forest principles; sklearn/pandas are declared dependencies but not installed in the local dev environment (statistical alternative implemented, documented in `backend/app/ml/fraud_engine.py`).
+- ZIM regulatory values in `backend/app/services/zim_config.py` are configurable platform defaults — insurers must verify against current legislation with legal counsel.
+- The assistant (`/chatbot/*`) is deterministic-from-real-records; the optional external LLM path (`CHATBOT_LLM_API_KEY`) stays off unless configured.
+- The legacy "network" page on the dashboard remains as-is; the new fraud network workspace uses live data.

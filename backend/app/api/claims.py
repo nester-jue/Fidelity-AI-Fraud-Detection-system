@@ -13,7 +13,9 @@ from ..models.sqlalchemy_models import (
 from ..dependencies import get_current_active_user, require_roles, require_department, log_audit_trail
 from ..integrations.mock_services import PolicyService, CustomerService, ClaimsService
 from ..ocr.ocr_service import process_document
-from ..ml.fraud_engine import fraud_engine
+from ..ml.fraud_engine import fraud_engine, isolation_features_from_claim, isolation_baseline_from_claims
+from ..services import document_forensics
+from ..services import historical_behavior
 from ..core.config import settings
 
 router = APIRouter(prefix="/claims", tags=["Claims Management"])
@@ -69,6 +71,32 @@ def run_ai_claim_analysis(claim_id: int):
             for h in historical_claims_objs
         ]
 
+        # 2b. Additional temporal context for the isolation component & historical engine
+        isolation_stats = {}
+        if claim.customer_id:
+            cust_claims = historical_behavior.get_customer_claim_history(db, claim.customer_id)
+            isolation_stats = isolation_baseline_from_claims(
+                [{"amount": c.amount, "latency_days": (c.submission_date - c.incident_date).days if c.submission_date and c.incident_date else 0,
+                  "claim_frequency_30d": 0, "days_since_inception": 0} for c in cust_claims]
+            )
+        claim_for_features = {
+            "claim_id": claim.claim_id,
+            "amount": claim.amount,
+            "incident_date": claim.incident_date.isoformat() if claim.incident_date else "",
+            "submission_date": claim.submission_date.isoformat() if claim.submission_date else "",
+            "claim_type": claim.claim_type,
+            "latency_days": (claim.submission_date - claim.incident_date).days
+                            if claim.submission_date and claim.incident_date else 0,
+            "claim_frequency_30d": sum(
+                1 for h in historical_claims_objs
+                if claim.submission_date and h.submission_date
+                and abs((claim.submission_date - h.submission_date).days) <= 30
+            ) + 1,
+            "days_since_inception": (claim.incident_date - claim.policy.effective_date).days
+                                    if claim.policy and claim.policy.effective_date and claim.incident_date else 0,
+        }
+        isolation_features = isolation_features_from_claim(claim_for_features, history_list)
+
         # 3. Policy & Customer records
         policy_dict = {
             "policy_number": claim.policy.policy_number if claim.policy else "UNKNOWN",
@@ -80,6 +108,31 @@ def run_ai_claim_analysis(claim_id: int):
             "customer_id": claim.customer.customer_id if claim.customer else "UNKNOWN",
             "national_id": claim.customer.national_id if claim.customer else "",
         }
+
+        # 3b. Persist forensic findings to ClaimDocument records (Phase 9)
+        for res in ocr_findings:
+            doc_obj = db.query(ClaimDocument).filter(
+                ClaimDocument.claim_id == claim.id,
+                ClaimDocument.filename == res["filename"],
+            ).first()
+            if doc_obj and not doc_obj.forensic_findings:
+                forensic_bits = {
+                    "sha256_hash": res.get("document_hash_sha256"),
+                    "document_type": res.get("document_type"),
+                    "flags": res.get("flags", []),
+                    "missing_fields": res.get("missing_fields", []),
+                    "extracted_amounts": res.get("extracted_amounts", []),
+                    "date_mismatch_details": res.get("mismatch_details", []),
+                }
+                try:
+                    forensic_bits["image_forensics"] = document_forensics.analyze_image_forensics(doc_obj.file_path)
+                except Exception:
+                    pass
+                try:
+                    forensic_bits["pdf_signature"] = document_forensics.analyze_pdf_signature(doc_obj.file_path)
+                except Exception:
+                    pass
+                doc_obj.forensic_findings = forensic_bits
 
         # 4. Evaluate Fraud Risk
         assessment_res = fraud_engine.evaluate_claim(
@@ -95,6 +148,8 @@ def run_ai_claim_analysis(claim_id: int):
             customer_data=cust_dict,
             historical_claims=history_list,
             ocr_results=ocr_findings,
+            isolation_features=isolation_features,
+            isolation_stats=isolation_stats,
         )
 
         # 5. Persist or Update FraudAssessment
@@ -108,6 +163,10 @@ def run_ai_claim_analysis(claim_id: int):
                 explanation=assessment_res["explanation"],
                 model_version=assessment_res["model_version"],
                 assessed_at=datetime.now(timezone.utc),
+                # Ensemble component persistence (Phase 2)
+                rule_score=assessment_res.get("rule_score"),
+                ensemble_score=assessment_res.get("ensemble_score"),
+                isolation_score=assessment_res.get("isolation_score"),
             )
             db.add(assessment)
         else:
@@ -117,6 +176,9 @@ def run_ai_claim_analysis(claim_id: int):
             assessment.explanation = assessment_res["explanation"]
             assessment.model_version = assessment_res["model_version"]
             assessment.assessed_at = datetime.now(timezone.utc)
+            assessment.rule_score = assessment_res.get("rule_score")
+            assessment.ensemble_score = assessment_res.get("ensemble_score")
+            assessment.isolation_score = assessment_res.get("isolation_score")
 
         # 6. Flag claim & notify if High or Critical risk
         if assessment_res["risk_category"] in ["High", "Critical"]:

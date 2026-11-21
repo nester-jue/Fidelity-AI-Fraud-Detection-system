@@ -137,4 +137,55 @@ export const api = {
   investigationDetail: (id) => apiCall(`/investigations/${id}`),
   addInvestigationNote: (id, note) => apiCall(`/investigations/${id}/notes`, { method: 'POST', body: JSON.stringify({ note }) }),
   attachEvidence: (id, documentIds) => apiCall(`/investigations/${id}/`, { method: 'PUT', body: JSON.stringify({ evidence_documents: documentIds }) }).catch(() => null),
+
+  // NEXA AI Intelligence Assistant (role-aware conversational chatbot)
+  chatSuggestedQuestions: () => apiCall('/chatbot/suggested-questions'),
+  chatSendMessage: (message) => apiCall('/chatbot/messages', { method: 'POST', body: JSON.stringify({ message }) }),
+  chatHistory: () => apiCall('/chatbot/history'),
+  chatResetHistory: () => apiCall('/chatbot/history', { method: 'DELETE' }),
+
+  // NEXA Sample Claim Forms & Document Forensics (Phase 8)
+  listSampleDocuments: () => apiCall('/ocr/sample-documents/'),
+  getSampleDocument: (id) => apiCall(`/ocr/sample-documents/${id}`),
+  getForensicAnalysis: () => apiCall('/forensics/document-analysis'),
+
+  // Advanced NEXA Intelligence (enterprise upgrade)
+  fraudNetworkGraph: () => apiCall('/fraud-network/graph'),
+  fraudNetworkInsights: () => apiCall('/fraud-network/insights'),
+  claimNetwork: (claimId) => apiCall(`/fraud-network/claim/${claimId}`),
+  claimTimeline: (claimId) => apiCall(`/timeline/${claimId}`),
+  timelineAll: (claimIds = []) => apiCall(`/timeline/all?claim_ids=${encodeURIComponent(claimIds.join(','))}`),
+  evidenceList: (params = {}) => {
+    const q = new URLSearchParams(params).toString();
+    return apiCall(`/evidence/${q ? '?' + q : ''}`);
+  },
+  evidenceTypes: () => apiCall('/evidence/types'),
+  evidenceById: (id) => apiCall(`/evidence/${id}`),
+  evidenceReport: (invId) => apiCall(`/evidence/report/${invId}`),
+  updateEvidenceStatus: (id, status, notes) => apiCall(`/evidence/${id}/status`, { method: 'PUT', body: JSON.stringify({ status, notes }) }),
+  historicalClaimAnalysis: (claimId) => apiCall(`/historical/claim/${claimId}`),
+  historicalCustomerStats: (customerId) => apiCall(`/historical/customer/${customerId}/stats`),
+  predictiveAlerts: (params = {}) => {
+    const q = new URLSearchParams(params).toString();
+    return apiCall(`/predictive/alerts${q ? '?' + q : ''}`);
+  },
+  predictiveSummary: () => apiCall('/predictive/summary'),
+  predictiveScan: () => apiCall('/predictive/scan', { method: 'POST' }),
+  acknowledgeAlert: (id) => apiCall(`/predictive/alerts/${id}/acknowledge`, { method: 'PUT' }),
+  resolveAlert: (id, note) => apiCall(`/predictive/alerts/${id}/resolve`, { method: 'PUT', body: JSON.stringify({ resolution_note: note }) }),
+  dismissAlert: (id) => apiCall(`/predictive/alerts/${id}/dismiss`, { method: 'PUT' }),
+  modelPerformanceDashboard: () => apiCall('/model-performance/dashboard'),
+  modelPerformanceVersions: () => apiCall('/model-performance/versions'),
+  modelPerformanceHistory: () => apiCall('/model-performance/history'),
+  modelPerformanceDataRetention: () => apiCall('/model-performance/data-retention'),
+  openRetrainingRequest: (data) => apiCall('/model-performance/requests', { method: 'POST', body: JSON.stringify(data) }),
+  listRetrainingRequests: (status = '') => apiCall(`/model-performance/requests?status=${encodeURIComponent(status)}`),
+  approveRetraining: (id) => apiCall(`/model-performance/requests/${id}/approve`, { method: 'PUT' }),
+  deployRetraining: (id) => apiCall(`/model-performance/requests/${id}/deploy`, { method: 'PUT' }),
+  rejectRetraining: (id, reason = '') => apiCall(`/model-performance/requests/${id}/reject?reason=${encodeURIComponent(reason)}`, { method: 'PUT' }),
+  zimConfig: () => apiCall('/zim/config'),
+  zimRegulatoryRules: () => apiCall('/zim/regulatory-rules'),
+  zimValidateNationalId: (value) => apiCall('/zim/validate/national-id', { method: 'POST', body: JSON.stringify({ value }) }),
+  zimValidateDate: (value) => apiCall('/zim/normalize-date', { method: 'POST', body: JSON.stringify({ value }) }),
+  zimValidateCurrency: (currency) => apiCall('/zim/validate-currency', { method: 'POST', body: JSON.stringify({ currency }) }),
 };

@@ -5,7 +5,8 @@ import {
   Filter, Plus, RotateCw, Sliders, Users,
   ClipboardCheck, AlertTriangle, ArrowRight,
   CheckCircle2, X, Clock, TrendingUp,
-  Brain, FileCheck, Share2, Layers, Check, MessageSquare, ClipboardList, Upload, Loader2
+  Brain, FileCheck, Share2, Layers, Check, MessageSquare, ClipboardList, Upload, Loader2,
+  GanttChart, History, Bell, Globe
 } from 'lucide-react';
 import { apiCall } from './api/apiClient.js';
 import ExecutiveDashboard from './components/dashboards/ExecutiveDashboard.jsx';
@@ -13,6 +14,14 @@ import ComplianceDashboard from './components/dashboards/ComplianceDashboard.jsx
 import FraudInvestigationDashboard from './components/dashboards/FraudInvestigationDashboard.jsx';
 import AdminDashboard from './components/dashboards/AdminDashboard.jsx';
 import OCRDocumentPage from './components/pages/OCRDocumentPage.jsx';
+import NexaAssistant from './components/shared/NexaAssistant.jsx';
+import FraudNetworkGraph from './components/dashboards/FraudNetworkGraph.jsx';
+import ClaimTimeline from './components/dashboards/ClaimTimeline.jsx';
+import EvidenceManagement from './components/dashboards/EvidenceManagement.jsx';
+import HistoricalBehaviorPanel from './components/dashboards/HistoricalBehaviorPanel.jsx';
+import PredictiveAlerts from './components/dashboards/PredictiveAlerts.jsx';
+import ModelPerformanceDashboard from './components/dashboards/ModelPerformanceDashboard.jsx';
+import ZimIntelligencePanel from './components/dashboards/ZimIntelligencePanel.jsx';
 
 // ─────────────────────────────────────────────
 // DEPARTMENTAL NAVIGATION (Backend-enforced RBAC mirrors this)
@@ -26,6 +35,10 @@ const ROLE_SIDEBAR = {
     { id: 'ocr-upload', label: 'Document Upload', icon: Layers },
     { id: 'detail', label: 'AI Risk Assessment', icon: Brain },
     { id: 'fnol', label: 'FNOL Intake', icon: Layers },
+    { id: 'fraud-network', label: 'Fraud Network', icon: Share2 },
+    { id: 'timeline', label: 'Claim Timeline', icon: GanttChart },
+    { id: 'historical', label: 'Claim History', icon: History },
+    { id: 'zim', label: 'ZIM Intelligence', icon: Globe },
     { id: 'notifications', label: 'Notifications', icon: Activity },
     { id: 'profile', label: 'Profile', icon: Users },
   ],
@@ -37,6 +50,9 @@ const ROLE_SIDEBAR = {
     { id: 'ocr-upload', label: 'Document Upload', icon: Layers },
     { id: 'detail', label: 'AI Risk Assessment', icon: Brain },
     { id: 'investigations', label: 'SIU Workspace', icon: ShieldCheck },
+    { id: 'fraud-network', label: 'Fraud Network', icon: Share2 },
+    { id: 'timeline', label: 'Claim Timeline', icon: GanttChart },
+    { id: 'historical', label: 'Claim History', icon: History },
     { id: 'fnol', label: 'FNOL Intake', icon: Layers },
     { id: 'notifications', label: 'Notifications', icon: Activity },
     { id: 'profile', label: 'Profile', icon: Users },
@@ -65,6 +81,9 @@ const ROLE_SIDEBAR = {
     { id: 'assigned-cases', label: 'Assigned Cases', icon: ClipboardCheck },
     { id: 'ai-forensic-analysis', label: 'AI Forensic Analysis', icon: Brain },
     { id: 'evidence-management', label: 'Evidence Management', icon: FileCheck },
+    { id: 'timeline', label: 'Claim Timeline', icon: GanttChart },
+    { id: 'historical', label: 'Claim History', icon: History },
+    { id: 'fraud-network', label: 'Fraud Network', icon: Share2 },
     { id: 'investigation-reports', label: 'Investigation Reports', icon: FileText },
     { id: 'profile', label: 'Profile', icon: Users },
   ],
@@ -76,6 +95,13 @@ const ROLE_SIDEBAR = {
     { id: 'ai-model-monitoring', label: 'AI Model Monitoring', icon: ShieldCheck },
     { id: 'ocr-monitoring', label: 'OCR Monitoring', icon: Layers },
     { id: 'audit', label: 'Audit Logs', icon: ClipboardCheck },
+    { id: 'fraud-network', label: 'Fraud Network', icon: Share2 },
+    { id: 'timeline', label: 'Claim Timeline', icon: GanttChart },
+    { id: 'evidence-management', label: 'Evidence Management', icon: FileCheck },
+    { id: 'historical', label: 'Claim History', icon: History },
+    { id: 'predictive', label: 'Predictive Alerts', icon: Bell },
+    { id: 'model-performance', label: 'AI Model Performance', icon: Brain },
+    { id: 'zim', label: 'ZIM Intelligence', icon: Globe },
     { id: 'system-configuration', label: 'System Configuration', icon: Sliders },
     { id: 'profile', label: 'Profile', icon: Users },
   ],
@@ -2040,11 +2066,27 @@ export default function App() {
         {activeTab === 'ocr' && <OCRDocumentPage activeTab="ocr-results" user={user} />}
         {activeTab === 'ocr-results' && <OCRDocumentPage activeTab="ocr-results" user={user} />}
         {activeTab === 'ocr-upload' && <OCRDocumentPage activeTab="ocr-upload" user={user} />}
+        {activeTab === 'ocr-samples' && <OCRDocumentPage activeTab="ocr-samples" user={user} />}
+        {activeTab === 'ocr-forensics' && <OCRDocumentPage activeTab="ocr-forensics" user={user} />}
         {activeTab === 'notifications' && <NotificationsPanel user={user} token={token} onCountChange={(n) => setNotificationCount(n)} />}
         {activeTab === 'profile' && <ProfilePanel user={user} />}
         {activeTab === 'new-claim' && <NewClaimPanel user={user} />}
 
+        {/* ========================================================= */}
+        {/* Advanced NEXA Intelligence Workspaces (enterprise upgrade) */}
+        {/* ========================================================= */}
+        {activeTab === 'fraud-network' && <FraudNetworkGraph user={user} />}
+        {activeTab === 'timeline' && <ClaimTimeline user={user} />}
+        {activeTab === 'evidence-management' && <EvidenceManagement user={user} />}
+        {activeTab === 'historical' && <HistoricalBehaviorPanel user={user} />}
+        {activeTab === 'predictive' && <PredictiveAlerts user={user} />}
+        {activeTab === 'model-performance' && <ModelPerformanceDashboard user={user} />}
+        {activeTab === 'zim' && <ZimIntelligencePanel user={user} />}
+
       </main>
+
+      {/* NEXA AI Intelligence Assistant (floating chatbot; all queries are role-enforced on the backend) */}
+      <NexaAssistant user={user} />
 
       {/* Modal: Submit Claim */}
       {showClaimModal && (
