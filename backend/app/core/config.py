@@ -26,6 +26,7 @@ class Settings(BaseModel):
     
     # Document storage & OCR
     DOCUMENTS_DIR: str = Field(default_factory=lambda: os.getenv("DOCUMENTS_DIR", os.path.abspath(os.path.join(os.path.dirname(__file__), "..", "..", "..", "data", "documents"))))
+    SAMPLE_CLAIM_DOCUMENTS_DIR: str = Field(default_factory=lambda: os.getenv("SAMPLE_CLAIM_DOCUMENTS_DIR", os.path.abspath(os.path.join(os.path.dirname(__file__), "..", "..", "..", "data", "sample_claim_documents"))))
     TESSERACT_CMD: str = Field(default_factory=lambda: os.getenv("TESSERACT_CMD", "tesseract"))
     
     # Model configuration
@@ -53,6 +54,28 @@ class Settings(BaseModel):
             "high": [self.RISK_THRESHOLD_HIGH_MIN, self.RISK_THRESHOLD_HIGH_MAX],
             "critical": [self.RISK_THRESHOLD_CRITICAL_MIN, self.RISK_THRESHOLD_CRITICAL_MAX],
         }
+
+    # NEXA AI Intelligence Assistant (chatbot) — optional external LLM integration.
+    # When CHATBOT_LLM_API_KEY is set, the chatbot forwards retrieved records to
+    # an OpenAI-compatible chat completions endpoint; otherwise it answers
+    # deterministically from real system records. Never log the API key.
+    CHATBOT_ENABLED: bool = os.getenv("CHATBOT_ENABLED", "true").lower() == "true"
+    CHATBOT_LLM_API_KEY: str = os.getenv("CHATBOT_LLM_API_KEY", "")
+    CHATBOT_LLM_BASE_URL: str = os.getenv("CHATBOT_LLM_BASE_URL", "https://api.openai.com/v1")
+    CHATBOT_LLM_MODEL: str = os.getenv("CHATBOT_LLM_MODEL", "gpt-4o-mini")
+
+    # NEXA Departmental AI Knowledge Base (RAG, Phase 5).
+    # Retrieval uses hashed embeddings + cosine similarity — no ML deps needed.
+    # CHATBOT_KB_ENABLED gates the whole feature; structured departmental
+    # packages live in docs/knowledge_packages and are seeded into the store.
+    CHATBOT_KB_ENABLED: bool = os.getenv("CHATBOT_KB_ENABLED", "true").lower() == "true"
+    CHATBOT_KB_TOP_K: int = int(os.getenv("CHATBOT_KB_TOP_K", "5"))
+    CHATBOT_KB_THRESHOLD: float = float(os.getenv("CHATBOT_KB_THRESHOLD", "0.15"))
+    CHATBOT_KB_SEED: bool = os.getenv("CHATBOT_KB_SEED", "true").lower() == "true"
+    CHATBOT_KB_PACKAGES_DIR: str = os.getenv(
+        "CHATBOT_KB_PACKAGES_DIR",
+        os.path.abspath(os.path.join(os.path.dirname(__file__), "..", "..", "..", "docs", "knowledge_packages")),
+    )
 
     # CORS
     CORS_ORIGINS: list[str] = [

@@ -1,0 +1,52 @@
+Fidelity Life Assurance — Claims Procedures Manual (SAMPLE — ingest to test Phase 6)
+
+# 1. Scope
+
+This manual applies to Claims Officers, Claims Managers and Fraud
+Investigators who process insurance claims under the Claims department policy.
+- Department: claims_officer
+
+# 2. Claim Registration
+
+2.1. Claims are registered in the Claims workspace via:
+   - The Claims workspace "New Claim" form (Claims Officer, Claims Manager, System Admin).
+   - Upload of supporting documents via Document Upload (Claims Officer or Fraud Investigator).
+
+2.2. A registered claim receives a claim reference number (CLM-YYYY-NNNN)
+   immediately; the reference is used in all subsequent processing.
+
+2.3. The Claims Officer then:
+   - Reviews the AI fraud risk score and indicators.
+   - Requests or confirms missing documentation (pending_documents status).
+   - Escalates to Fraud Investigators (SIU) if the risk category is High or Critical.
+
+# 3. Supporting Documentation
+
+Required before processing:
+   - Valid national identification documents.
+   - Policy documents (current schedule, endorsements).
+   - Death certificates (for death/funeral claims) — cross-check certificate
+     dates against the claimed incident date.
+   - Medical reports (medical/disability claims) from recognised providers.
+   - Funeral invoices (dated, itemised).
+   - Police reports where applicable.
+   - Verified beneficiary documentation (signed beneficiary designation).
+
+# 4. Assessment and Approval
+
+4.1. Fraud risk is assessed by the NEXA AI Fraud Detection Engine — a score
+   between 0 and 100 with indicators and explanation.
+
+4.2. Claims with risk category Medium/High require secondary review by a
+   senior Claims Officer. High and Critical risk claims are escalated to the
+   Fraud Investigation Unit; payment is not approved pending SIU review.
+
+4.3. Final approval/rejection is always a human decision; the chatbot and AI
+   never approve or reject claims.
+
+# 5. Settlement
+
+Approved claims are settled on the approved settlement schedule; beneficiary
+payment details must be verified before disbursement. Rejected claims follow
+the Claims department's reconsideration procedure and may be reconsidered
+once by the submitting officer, then reviewed again by the manager.

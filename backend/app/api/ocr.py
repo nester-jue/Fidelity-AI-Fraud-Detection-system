@@ -93,6 +93,12 @@ def _serialize_document(doc: OCRDocument) -> Dict[str, Any]:
             }
             for c in (doc.corrections or [])
         ],
+        # Sample claim-form fields (genuine public claim forms, data/sample_claim_documents)
+        "is_sample_document": bool(doc.is_sample_document),
+        "sample_category": doc.sample_category,
+        "source_institution": doc.source_institution,
+        "source_url": doc.source_url,
+        "source_note": doc.source_note,
     }
 
 

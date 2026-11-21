@@ -23,6 +23,7 @@ export default defineConfig({
       '/ocr': 'http://localhost:8010',
       '/compliance-reports': 'http://localhost:8010',
       '/management-reports': 'http://localhost:8010',
+      '/chatbot': 'http://localhost:8010',
     }
   }
 });

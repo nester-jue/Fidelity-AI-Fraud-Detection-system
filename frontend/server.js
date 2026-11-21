@@ -17,7 +17,7 @@ const BACKEND_URL = process.env.BACKEND_URL || 'http://127.0.0.1:8010';
 const API_PREFIXES = [
   '/api', '/auth', '/claims', '/fraud', '/investigations', '/dashboard',
   '/audit-logs', '/customers', '/policies', '/notifications', '/users',
-  '/departmental', '/forensics', '/ocr', '/compliance-reports', '/management-reports', '/health',
+  '/departmental', '/forensics', '/ocr', '/compliance-reports', '/management-reports', '/chatbot', '/health',
 ];
 
 async function proxyToBackend(req, res, body) {
