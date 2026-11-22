@@ -838,10 +838,16 @@ export function AIAssistantPanel({ user }) {
     const q = input.trim();
     if (!q || sending || typing) return;
     setSending(true); setErr('');
-    setMessages(m => [...m, { type: 'user', text: q, at: new Date().toLocaleString('en-ZA') }]);
+    const userMsg = { type: 'user', text: q, at: new Date().toLocaleString('en-ZA') };
+    setMessages(m => [...m, userMsg]);
     setInput('');
+    // Send recent conversation history so the backend can maintain context.
+    const history = [...messages, userMsg]
+      .filter(m => m.type === 'user' || (m.type === 'bot' && !m.isError))
+      .slice(-12)
+      .map(m => ({ direction: m.type === 'user' ? 'user' : 'assistant', content: m.text, created_at: m.at }));
     try {
-      const res = await api.chatSendMessage(q);
+      const res = await api.chatSendMessage(q, history);
       if (res.ok) {
         const d = await res.json();
         const botText = d.response || d.answer || 'No response.';

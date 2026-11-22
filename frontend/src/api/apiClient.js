@@ -153,7 +153,10 @@ export const api = {
   // NEXA AI Intelligence Assistant (role-aware conversational chatbot)
   chatSuggestedQuestions: () => apiCall('/chatbot/suggested-questions'),
   health: () => apiCall('/health'),
-  chatSendMessage: (message) => apiCall('/chatbot/messages', { method: 'POST', body: JSON.stringify({ message }) }),
+  chatSendMessage: (message, history = [], conversationId = null) => apiCall('/chatbot/messages', {
+    method: 'POST',
+    body: JSON.stringify({ message, history, ...(conversationId ? { conversation_id: conversationId } : {}) }),
+  }),
   chatHistory: () => apiCall('/chatbot/history'),
   chatResetHistory: () => apiCall('/chatbot/history', { method: 'DELETE' }),
 

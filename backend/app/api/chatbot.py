@@ -280,6 +280,8 @@ ADMIN_KEYWORDS = ["operational", "ai service", "document-processing", "system st
 
 class ChatMessageRequest(BaseModel):
     message: str = Field(..., min_length=1, max_length=MAX_MESSAGE_LENGTH, description="User question or statement")
+    history: List[Dict[str, Any]] = Field(default_factory=list, description="Recent conversation history from the frontend (direction/content/created_at)")
+    conversation_id: Optional[str] = Field(None, description="Client-supplied conversation identifier (conversation scope is per-user)")
 
 
 class ChatMessageResponse(BaseModel):
@@ -1468,6 +1470,190 @@ def _general_response(user: User) -> str:
     )
 
 
+# ---------------------------------------------------------------------------
+# Conversational intent recognition (greetings, gratitude, farewells,
+# acknowledgements, follow-ups) and conversation context
+# ---------------------------------------------------------------------------
+
+def _match_words(lower: str, keywords: List[str]) -> bool:
+    """Match keywords as words (word boundaries); multi-word phrases allowed."""
+    for kw in keywords:
+        if re.search(r"\b" + re.escape(kw) + r"\b", lower):
+            return True
+    return False
+
+
+CONV_FAREWELL = ["goodbye", "see you later", "see you soon", "have a good day",
+                 "talk later", "catch you later", "i will come back later", "bye"]
+CONV_INTRO = ["introduce yourself", "tell me about yourself", "who are you",
+              "what can you do", "describe yourself", "what do you do",
+              "who is nesa", "what is nesa", "tell me what you do", "who built you", "who made you"]
+CONV_GRATITUDE = ["thank", "appreciated", "that helps", "grateful", "thanks"]
+CONV_GREETING = ["hello", "hi", "hey", "good morning", "good afternoon",
+                 "good evening", "greetings"]
+CONV_ACK = ["ok", "okay", "understood", "got it", "alright", "sure",
+            "noted", "fine", "yes", "yeah"]
+CONV_FOLLOWUP = ["explain further", "explain that", "explain it", "elaborate",
+                 "what about the documents", "what about the document", "what about that",
+                 "why is that", "why was that", "can you give me an example",
+                 "give me an example", "tell me more", "more about",
+                 "which document contains", "which documents contain", "the inconsistency",
+                 "the discrepancies", "expand on that", "say more", "additional detail",
+                 "where is the inconsistency", "which dates", "which date",
+                 "which documents are affected", "which document is affected"]
+
+
+def _classify_conversational(message: str) -> Optional[str]:
+    """Classify a message into a conversational intent (natural-language chat).
+
+    Returns one of: "farewell", "intro", "gratitude", "greeting",
+    "acknowledgement", "followup" or None (a work question).
+    """
+    lower = message.lower().strip()
+    if not lower:
+        return None
+    if _match_words(lower, CONV_FAREWELL):
+        return "farewell"
+    if _match_words(lower, CONV_INTRO):
+        return "intro"
+    if _match_words(lower, CONV_GRATITUDE):
+        return "gratitude"
+    if _match_words(lower, CONV_GREETING):
+        return "greeting"
+    if _match_words(lower, CONV_ACK):
+        return "acknowledgement"
+    if _match_words(lower, CONV_FOLLOWUP):
+        return "followup"
+    return None
+
+
+def _extract_context(messages: List[Dict[str, Any]]) -> Dict[str, Any]:
+    """Extract conversation context (previous exchange + entities mentioned)."""
+    ctx: Dict[str, Any] = {
+        "previous_question": None,
+        "previous_answer": None,
+        "mentioned_claim": None,
+        "mentioned_investigation": None,
+        "mentioned_document": None,
+    }
+    users = [m for m in messages if m.get("direction") == "user" and m.get("content")]
+    assistants = [m for m in messages if m.get("direction") == "assistant" and m.get("content")]
+    if users:
+        ctx["previous_question"] = users[-1]["content"]
+    if assistants:
+        ctx["previous_answer"] = assistants[-1]["content"]
+    text = " ".join(m["content"] for m in users[-6:] + assistants[-6:])
+    m = re.search(r"\b(CLM-[A-Za-z0-9-]+)\b", text)
+    if m:
+        ctx["mentioned_claim"] = m.group(1).upper()
+    m = re.search(r"\b(INV-\d+)\b", text)
+    if m:
+        ctx["mentioned_investigation"] = m.group(1)
+    m = re.search(r"\b([\w\-]+\.(?:pdf|png|jpg|jpeg|gif|txt|doc))\b", text)
+    if m:
+        ctx["mentioned_document"] = m.group(1)
+    if not ctx["mentioned_document"]:
+        low = text.lower()
+        for kw in ("medical report", "death certificate", "death cert", "benefit letter",
+                   "funeral invoice", "claim document", "ocr document"):
+            if kw in low:
+                ctx["mentioned_document"] = kw
+                break
+    return ctx
+
+
+def _load_context(db: Session, user: User, history: Optional[List[Dict[str, Any]]] = None,
+                  exclude_id: Optional[int] = None) -> Dict[str, Any]:
+    """Loads recent conversation context: persisted history from the DB
+    (authoritative) with a frontend-provided history as fallback when the DB
+    has none. `exclude_id` drops the current user message from the context."""
+    rows = (
+        db.query(ChatMessage)
+        .filter(ChatMessage.user_id == user.id, ChatMessage.id != exclude_id)
+        .order_by(ChatMessage.id)
+        .all()
+    )
+    messages = [
+        {"direction": r.direction, "content": r.content or "", "created_at": r.created_at}
+        for r in rows[-20:]
+    ]
+    if not messages and history:
+        messages = [
+            {"direction": h.get("direction", "user"), "content": h.get("content") or "",
+             "created_at": h.get("created_at")}
+            for h in history[-20:] if h.get("content")
+        ]
+    return _extract_context(messages)
+
+
+def _greeting_response(user: User, ctx: Dict[str, Any]) -> str:
+    name = user.full_name or user.username
+    if ctx.get("previous_question"):
+        return f"Hello again, {name}! I'm the NEXA AI Intelligence Assistant — what can I help you with today?"
+    return (
+        f"Hello, {name}! I'm the NEXA AI Intelligence Assistant, your workplace AI assistant "
+        f"for {ROLE_NAME.get(user.role, 'claims work')}. Ask me anything about your work — "
+        f"claims, fraud investigation, OCR documents, compliance and system operations."
+    )
+
+
+def _gratitude_response(user: User) -> str:
+    name = user.full_name or user.username
+    return f"You're welcome, {name}! Let me know if you need anything else."
+
+
+def _farewell_response(user: User) -> str:
+    name = user.full_name or user.username
+    return f"Goodbye! Have a great day, {name}."
+
+
+def _ack_response() -> str:
+    return "Understood."
+
+
+def _intro_response(user: User) -> str:
+    name = user.full_name or user.username
+    return (
+        f"Hello, {name}! I'm the NEXA AI Intelligence Assistant, your workplace AI assistant "
+        f"for {ROLE_NAME.get(user.role, 'claims work')}. I help with claims, fraud investigation, "
+        f"OCR documents, compliance and system operations. Ask me anything about your work."
+    )
+
+
+def _followup_response(user: User, message: str, ctx: Dict[str, Any],
+                       db: Session) -> Tuple[str, List[Dict[str, Any]], str]:
+    """Follow-up questions ('Explain further', 'What about the documents?') —
+    answers using conversation context and real system data."""
+    samples: List[Dict[str, Any]] = []
+    # 1. Approved company knowledge relevant to the follow-up.
+    kb_sources = _kb_retrieve(user, message)
+    if kb_sources:
+        return _format_kb_sources(kb_sources), _kb_samples(kb_sources), "deterministic"
+    # 2. If a claim is referenced (in this message or in context), answer with
+    #    the forensic handler — includes document evidence for the claim.
+    ref = _claim_ref_from_message(message) or ctx.get("mentioned_claim")
+    if ref:
+        text, forensic_samples = _forensics_handler(
+            db, user, f"Explain documents and evidence for claim {ref}")
+        if text:
+            return text, forensic_samples, "deterministic"
+    # 3. Expand on the previous question using its capability handler.
+    prev = ctx.get("previous_question")
+    if prev:
+        cap = _classify_message(user, prev)
+        if cap and cap in ROLE_CAPABILITIES.get(user.role, []):
+            text, prev_samples = _HANDLERS[cap](db, user, prev)
+            if text:
+                return f"Here is further detail — {text}", prev_samples, "deterministic"
+    # 4. Natural contextual response.
+    target = ctx.get("mentioned_document") or ctx.get("mentioned_investigation") or ""
+    if target:
+        return (f"I can explain that further. What would you like to know about {target}?",
+                [], "deterministic")
+    return ("I can explain that further, including any related documents or records, if "
+            "available. What specific detail would you like to know?", [], "deterministic")
+
+
 def _denied_response(user: User) -> str:
     """Denial without disclosing the user's permitted capabilities — those are
     capabilities of the assistant, not information the user asked for."""
@@ -1524,9 +1710,34 @@ def _kb_samples(sources: List[KnowledgeSource]) -> List[Dict[str, Any]]:
     ]
 
 
-def _answer(db: Session, user: User, message: str) -> Tuple[str, List[Dict[str, Any]], str]:
+def _answer(db: Session, user: User, message: str,
+            history: Optional[List[Dict[str, Any]]] = None,
+            exclude_id: Optional[int] = None) -> Tuple[str, List[Dict[str, Any]], str]:
     """Deterministic response built from real records + approved company knowledge,
-    or a denial for unauthorised capabilities."""
+    or a denial for unauthorised capabilities.
+
+    Conversational intents (greetings, gratitude, farewells, acknowledgements,
+    follow-ups, introductions) are handled first with natural, context-aware
+    responses; genuine questions fall through to the capability flow."""
+    ctx = _load_context(db, user, history=history, exclude_id=exclude_id)
+
+    # 1. Conversational intents — greetings, gratitude, farewells,
+    #    acknowledgements and follow-ups respond naturally.
+    conv = _classify_conversational(message)
+    if conv == "greeting":
+        return _greeting_response(user, ctx), [], "deterministic"
+    if conv == "gratitude":
+        return _gratitude_response(user), [], "deterministic"
+    if conv == "farewell":
+        return _farewell_response(user), [], "deterministic"
+    if conv == "acknowledgement":
+        return _ack_response(), [], "deterministic"
+    if conv == "intro":
+        return _intro_response(user), [], "deterministic"
+    if conv == "followup":
+        return _followup_response(user, message, ctx, db)
+
+    # 2. Existing capability flow (questions about work data).
     capability = _classify_message(user, message)
     kb_sources = _kb_retrieve(user, message)
     if capability is None:
@@ -1636,7 +1847,10 @@ async def send_message(
     db.commit()
 
     try:
-        text, samples, mode = _answer(db, current_user, message)
+        text, samples, mode = _answer(
+            db, current_user, message,
+            history=req.history, exclude_id=db_user_msg.id,
+        )
     except Exception as exc:
         logger.exception("CHATBOT_ERROR: %s", exc)
         db.rollback()
@@ -1664,7 +1878,7 @@ async def send_message(
         db, current_user,
         action="CHATBOT_MESSAGE_SENT",
         target=f"Chatbot:Msg:{db_user_msg.id}",
-        detail={"message_preview": message[:200], "intent": mode},
+        detail={"message_preview": message[:200], "intent": mode, "conversation_id": req.conversation_id},
     )
     db.commit()
 

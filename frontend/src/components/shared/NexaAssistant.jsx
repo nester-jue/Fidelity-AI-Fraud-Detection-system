@@ -55,6 +55,8 @@ export default function NexaAssistant({ user }) {
   const [suggested, setSuggested] = useState(ROLE_SUGGESTED[user?.role || 'claims_officer'] || []);
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
+  // Conversation identifier — identifies the chat session to the backend.
+  const conversationIdRef = useRef('');
   // Typing process state — when asked, the answer is revealed progressively.
   const [typing, setTyping] = useState(null); // { id, target, text }
   const messagesEndRef = useRef(null);
@@ -80,6 +82,12 @@ export default function NexaAssistant({ user }) {
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
   }, [messages, loading, open]);
+
+  useEffect(() => {
+    if (!conversationIdRef.current) {
+      conversationIdRef.current = `conv-${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 8)}`;
+    }
+  }, []);
 
   const loadHistory = async () => {
     try {
@@ -112,8 +120,14 @@ export default function NexaAssistant({ user }) {
     setLoading(true);
     const userMsg = { id: `u-${Date.now()}`, from: 'user', text, time: new Date().toISOString() };
     setMessages((m) => [...m, userMsg]);
+    // Send the conversation history (and the session's conversation id) so the
+    // backend can maintain context across the conversation.
+    const history = [...messages, userMsg]
+      .filter(m => !m.isNote && !m.isError && m.text)
+      .slice(-12)
+      .map(m => ({ direction: m.from, content: m.text, created_at: m.time }));
     try {
-      const res = await api.chatSendMessage(text);
+      const res = await api.chatSendMessage(text, history, conversationIdRef.current);
       if (!res.ok) {
         const body = await res.json().catch(() => ({}));
         throw new Error(body.detail || 'Chatbot request failed');
