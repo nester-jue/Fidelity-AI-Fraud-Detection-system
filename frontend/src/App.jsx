@@ -2050,7 +2050,7 @@ export default function App() {
         {activeTab === 'ocr-samples' && <OCRDocumentPage activeTab="ocr-samples" user={user} />}
         {activeTab === 'ocr-forensics' && <OCRDocumentPage activeTab="ocr-forensics" user={user} />}
         {activeTab === 'notifications' && <NotificationsPanel user={user} token={token} onCountChange={(n) => setNotificationCount(n)} />}
-        {activeTab === 'profile' && <ProfilePanel user={user} />}
+        {activeTab === 'profile' && <ProfilePanel user={user} onExit={handleLogout} />}
         {activeTab === 'new-claim' && <NewClaimPanel user={user} />}
 
         {/* ========================================================= */}
@@ -2528,7 +2528,7 @@ function NotificationsPanel({ user, token, onCountChange }) {
   );
 }
 
-function ProfilePanel({ user }) {
+function ProfilePanel({ user, onExit }) {
   const stats = [
     ['Role', user?.role],
     ['Department', user?.department || 'Not assigned'],
@@ -2537,7 +2537,20 @@ function ProfilePanel({ user }) {
   ];
   return (
     <div className="bg-white rounded-2xl border border-slate-200 shadow-sm p-6 max-w-2xl">
-      <h1 className="text-2xl font-extrabold text-slate-900 mb-2">User Profile & Department</h1>
+      <div className="flex items-start justify-between gap-3 mb-2">
+        <h1 className="text-2xl font-extrabold text-slate-900">User Profile & Department</h1>
+        {onExit && (
+          <button
+            onClick={onExit}
+            title="Exit"
+            aria-label="Exit"
+            className="flex items-center gap-1.5 px-4.5 py-2.5 rounded-xl bg-red-600 text-white font-bold text-xs hover:bg-red-700 shadow-md transition"
+          >
+            <X size={15} />
+            Exit
+          </button>
+        )}
+      </div>
       <div className="flex items-center gap-4 mb-6">
         <div className="w-16 h-16 rounded-2xl bg-blue-50 flex items-center justify-center font-bold text-2xl text-blue-700">{(user?.full_name || user?.username || '?').slice(0, 2).toUpperCase()}</div>
         <div>
