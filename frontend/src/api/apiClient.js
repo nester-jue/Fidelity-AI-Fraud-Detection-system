@@ -163,7 +163,7 @@ export const api = {
   // NEXA Sample Claim Forms & Document Forensics (Phase 8)
   listSampleDocuments: () => apiCall('/ocr/sample-documents/'),
   getSampleDocument: (id) => apiCall(`/ocr/sample-documents/${id}`),
-  getForensicAnalysis: () => apiCall('/forensics/document-analysis'),
+  getForensicAnalysis: () => apiCall('/forensics/document-analysis', { timeout: 60000 }),
 
   // Advanced NEXA Intelligence (enterprise upgrade)
   fraudNetworkGraph: (options = {}) => apiCall('/fraud-network/graph', options),

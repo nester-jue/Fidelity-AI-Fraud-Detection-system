@@ -719,6 +719,12 @@ export default function App() {
     return matchesSearch && matchesRisk && matchesStatus;
   });
 
+  // Claims currently assigned to the logged-in user (Claims Manager view)
+  const assignedToMe = user?.id
+    ? claimsList.filter(c => c.assigned_officer_id === user.id)
+    : [];
+  const claimsTableList = activeTab === 'assigned-claims' ? assignedToMe : filteredClaims;
+
   const getRiskBadge = (category, score) => {
     const cat = (category || '').toLowerCase();
     let color = 'bg-slate-100 text-slate-800 border-slate-200';
@@ -1549,7 +1555,7 @@ export default function App() {
               </div>
 
               <div className="text-xs text-slate-500 font-bold">
-                Showing <span className="text-slate-900 font-black">{filteredClaims.length}</span> claims
+                Showing <span className="text-slate-900 font-black">{claimsTableList.length}</span> claims
               </div>
             </div>
 
@@ -1571,7 +1577,7 @@ export default function App() {
                     </tr>
                   </thead>
                   <tbody className="divide-y divide-slate-100 font-medium">
-                    {filteredClaims.map((c, i) => (
+                    {claimsTableList.map((c, i) => (
                       <tr key={i} className="hover:bg-slate-50 transition cursor-pointer" onClick={() => { fetchClaimDetail(c.claim_id); setActiveTab('detail'); }}>
                         <td className="py-3 px-4 font-mono font-bold text-slate-900">{c.claim_id}</td>
                         <td className="py-3 px-4 font-mono text-slate-600">{c.policy_number}</td>
@@ -2033,13 +2039,13 @@ export default function App() {
         {/* NEW: DEPARTMENTAL WORKSPACES */}
         {/* ========================================================= */}
         {['executive-overview', 'claims-performance', 'fraud-analytics', 'financial-exposure', 'department-performance', 'management-reports'].includes(activeTab) && (
-          <ExecutiveDashboard />
+          <ExecutiveDashboard activeTab={activeTab} />
         )}
         {['compliance-overview', 'compliance-alerts', 'claims-under-review', 'regulatory-reports'].includes(activeTab) && (
           <ComplianceDashboard />
         )}
         {['investigation-overview', 'fraud-alerts', 'assigned-cases', 'ai-forensic-analysis', 'evidence-management', 'investigation-reports'].includes(activeTab) && (
-          <FraudInvestigationDashboard />
+          <FraudInvestigationDashboard activeTab={activeTab} />
         )}
         {['admin-overview', 'user-management', 'roles-permissions', 'system-monitoring', 'ai-model-monitoring', 'ocr-monitoring', 'system-configuration'].includes(activeTab) && (
           <AdminDashboard />
@@ -2089,7 +2095,6 @@ export default function App() {
         {activeTab === 'emerging-patterns' && <EmergingRiskPatternsPanel user={user} />}
         {activeTab === 'risk-concentration' && <RiskConcentrationPanel user={user} />}
         {activeTab === 'risk-reports' && <RiskReportsPanel user={user} />}
-        {activeTab === 'assigned-claims' && null}
         {activeTab === 'department-management' && <DepartmentManagementPanel user={user} />}
         {activeTab === 'database-monitoring' && <DatabaseMonitoringPanel user={user} />}
         {activeTab === 'api-monitoring' && <APIMonitoringPanel user={user} />}

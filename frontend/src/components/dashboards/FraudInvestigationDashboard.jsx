@@ -29,8 +29,12 @@ function loadDetail(docId) {
   return api.getOcrDocument(docId).then(r => r.ok ? r.json() : null);
 }
 
-export default function FraudInvestigationDashboard() {
-  const [tab, setTab] = useState('investigation-overview');
+export default function FraudInvestigationDashboard({ activeTab }) {
+  // Mirror the parent App's activeTab into the internal view so each sidebar
+  // item (Dashboard, Evidence Management, AI Forensics, …) shows its own
+  // section instead of the default overview.
+  const [tab, setTab] = useState(activeTab || 'investigation-overview');
+  useEffect(() => { if (activeTab) setTab(activeTab); }, [activeTab]);
   const [dash, setDash] = useState(null);
   const [detailDoc, setDetailDoc] = useState(null);
   const [loading, setLoading] = useState(true);

@@ -312,16 +312,23 @@ def analyze_pdf_signature(file_path: Optional[str]) -> Dict[str, Any]:
 # ---------------------------------------------------------------------------
 
 def detect_reused_documents(db: Session, threshold: float = 0.9,
-                            min_length: int = 80) -> List[Dict[str, Any]]:
+                            min_length: int = 80,
+                            max_compare: int = 4000) -> List[Dict[str, Any]]:
     """Detects documents that are near-duplicates by text similarity even
     without identical hashes (e.g., reused medical certificates/receipts).
 
-    Pure Python: O(n^2) over documents with text; production data scales fine
-    at typical claim volumes.
+    Returns groups of documents sharing a similarity ratio above ``threshold``.
     """
     docs = [d for d in db.query(OCRDocument).all()
             if d.raw_text and len(d.raw_text.strip()) >= min_length]
     groups: List[Dict[str, Any]] = []
+    # Optimizations over a naive O(n^2) full-text scan:
+    #  - length gate: pairs whose max possible ratio
+    #    (2*min(la,lb)/(la+lb)) cannot reach the threshold are skipped with an
+    #    O(1) check instead of a text compare;
+    #  - quick_ratio() prefilter: cheap O(n) upper bound, skips most pairs;
+    #  - ratio() runs on the first `max_compare` chars: reuse typically comes
+    #    from the same source document, so the prefix is where the match lives.
     for i in range(len(docs)):
         for j in range(i + 1, len(docs)):
             a, b = docs[i], docs[j]
@@ -329,7 +336,15 @@ def detect_reused_documents(db: Session, threshold: float = 0.9,
                 continue  # handled by exact-hash duplicates
             if a.claim_id and b.claim_id and a.claim_id == b.claim_id:
                 continue
-            ratio = SequenceMatcher(None, a.raw_text, b.raw_text).ratio()
+            la, lb = len(a.raw_text or ""), len(b.raw_text or "")
+            denom = la + lb
+            if denom == 0 or 2 * min(la, lb) < threshold * denom:
+                continue
+            matcher = SequenceMatcher(None, (a.raw_text or "")[:max_compare],
+                                      (b.raw_text or "")[:max_compare], autojunk=True)
+            if matcher.quick_ratio() < threshold:
+                continue
+            ratio = matcher.ratio()
             if ratio >= threshold:
                 groups.append({
                     "documents": [

@@ -361,6 +361,7 @@ async def list_claims(
             "submission_date": c.submission_date.isoformat() if c.submission_date else "",
             "status": c.status,
             "documents_count": len(c.documents),
+            "assigned_officer_id": c.assigned_officer_id,
             "risk_score": assessment.risk_score if assessment else None,
             "risk_category": assessment.risk_category if assessment else "Pending AI Analysis",
             "indicators": assessment.indicators if assessment else [],

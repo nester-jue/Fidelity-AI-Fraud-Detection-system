@@ -154,8 +154,11 @@ function ReportGenerator({ user }) {
   );
 }
 
-export default function ExecutiveDashboard() {
-  const [tab, setTab] = useState('executive-overview');
+export default function ExecutiveDashboard({ activeTab }) {
+  // The workspace is routed by the parent App via activeTab — mirror it into
+  // the internal view so each sidebar item shows its own section.
+  const [tab, setTab] = useState(activeTab || 'executive-overview');
+  useEffect(() => { if (activeTab) setTab(activeTab); }, [activeTab]);
   const [kpis, setKpis] = useState(null);
   const [trends, setTrends] = useState([]);
   const [riskDist, setRiskDist] = useState([]);
