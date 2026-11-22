@@ -15,13 +15,25 @@ export const apiCall = async (path, options = {}) => {
   if (!(options.body instanceof FormData) && options.method && options.method !== 'GET') {
     headers['Content-Type'] = 'application/json';
   }
-  const res = await fetch(path, { ...options, headers });
-  if (res.status === 401) {
-    sessionStorage.removeItem('fide_token');
-    window.location.reload();
-    throw new Error('Session expired. Please sign in again.');
+  // Reasonable default timeout (10s) so a hung request never blocks the UI
+  // forever; callers can override via options.timeout or pass their own signal.
+  const { timeout = 10000, signal, ...rest } = options;
+  const controller = new AbortController();
+  const timer = setTimeout(() => controller.abort(), timeout);
+  const onAbort = () => { try { controller.abort(); } catch { /* already aborted */ } };
+  signal?.addEventListener('abort', onAbort);
+  try {
+    const res = await fetch(path, { ...rest, headers, signal: controller.signal });
+    if (res.status === 401) {
+      sessionStorage.removeItem('fide_token');
+      window.location.reload();
+      throw new Error('Session expired. Please sign in again.');
+    }
+    return res;
+  } finally {
+    clearTimeout(timer);
+    signal?.removeEventListener('abort', onAbort);
   }
-  return res;
 };
 
 export const api = {
@@ -140,6 +152,7 @@ export const api = {
 
   // NEXA AI Intelligence Assistant (role-aware conversational chatbot)
   chatSuggestedQuestions: () => apiCall('/chatbot/suggested-questions'),
+  health: () => apiCall('/health'),
   chatSendMessage: (message) => apiCall('/chatbot/messages', { method: 'POST', body: JSON.stringify({ message }) }),
   chatHistory: () => apiCall('/chatbot/history'),
   chatResetHistory: () => apiCall('/chatbot/history', { method: 'DELETE' }),
@@ -150,8 +163,8 @@ export const api = {
   getForensicAnalysis: () => apiCall('/forensics/document-analysis'),
 
   // Advanced NEXA Intelligence (enterprise upgrade)
-  fraudNetworkGraph: () => apiCall('/fraud-network/graph'),
-  fraudNetworkInsights: () => apiCall('/fraud-network/insights'),
+  fraudNetworkGraph: (options = {}) => apiCall('/fraud-network/graph', options),
+  fraudNetworkInsights: (options = {}) => apiCall('/fraud-network/insights', options),
   claimNetwork: (claimId) => apiCall(`/fraud-network/claim/${claimId}`),
   claimTimeline: (claimId) => apiCall(`/timeline/${claimId}`),
   timelineAll: (claimIds = []) => apiCall(`/timeline/all?claim_ids=${encodeURIComponent(claimIds.join(','))}`),

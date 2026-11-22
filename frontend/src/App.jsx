@@ -6,9 +6,19 @@ import {
   ClipboardCheck, AlertTriangle, ArrowRight,
   CheckCircle2, X, Clock, TrendingUp,
   Brain, FileCheck, Share2, Layers, Check, MessageSquare, ClipboardList, Upload, Loader2,
-  GanttChart, History, Bell, Globe
+  GanttChart, History, Bell, Globe, HeartPulse, ShieldAlert, FileSearch, Database, Link2
 } from 'lucide-react';
-import { apiCall } from './api/apiClient.js';
+import { apiCall, api } from './api/apiClient.js';
+import Sidebar from './components/shared/Sidebar.jsx';
+import {
+  PendingClaimsPanel, MissingInformationPanel, HighRiskClaimsPanel, EscalatedClaimsPanel,
+  AIRiskAnalysisPanel, ClaimAllocationPanel, DepartmentReportsPanel, PerformanceAnalyticsPanel,
+  DocumentComparisonPanel, DocumentationCompliancePanel, PolicyVerificationPanel,
+  RegulatoryMonitoringPanel, FraudTrendsPanel, RiskDashboardPanel, EnterpriseRiskOverviewPanel,
+  FraudRiskExposurePanel, EmergingRiskPatternsPanel, RiskConcentrationPanel, RiskReportsPanel,
+  DepartmentManagementPanel, DatabaseMonitoringPanel, APIMonitoringPanel, SystemHealthPanel,
+  AIAssistantPanel,
+} from './components/panels/DepartmentExtras.jsx';
 import ExecutiveDashboard from './components/dashboards/ExecutiveDashboard.jsx';
 import ComplianceDashboard from './components/dashboards/ComplianceDashboard.jsx';
 import FraudInvestigationDashboard from './components/dashboards/FraudInvestigationDashboard.jsx';
@@ -26,84 +36,133 @@ import ZimIntelligencePanel from './components/dashboards/ZimIntelligencePanel.j
 // ─────────────────────────────────────────────
 // DEPARTMENTAL NAVIGATION (Backend-enforced RBAC mirrors this)
 // ─────────────────────────────────────────────
+// ─────────────────────────────────────────────
+// DEPARTMENTAL NAVIGATION (Backend-enforced RBAC mirrors this)
+// Per the NEXA master prompt: each role sees only its authorised functions.
+// ─────────────────────────────────────────────
 const ROLE_SIDEBAR = {
+  // A. CLAIMS OFFICER — Dashboard, Register New Claim, All Assigned Claims,
+  //    Pending Claims, Claim Documents, OCR Document Analysis, Missing
+  //    Information, Claim History, Notifications, AI Assistant, My Profile.
   claims_officer: [
-    { id: 'overview', label: 'Dashboard', icon: Activity },
-    { id: 'claims', label: 'My Claims', icon: FileText },
-    { id: 'new-claim', label: 'New Claim', icon: Plus },
-    { id: 'ocr-results', label: 'OCR Results', icon: FileCheck },
-    { id: 'ocr-upload', label: 'Document Upload', icon: Layers },
-    { id: 'detail', label: 'AI Risk Assessment', icon: Brain },
-    { id: 'fnol', label: 'FNOL Intake', icon: Layers },
-    { id: 'fraud-network', label: 'Fraud Network', icon: Share2 },
-    { id: 'timeline', label: 'Claim Timeline', icon: GanttChart },
-    { id: 'historical', label: 'Claim History', icon: History },
-    { id: 'zim', label: 'ZIM Intelligence', icon: Globe },
-    { id: 'notifications', label: 'Notifications', icon: Activity },
-    { id: 'profile', label: 'Profile', icon: Users },
+    { id: 'overview', label: 'Dashboard', icon: Activity, section: 'Claims Workflow' },
+    { id: 'new-claim', label: 'Register New Claim', icon: Plus, section: 'Claims Workflow' },
+    { id: 'claims', label: 'All Assigned Claims', icon: FileText, section: 'Claims Workflow' },
+    { id: 'pending', label: 'Pending Claims', icon: Clock, section: 'Claims Workflow' },
+    { id: 'documents', label: 'Claim Documents', icon: Layers, section: 'Claims Workflow' },
+    { id: 'ocr-analysis', label: 'OCR Document Analysis', icon: FileCheck, section: 'Claims Workflow' },
+    { id: 'missing', label: 'Missing Information', icon: AlertTriangle, section: 'Claims Workflow' },
+    { id: 'historical', label: 'Claim History', icon: History, section: 'Claims Workflow' },
+    { id: 'notifications', label: 'Notifications', icon: Activity, section: 'Assistant & Account' },
+    { id: 'ai-assistant', label: 'AI Assistant', icon: Brain, section: 'Assistant & Account' },
+    { id: 'profile', label: 'My Profile', icon: Users, section: 'Account' },
   ],
+  // B. CLAIMS MANAGER — Dashboard, Claims Overview, Pending Approvals,
+  //    Assigned Claims, Claim Allocation, High-Risk Claims, Escalated Claims,
+  //    AI Risk Analysis, Department Reports, Performance Analytics,
+  //    Notifications, AI Assistant, My Profile.
   claims_manager: [
-    { id: 'overview', label: 'Dashboard', icon: Activity },
-    { id: 'claims', label: 'My Claims', icon: FileText },
-    { id: 'new-claim', label: 'New Claim', icon: Plus },
-    { id: 'ocr-results', label: 'OCR Results', icon: FileCheck },
-    { id: 'ocr-upload', label: 'Document Upload', icon: Layers },
-    { id: 'detail', label: 'AI Risk Assessment', icon: Brain },
-    { id: 'investigations', label: 'SIU Workspace', icon: ShieldCheck },
-    { id: 'fraud-network', label: 'Fraud Network', icon: Share2 },
-    { id: 'timeline', label: 'Claim Timeline', icon: GanttChart },
-    { id: 'historical', label: 'Claim History', icon: History },
-    { id: 'fnol', label: 'FNOL Intake', icon: Layers },
-    { id: 'notifications', label: 'Notifications', icon: Activity },
-    { id: 'profile', label: 'Profile', icon: Users },
+    { id: 'overview', label: 'Dashboard', icon: Activity, section: 'Claims Workflow' },
+    { id: 'claims', label: 'Claims Overview', icon: FileText, section: 'Claims Workflow' },
+    { id: 'pending', label: 'Pending Approvals', icon: Clock, section: 'Claims Workflow' },
+    { id: 'assigned-claims', label: 'Assigned Claims', icon: Users, section: 'Claims Workflow' },
+    { id: 'allocation', label: 'Claim Allocation', icon: ShieldCheck, section: 'Claims Workflow' },
+    { id: 'high-risk', label: 'High-Risk Claims', icon: AlertTriangle, section: 'Claims Workflow' },
+    { id: 'escalated', label: 'Escalated Claims', icon: AlertCircle, section: 'Claims Workflow' },
+    { id: 'ai-risk-analysis', label: 'AI Risk Analysis', icon: Brain, section: 'Claims Workflow' },
+    { id: 'department-reports', label: 'Department Reports', icon: FileText, section: 'Claims Workflow' },
+    { id: 'performance', label: 'Performance Analytics', icon: TrendingUp, section: 'Claims Workflow' },
+    { id: 'notifications', label: 'Notifications', icon: Activity, section: 'Assistant & Account' },
+    { id: 'ai-assistant', label: 'AI Assistant', icon: Brain, section: 'Assistant & Account' },
+    { id: 'profile', label: 'My Profile', icon: Users, section: 'Account' },
   ],
-  management: [
-    { id: 'executive-overview', label: 'Executive Overview', icon: Activity },
-    { id: 'claims-performance', label: 'Claims Performance', icon: FileText },
-    { id: 'fraud-analytics', label: 'Fraud Analytics', icon: AlertTriangle },
-    { id: 'financial-exposure', label: 'Financial Exposure', icon: ShieldCheck },
-    { id: 'department-performance', label: 'Department Performance', icon: Users },
-    { id: 'management-reports', label: 'Management Reports', icon: FileText },
-    { id: 'profile', label: 'Profile', icon: Users },
-  ],
-  compliance_officer: [
-    { id: 'compliance-overview', label: 'Compliance Overview', icon: Activity },
-    { id: 'compliance-alerts', label: 'Compliance Alerts', icon: ShieldCheck },
-    { id: 'claims-under-review', label: 'Claims Under Review', icon: Clock },
-    { id: 'investigations', label: 'Investigations', icon: ShieldCheck },
-    { id: 'audit', label: 'Audit Trails', icon: ClipboardCheck },
-    { id: 'regulatory-reports', label: 'Regulatory Reports', icon: FileText },
-    { id: 'profile', label: 'Profile', icon: Users },
-  ],
+  // C. FRAUD INVESTIGATOR — Dashboard, Investigation Cases, Suspicious Claims,
+  //    AI Forensic Analysis, OCR Intelligence, Fraud Network Intelligence,
+  //    Document Comparison, Historical Claim Analysis, Evidence Management,
+  //    Claim Timeline, Investigation Reports, AI Assistant, My Profile.
   fraud_investigator: [
-    { id: 'investigation-overview', label: 'Investigation Overview', icon: Activity },
-    { id: 'fraud-alerts', label: 'Fraud Alerts', icon: AlertTriangle },
-    { id: 'assigned-cases', label: 'Assigned Cases', icon: ClipboardCheck },
-    { id: 'ai-forensic-analysis', label: 'AI Forensic Analysis', icon: Brain },
-    { id: 'evidence-management', label: 'Evidence Management', icon: FileCheck },
-    { id: 'timeline', label: 'Claim Timeline', icon: GanttChart },
-    { id: 'historical', label: 'Claim History', icon: History },
-    { id: 'fraud-network', label: 'Fraud Network', icon: Share2 },
-    { id: 'investigation-reports', label: 'Investigation Reports', icon: FileText },
-    { id: 'profile', label: 'Profile', icon: Users },
+    { id: 'investigation-overview', label: 'Dashboard', icon: Activity, section: 'Investigations' },
+    { id: 'assigned-cases', label: 'Investigation Cases', icon: ClipboardCheck, section: 'Investigations' },
+    { id: 'fraud-alerts', label: 'Suspicious Claims', icon: AlertTriangle, section: 'Investigations' },
+    { id: 'ai-forensic-analysis', label: 'AI Forensic Analysis', icon: Brain, section: 'Investigations' },
+    { id: 'ocr-analysis', label: 'OCR Intelligence', icon: FileCheck, section: 'Investigations' },
+    { id: 'fraud-network', label: 'Fraud Network Intelligence', icon: Share2, section: 'Investigations' },
+    { id: 'document-comparison', label: 'Document Comparison', icon: FileSearch, section: 'Investigations' },
+    { id: 'historical', label: 'Historical Claim Analysis', icon: History, section: 'Investigations' },
+    { id: 'evidence-management', label: 'Evidence Management', icon: FileCheck, section: 'Investigations' },
+    { id: 'timeline', label: 'Claim Timeline', icon: GanttChart, section: 'Investigations' },
+    { id: 'investigation-reports', label: 'Investigation Reports', icon: FileText, section: 'Investigations' },
+    { id: 'ai-assistant', label: 'AI Assistant', icon: Brain, section: 'Assistant & Account' },
+    { id: 'profile', label: 'My Profile', icon: Users, section: 'Account' },
   ],
+  // D. COMPLIANCE OFFICER — Dashboard, Documentation Compliance, Policy
+  //    Verification, Compliance Alerts, Audit Trail, Regulatory Monitoring,
+  //    Compliance Reports, AI Assistant, My Profile.
+  compliance_officer: [
+    { id: 'compliance-overview', label: 'Dashboard', icon: Activity, section: 'Compliance' },
+    { id: 'documentation-compliance', label: 'Documentation Compliance', icon: ClipboardCheck, section: 'Compliance' },
+    { id: 'policy-verification', label: 'Policy Verification', icon: LockKeyhole, section: 'Compliance' },
+    { id: 'compliance-alerts', label: 'Compliance Alerts', icon: ShieldCheck, section: 'Compliance' },
+    { id: 'audit', label: 'Audit Trail', icon: ClipboardCheck, section: 'Compliance' },
+    { id: 'regulatory-monitoring', label: 'Regulatory Monitoring', icon: Globe, section: 'Compliance' },
+    { id: 'regulatory-reports', label: 'Compliance Reports', icon: FileText, section: 'Compliance' },
+    { id: 'ai-assistant', label: 'AI Assistant', icon: Brain, section: 'Assistant & Account' },
+    { id: 'profile', label: 'My Profile', icon: Users, section: 'Account' },
+  ],
+  // E. EXECUTIVE MANAGEMENT — Dashboard, Claims Overview, Fraud Intelligence,
+  //    Financial Exposure, Department Performance, Fraud Trends, Executive
+  //    Reports, Notifications, AI Assistant, My Profile.
+  management: [
+    { id: 'executive-overview', label: 'Dashboard', icon: Activity, section: 'Executive' },
+    { id: 'claims-performance', label: 'Claims Overview', icon: FileText, section: 'Executive' },
+    { id: 'fraud-analytics', label: 'Fraud Intelligence', icon: AlertTriangle, section: 'Executive' },
+    { id: 'financial-exposure', label: 'Financial Exposure', icon: ShieldCheck, section: 'Executive' },
+    { id: 'department-performance', label: 'Department Performance', icon: Users, section: 'Executive' },
+    { id: 'fraud-trends', label: 'Fraud Trends', icon: TrendingUp, section: 'Executive' },
+    { id: 'management-reports', label: 'Executive Reports', icon: FileText, section: 'Executive' },
+    { id: 'notifications', label: 'Notifications', icon: Activity, section: 'Assistant & Account' },
+    { id: 'ai-assistant', label: 'AI Assistant', icon: Brain, section: 'Assistant & Account' },
+    { id: 'profile', label: 'My Profile', icon: Users, section: 'Account' },
+  ],
+  // F. CHIEF RISK OFFICER — Risk Dashboard, Enterprise Risk Overview, Fraud
+  //    Risk Exposure, High-Risk Claims, Fraud Network Intelligence, Emerging
+  //    Risk Patterns, Risk Concentration, AI Model Performance, Risk Reports,
+  //    Notifications, AI Assistant, My Profile.
+  chief_risk_officer: [
+    { id: 'risk-dashboard', label: 'Risk Dashboard', icon: HeartPulse, section: 'Risk Intelligence' },
+    { id: 'enterprise-risk-overview', label: 'Enterprise Risk Overview', icon: ShieldAlert, section: 'Risk Intelligence' },
+    { id: 'fraud-risk-exposure', label: 'Fraud Risk Exposure', icon: AlertTriangle, section: 'Risk Intelligence' },
+    { id: 'high-risk', label: 'High-Risk Claims', icon: AlertTriangle, section: 'Risk Intelligence' },
+    { id: 'fraud-network', label: 'Fraud Network Intelligence', icon: Share2, section: 'Risk Intelligence' },
+    { id: 'emerging-patterns', label: 'Emerging Risk Patterns', icon: Brain, section: 'Risk Intelligence' },
+    { id: 'risk-concentration', label: 'Risk Concentration', icon: TrendingUp, section: 'Risk Intelligence' },
+    { id: 'model-performance', label: 'AI Model Performance', icon: Brain, section: 'Risk Intelligence' },
+    { id: 'risk-reports', label: 'Risk Reports', icon: FileText, section: 'Risk Intelligence' },
+    { id: 'notifications', label: 'Notifications', icon: Activity, section: 'Assistant & Account' },
+    { id: 'ai-assistant', label: 'AI Assistant', icon: Brain, section: 'Assistant & Account' },
+    { id: 'profile', label: 'My Profile', icon: Users, section: 'Account' },
+  ],
+  // G. SYSTEM ADMINISTRATOR — Administration Dashboard, User Management,
+  //    Role Management, Department Management, Claims Overview, AI Model
+  //    Monitoring, OCR Monitoring, Fraud Network Intelligence, Zimbabwe
+  //    Insurance Intelligence, Database Monitoring, API Monitoring, System
+  //    Health, Audit Logs, System Settings, My Profile.
   system_admin: [
-    { id: 'admin-overview', label: 'Administration Overview', icon: Activity },
-    { id: 'user-management', label: 'User Management', icon: Users },
-    { id: 'roles-permissions', label: 'Roles and Permissions', icon: LockKeyhole },
-    { id: 'system-monitoring', label: 'System Monitoring', icon: Activity },
-    { id: 'ai-model-monitoring', label: 'AI Model Monitoring', icon: ShieldCheck },
-    { id: 'ocr-monitoring', label: 'OCR Monitoring', icon: Layers },
-    { id: 'audit', label: 'Audit Logs', icon: ClipboardCheck },
-    { id: 'fraud-network', label: 'Fraud Network', icon: Share2 },
-    { id: 'timeline', label: 'Claim Timeline', icon: GanttChart },
-    { id: 'evidence-management', label: 'Evidence Management', icon: FileCheck },
-    { id: 'historical', label: 'Claim History', icon: History },
-    { id: 'predictive', label: 'Predictive Alerts', icon: Bell },
-    { id: 'model-performance', label: 'AI Model Performance', icon: Brain },
-    { id: 'zim', label: 'ZIM Intelligence', icon: Globe },
-    { id: 'system-configuration', label: 'System Configuration', icon: Sliders },
-    { id: 'profile', label: 'Profile', icon: Users },
+    { id: 'admin-overview', label: 'Dashboard', icon: Activity, section: 'Administration' },
+    { id: 'user-management', label: 'User Management', icon: Users, section: 'Administration' },
+    { id: 'roles-permissions', label: 'Role Management', icon: LockKeyhole, section: 'Administration' },
+    { id: 'department-management', label: 'Department Management', icon: Users, section: 'Administration' },
+    { id: 'claims', label: 'Claims Overview', icon: FileText, section: 'Administration' },
+    { id: 'ai-model-monitoring', label: 'AI Model Monitoring', icon: Brain, section: 'Administration' },
+    { id: 'ocr-monitoring', label: 'OCR Monitoring', icon: Layers, section: 'Administration' },
+    { id: 'fraud-network', label: 'Fraud Network Intelligence', icon: Share2, section: 'Administration' },
+    { id: 'zim', label: 'Zimbabwe Insurance Intelligence', icon: Globe, section: 'Administration' },
+    { id: 'database-monitoring', label: 'Database Monitoring', icon: Database, section: 'Administration' },
+    { id: 'api-monitoring', label: 'API Monitoring', icon: Link2, section: 'Administration' },
+    { id: 'system-health', label: 'System Health', icon: HeartPulse, section: 'Administration' },
+    { id: 'audit', label: 'Audit Logs', icon: ClipboardCheck, section: 'Administration' },
+    { id: 'system-configuration', label: 'System Settings', icon: Sliders, section: 'Administration' },
+    { id: 'profile', label: 'My Profile', icon: Users, section: 'Account' },
   ],
 };
 
@@ -158,6 +217,18 @@ export default function App() {
   const [newClaimNote, setNewClaimNote] = useState('');
   const [notesLoading, setNotesLoading] = useState(false);
   const [notificationCount, setNotificationCount] = useState(0);
+
+  // ── Fixed collapsible LEFT sidebar (persisted across sessions) ──
+  const [sidebarExpanded, setSidebarExpanded] = useState(() => {
+    try { return window.localStorage.getItem('nexa_sidebar_expanded') !== 'false'; } catch { return true; }
+  });
+  const [mobileOpen, setMobileOpen] = useState(false);
+  const toggleSidebar = () => setSidebarExpanded(p => {
+    const n = !p;
+    try { window.localStorage.setItem('nexa_sidebar_expanded', String(n)); } catch { /* ignore */ }
+    return n;
+  });
+  const toggleMobile = () => setMobileOpen(p => !p);
 
   // Filter States
   const [searchQuery, setSearchQuery] = useState('');
@@ -1128,34 +1199,24 @@ export default function App() {
           </div>
         </div>
 
-        {/* Departmental Sidebar (role-based, backend-enforced) */}
-        <div className="bg-[#0F2744] border-t border-slate-700/60">
-          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 flex space-x-2 sm:space-x-4 overflow-x-auto scrollbar-thin">
-            {getSidebar(user?.role || 'claims_officer').map(tab => {
-              const Icon = tab.icon;
-              const isActive = activeTab === tab.id;
-              const isNotifs = tab.id === 'notifications' && notificationCount > 0;
-              return (
-                <button
-                  key={tab.id}
-                  onClick={() => setActiveTab(tab.id)}
-                  className={`px-3.5 py-3 text-xs sm:text-sm font-bold border-b-2 flex items-center space-x-2 whitespace-nowrap transition ${
-                    isActive
-                      ? 'border-amber-400 text-white'
-                      : 'border-transparent text-slate-400 hover:text-white'
-                  }`}
-                >
-                  <Icon size={16} className={isActive ? 'text-amber-400' : 'text-slate-400'} />
-                  <span>{tab.label}{isNotifs && <span className="ml-1 text-[10px] text-amber-300 font-black">●</span>}</span>
-                </button>
-              );
-            })}
-          </div>
-        </div>
+        {/* Fixed collapsible LEFT sidebar — role-based, backend-enforced */}
+        <Sidebar
+          user={user}
+          sidebar={getSidebar(user?.role || 'claims_officer')}
+          activeTab={activeTab}
+          onTab={setActiveTab}
+          expanded={sidebarExpanded}
+          onToggle={toggleSidebar}
+          mobileOpen={mobileOpen}
+          onMobileClose={toggleMobile}
+        />
       </header>
 
-      {/* Main Container */}
-      <main className="flex-1 max-w-7xl w-full mx-auto p-4 sm:p-6 lg:p-8 space-y-8">
+      {/* Main Container — shifts right with the collapsible sidebar */}
+      <main
+        className="flex-1 max-w-7xl w-full mx-auto p-4 sm:p-6 lg:p-8 space-y-8 md:transition-all md:duration-200"
+        style={{ marginLeft: sidebarExpanded ? '264px' : '56px' }}
+      >
 
         {/* ========================================================= */}
         {/* TAB 1: EXECUTIVE OVERVIEW */}
@@ -1415,7 +1476,7 @@ export default function App() {
         {/* ========================================================= */}
         {/* TAB 3: CLAIMS REGISTER */}
         {/* ========================================================= */}
-        {activeTab === 'claims' && (
+        {['claims', 'assigned-claims'].includes(activeTab) && (
           <div className="space-y-8">
             <div className="relative overflow-hidden bg-gradient-to-r from-white via-slate-50 to-blue-50/40 rounded-3xl p-6 sm:p-8 border border-slate-200 shadow-md">
               <div className="relative flex flex-col lg:flex-row lg:items-center justify-between gap-6">
@@ -1801,87 +1862,7 @@ export default function App() {
         {/* ========================================================= */}
         {/* TAB 6: FRAUD NETWORK INTELLIGENCE */}
         {/* ========================================================= */}
-        {activeTab === 'network' && (
-          <div className="space-y-8">
-            <div className="relative overflow-hidden bg-gradient-to-r from-white via-slate-50 to-cyan-50/40 rounded-3xl p-6 sm:p-8 border border-slate-200 shadow-md">
-              <div className="relative flex flex-col lg:flex-row lg:items-center justify-between gap-6">
-                <div>
-                  <div className="inline-flex items-center space-x-2 px-3 py-1 rounded-full bg-cyan-500/10 border border-cyan-500/30 text-cyan-800 text-xs font-black tracking-widest uppercase mb-3">
-                    <Share2 size={14} className="text-cyan-600" />
-                    <span>SECTION 6.6 &bull; RELATIONSHIP GRAPH & COLLUSION ANALYSIS</span>
-                  </div>
-                  <h1 className="text-2xl sm:text-3xl lg:text-4xl font-extrabold text-slate-900 tracking-tight leading-tight">
-                    Fraud Network Intelligence & Collusion Analysis
-                  </h1>
-                  <div className="mt-3 flex items-center space-x-2">
-                    <div className="h-1.5 w-20 bg-gradient-to-r from-cyan-500 to-blue-600 rounded-full"></div>
-                    <div className="h-1.5 w-6 bg-blue-900 rounded-full"></div>
-                    <div className="h-1.5 w-2 bg-slate-300 rounded-full"></div>
-                  </div>
-                  <p className="mt-2.5 text-xs sm:text-sm text-slate-600 max-w-3xl leading-relaxed font-medium">
-                    Reveals hidden collusion clusters across shared phone numbers, disbursement bank accounts, and common beneficiaries across claims.
-                  </p>
-                </div>
-              </div>
-            </div>
-
-            <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-              <div className="bg-white p-6 rounded-2xl border border-slate-200 shadow-sm lg:col-span-2 space-y-4">
-                <h3 className="text-sm font-extrabold text-slate-900 uppercase tracking-wider">Multi-Entity Relationship Graph</h3>
-                <div className="bg-slate-900 rounded-xl p-4 h-96 flex items-center justify-center">
-                  <svg className="w-full h-full" viewBox="0 0 800 400">
-                    <line x1="160" y1="120" x2="320" y2="120" stroke="#EF4444" strokeWidth="2.5" strokeDasharray="5,5" className="animate-pulse" />
-                    <line x1="320" y1="120" x2="480" y2="80" stroke="#EF4444" strokeWidth="3" />
-                    <line x1="480" y1="80" x2="640" y2="140" stroke="#C59B27" strokeWidth="2" />
-                    <line x1="320" y1="120" x2="480" y2="280" stroke="#EF4444" strokeWidth="2.5" />
-                    <line x1="160" y1="280" x2="320" y2="280" stroke="#3B82F6" strokeWidth="2" />
-                    <line x1="320" y1="280" x2="480" y2="280" stroke="#EF4444" strokeWidth="3" strokeDasharray="5,5" className="animate-pulse" />
-
-                    <g transform="translate(160, 120)">
-                      <circle r="26" fill="#1E3A8A" stroke="#60A5FA" strokeWidth="2" />
-                      <text textAnchor="middle" dy="4" fill="#FFFFFF" fontSize="10" fontWeight="bold">S. Mpofu</text>
-                      <text textAnchor="middle" dy="40" fill="#94A3B8" fontSize="10">Claimant</text>
-                    </g>
-                    <g transform="translate(320, 120)">
-                      <circle r="24" fill="#DC2626" stroke="#F87171" strokeWidth="3" />
-                      <text textAnchor="middle" dy="4" fill="#FFFFFF" fontSize="9" fontWeight="bold">+263 77...</text>
-                      <text textAnchor="middle" dy="38" fill="#FCA5A5" fontSize="10">Shared Phone</text>
-                    </g>
-                    <g transform="translate(480, 80)">
-                      <circle r="26" fill="#7C3AED" stroke="#C084FC" strokeWidth="2" />
-                      <text textAnchor="middle" dy="4" fill="#FFFFFF" fontSize="9" fontWeight="bold">CLM-9002</text>
-                      <text textAnchor="middle" dy="40" fill="#E9D5FF" fontSize="10">$45,000</text>
-                    </g>
-                    <g transform="translate(640, 140)">
-                      <circle r="26" fill="#D97706" stroke="#FBBF24" strokeWidth="2" />
-                      <text textAnchor="middle" dy="4" fill="#FFFFFF" fontSize="9" fontWeight="bold">B. Mutasa</text>
-                      <text textAnchor="middle" dy="40" fill="#FDE68A" fontSize="10">Beneficiary</text>
-                    </g>
-                    <g transform="translate(160, 280)">
-                      <circle r="26" fill="#1E3A8A" stroke="#60A5FA" strokeWidth="2" />
-                      <text textAnchor="middle" dy="4" fill="#FFFFFF" fontSize="10" fontWeight="bold">N. Sibanda</text>
-                      <text textAnchor="middle" dy="40" fill="#94A3B8" fontSize="10">Claimant</text>
-                    </g>
-                    <g transform="translate(480, 280)">
-                      <circle r="26" fill="#DC2626" stroke="#F87171" strokeWidth="3" />
-                      <text textAnchor="middle" dy="4" fill="#FFFFFF" fontSize="9" fontWeight="bold">Stanbic-ZW</text>
-                      <text textAnchor="middle" dy="40" fill="#FCA5A5" fontSize="10">Bank 914000</text>
-                    </g>
-                  </svg>
-                </div>
-              </div>
-
-              <div className="bg-white p-6 rounded-2xl border border-slate-200 shadow-sm space-y-4">
-                <h3 className="text-sm font-extrabold text-red-700 uppercase tracking-wider">Syndicate Pattern Alpha</h3>
-                <div className="p-4 bg-red-50 border-l-4 border-red-600 rounded-xl text-xs space-y-2 text-slate-700">
-                  <p className="font-extrabold text-red-900">Harare Central Collusion Ring</p>
-                  <p>Multiple claimants share contact number <strong className="font-mono">+263 77 289 4120</strong> and route proceeds to Stanbic Account <strong className="font-mono">914000-ZW</strong>.</p>
-                  <p className="text-red-700 font-bold">Recommended Action: Freeze electronic payouts pending physical death registry check.</p>
-                </div>
-              </div>
-            </div>
-          </div>
-        )}
+        {activeTab === 'network' && <FraudNetworkGraph user={user} />}
 
         {/* ========================================================= */}
         {/* TAB 7: AI MODEL GOVERNANCE */}
@@ -2082,6 +2063,37 @@ export default function App() {
         {activeTab === 'predictive' && <PredictiveAlerts user={user} />}
         {activeTab === 'model-performance' && <ModelPerformanceDashboard user={user} />}
         {activeTab === 'zim' && <ZimIntelligencePanel user={user} />}
+
+        {/* ========================================================= */}
+        {/* Extended master-prompt navigation (per-role functional views) */}
+        {/* ========================================================= */}
+        {activeTab === 'documents' && <OCRDocumentPage user={user} activeTab="ocr-results" />}
+        {activeTab === 'ocr-analysis' && <OCRDocumentPage user={user} activeTab="ocr-forensics" />}
+        {activeTab === 'pending' && <PendingClaimsPanel user={user} />}
+        {activeTab === 'missing' && <MissingInformationPanel user={user} />}
+        {activeTab === 'ai-assistant' && <AIAssistantPanel user={user} />}
+        {activeTab === 'allocation' && <ClaimAllocationPanel user={user} />}
+        {activeTab === 'high-risk' && <HighRiskClaimsPanel user={user} />}
+        {activeTab === 'escalated' && <EscalatedClaimsPanel user={user} />}
+        {activeTab === 'ai-risk-analysis' && <AIRiskAnalysisPanel user={user} />}
+        {activeTab === 'department-reports' && <DepartmentReportsPanel user={user} />}
+        {activeTab === 'performance' && <PerformanceAnalyticsPanel user={user} />}
+        {activeTab === 'document-comparison' && <DocumentComparisonPanel user={user} />}
+        {activeTab === 'documentation-compliance' && <DocumentationCompliancePanel user={user} />}
+        {activeTab === 'policy-verification' && <PolicyVerificationPanel user={user} />}
+        {activeTab === 'regulatory-monitoring' && <RegulatoryMonitoringPanel user={user} />}
+        {activeTab === 'fraud-trends' && <FraudTrendsPanel user={user} />}
+        {activeTab === 'risk-dashboard' && <RiskDashboardPanel user={user} />}
+        {activeTab === 'enterprise-risk-overview' && <EnterpriseRiskOverviewPanel user={user} />}
+        {activeTab === 'fraud-risk-exposure' && <FraudRiskExposurePanel user={user} />}
+        {activeTab === 'emerging-patterns' && <EmergingRiskPatternsPanel user={user} />}
+        {activeTab === 'risk-concentration' && <RiskConcentrationPanel user={user} />}
+        {activeTab === 'risk-reports' && <RiskReportsPanel user={user} />}
+        {activeTab === 'assigned-claims' && null}
+        {activeTab === 'department-management' && <DepartmentManagementPanel user={user} />}
+        {activeTab === 'database-monitoring' && <DatabaseMonitoringPanel user={user} />}
+        {activeTab === 'api-monitoring' && <APIMonitoringPanel user={user} />}
+        {activeTab === 'system-health' && <SystemHealthPanel user={user} />}
 
       </main>
 

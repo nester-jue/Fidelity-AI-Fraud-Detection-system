@@ -24,6 +24,16 @@ export default defineConfig({
       '/compliance-reports': 'http://localhost:8010',
       '/management-reports': 'http://localhost:8010',
       '/chatbot': 'http://localhost:8010',
+      '/health': 'http://localhost:8010',
+      // NEXA advanced intelligence modules (added — were missing, causing
+      // the endless "loading" on Fraud Network & Zimbabwe Intelligence pages)
+      '/fraud-network': 'http://localhost:8010',
+      '/zim': 'http://localhost:8010',
+      '/timeline': 'http://localhost:8010',
+      '/evidence': 'http://localhost:8010',
+      '/historical': 'http://localhost:8010',
+      '/predictive': 'http://localhost:8010',
+      '/model-performance': 'http://localhost:8010',
     }
   }
 });
