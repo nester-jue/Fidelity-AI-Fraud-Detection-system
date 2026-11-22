@@ -355,12 +355,19 @@ export function DocumentComparisonPanel({ user }) {
 // ─── Compliance ──────────────────────────────────────────────────────────
 
 export function DocumentationCompliancePanel({ user }) {
-  const fetcher = () => Promise.allSettled([api.listComplianceExceptions(), api.listComplianceReports()])
-    .then(res => {
-      const exceptions = res[0].status === 'fulfilled' && res[0].value.ok ? res[0].value.json().catch(() => []) : [];
-      const reports = res[1].status === 'fulfilled' && res[1].value.ok ? res[1].value.json().catch(() => []) : [];
-      return Promise.all([exceptions, reports]);
-    });
+  const readList = (res) => {
+    if (res.status !== 'fulfilled' || !res.value?.ok) return Promise.resolve([]);
+    // The API returns a bare array for some list endpoints and an object
+    // with an `exceptions`/`items` key for others — normalize both.
+    return res.value.json().catch(() => []).then(d =>
+      Array.isArray(d)
+        ? d
+        : (Array.isArray(d?.exceptions) ? d.exceptions
+          : (Array.isArray(d?.items) ? d.items : (Array.isArray(d?.results) ? d.results : []))));
+  };
+  const fetcher = () =>
+    Promise.allSettled([api.listComplianceExceptions(), api.listComplianceReports()])
+      .then(res => Promise.all([readList(res[0]), readList(res[1])]));
   const { items: data, loading, error, retry } = useList(fetcher);
   if (loading) return <PanelLoading />;
   if (error) return <PanelError error={error} onRetry={retry} />;
@@ -402,11 +409,23 @@ export function DocumentationCompliancePanel({ user }) {
 }
 
 export function PolicyVerificationPanel({ user }) {
-  const fetcher = () => Promise.allSettled([api.policies(), api.customers()]).then(res => {
-    const policies = res[0].status === 'fulfilled' && res[0].value.ok ? res[0].value.json().catch(() => []) : [];
-    const customers = res[1].status === 'fulfilled' && res[1].value.ok ? res[1].value.json().catch(() => []) : [];
-    return [policies, customers];
-  });
+  // Normalize any shape the API may return into an array (some list
+  // endpoints wrap data in {data|items|results}).
+  const toArray = (d) => {
+    if (Array.isArray(d)) return d;
+    if (d && typeof d === 'object') {
+      for (const k of ['exceptions', 'data', 'items', 'results']) if (Array.isArray(d[k])) return d[k];
+    }
+    return [];
+  };
+  const readArray = (res) => {
+    if (res.status !== 'fulfilled' || !res.value?.ok) return Promise.resolve([]);
+    return res.value.json().catch(() => null).then(toArray);
+  };
+  const fetcher = () =>
+    Promise.allSettled([api.policies(), api.customers()]).then(res =>
+      Promise.all([readArray(res[0]), readArray(res[1])])
+    );
   const { items: data, loading, error, retry } = useList(fetcher);
   if (loading) return <PanelLoading />;
   if (error) return <PanelError error={error} onRetry={retry} />;
