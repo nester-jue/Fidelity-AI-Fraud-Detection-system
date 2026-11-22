@@ -810,6 +810,7 @@ export function AIAssistantPanel({ user }) {
   const [suggested, setSuggested] = useState([]);
   const [input, setInput] = useState('');
   const [sending, setSending] = useState(false);
+  const [typing, setTyping] = useState(null); // { target, text } — progressive typing
   const [err, setErr] = useState('');
 
   useEffect(() => {
@@ -823,9 +824,19 @@ export function AIAssistantPanel({ user }) {
       .catch(() => {});
   }, []);
 
+  // Progressive typing animation while a response is revealed.
+  useEffect(() => {
+    if (!typing) return;
+    if (typing.text.length >= typing.target.length) { setTyping(null); return; }
+    const timer = setInterval(() => {
+      setTyping(t => t ? { ...t, text: t.text + t.target.slice(t.text.length, t.text.length + 5) } : null);
+    }, 22);
+    return () => clearInterval(timer);
+  }, [typing]);
+
   const send = async () => {
     const q = input.trim();
-    if (!q || sending) return;
+    if (!q || sending || typing) return;
     setSending(true); setErr('');
     setMessages(m => [...m, { type: 'user', text: q, at: new Date().toLocaleString('en-ZA') }]);
     setInput('');
@@ -833,7 +844,9 @@ export function AIAssistantPanel({ user }) {
       const res = await api.chatSendMessage(q);
       if (res.ok) {
         const d = await res.json();
-        setMessages(m => [...m, { type: 'bot', text: d.response || d.answer || 'No response.', at: new Date().toLocaleString('en-ZA') }]);
+        const botText = d.response || d.answer || 'No response.';
+        setMessages(m => [...m, { type: 'bot', text: botText, at: new Date().toLocaleString('en-ZA') }]);
+        setTyping({ target: botText, text: '' });
       } else {
         setErr(`AI assistant query failed: ${res.status}`);
       }
@@ -855,7 +868,7 @@ export function AIAssistantPanel({ user }) {
           ) : messages.map((m, i) => (
             <div key={i} className={`flex ${m.type === 'user' ? 'justify-end' : 'justify-start'}`}>
               <div className={`px-3.5 py-2.5 rounded-xl text-xs max-w-[85%] ${m.type === 'user' ? 'bg-[#0F2744] text-white' : 'bg-slate-50 border border-slate-200 text-slate-700'}`}>
-                <p>{m.text}</p>
+                <p>{typing && i === messages.length - 1 && m.type === 'bot' ? typing.text : m.text}</p>
                 <span className="block mt-1 text-[9px] font-mono text-slate-400">{m.at}</span>
               </div>
             </div>
@@ -863,8 +876,8 @@ export function AIAssistantPanel({ user }) {
         </div>
         <div className="border-t border-slate-100 p-3">
           <div className="flex gap-2">
-            <input value={input} onChange={e => setInput(e.target.value)} onKeyDown={e => e.key === 'Enter' && send()} placeholder="Ask a fraud-related question…" className="flex-1 px-3 py-2.5 border border-slate-300 rounded-xl text-xs" />
-            <button onClick={send} disabled={sending || !input.trim()} className="px-4 py-2.5 bg-[#0F2744] text-white rounded-xl font-bold text-xs disabled:opacity-50"><Loader2 className={`w-4 h-4 inline ${sending ? 'animate-spin' : ''}`} /></button>
+            <input value={input} onChange={e => setInput(e.target.value)} onKeyDown={e => e.key === 'Enter' && send()} placeholder="Ask a fraud-related question…" className="flex-1 px-3 py-2.5 border border-slate-300 rounded-xl text-xs disabled:opacity-50" disabled={sending || typing} />
+            <button onClick={send} disabled={sending || typing || !input.trim()} className="px-4 py-2.5 bg-[#0F2744] text-white rounded-xl font-bold text-xs disabled:opacity-50"><Loader2 className={`w-4 h-4 inline ${sending ? 'animate-spin' : ''}`} /></button>
           </div>
           {suggested.length > 0 && (
             <div className="flex flex-wrap gap-2 mt-2">

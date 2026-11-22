@@ -55,7 +55,27 @@ export default function NexaAssistant({ user }) {
   const [suggested, setSuggested] = useState(ROLE_SUGGESTED[user?.role || 'claims_officer'] || []);
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
+  // Typing process state — when asked, the answer is revealed progressively.
+  const [typing, setTyping] = useState(null); // { id, target, text }
   const messagesEndRef = useRef(null);
+
+  // Drive the progressive typing animation while a response is being revealed.
+  useEffect(() => {
+    if (!typing) return;
+    if (typing.text.length >= typing.target.length) {
+      setTyping(null);
+      return;
+    }
+    const timer = setInterval(() => {
+      setTyping((t) => {
+        if (!t) return t;
+        const step = Math.min(5, t.target.length - t.text.length);
+        if (step <= 0) return { ...t, text: t.target };
+        return { ...t, text: t.text + t.target.slice(t.text.length, t.text.length + step) };
+      });
+    }, 22);
+    return () => clearInterval(timer);
+  }, [typing]);
 
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
@@ -86,7 +106,7 @@ export default function NexaAssistant({ user }) {
 
   const send = async (overrideText) => {
     const text = (overrideText ?? input).trim();
-    if (!text || loading) return;
+    if (!text || loading || typing) return;
     setInput('');
     setError('');
     setLoading(true);
@@ -99,7 +119,10 @@ export default function NexaAssistant({ user }) {
         throw new Error(body.detail || 'Chatbot request failed');
       }
       const data = await res.json();
-      setMessages((m) => [...m, { id: `a-${Date.now()}`, from: 'assistant', text: data.response, time: new Date().toISOString() }]);
+      const msgId = `a-${Date.now()}`;
+      setMessages((m) => [...m, { id: msgId, from: 'assistant', text: data.response, time: new Date().toISOString() }]);
+      // Reveal the answer progressively — the user sees a typing process.
+      setTyping({ id: msgId, target: data.response || '', text: '' });
       if (data.suggestions?.length) setSuggested(data.suggestions);
       if (data.ai_mode && data.ai_mode !== 'deterministic') {
         setMessages((m) => [...m, {
@@ -212,19 +235,33 @@ export default function NexaAssistant({ user }) {
                     }`}
                   >
                     {m.from === 'user' && <div className="text-[10px] opacity-75 mb-1 text-right font-bold uppercase tracking-wider">YOU</div>}
-                    <div className={m.from === 'user' ? 'text-right' : 'text-left'}>{m.text}</div>
+                    <div className={m.from === 'user' ? 'text-right' : 'text-left'}>
+                      {typing && typing.id === m.id ? (
+                        <span>{typing.text}<span className="inline-block w-[5px] h-[17px] bg-amber-500 rounded-sm animate-pulse ml-0.5 align-baseline" /></span>
+                      ) : (
+                        m.text
+                      )}
+                    </div>
                     {m.time && <div className="text-[9px] opacity-50 mt-1 text-right">{fmtTime(m.time)}</div>}
                   </div>
                 </div>
               ))}
-              {loading && (
+              {(loading || typing) && (
                 <div className="flex justify-start">
                   <div className="px-4 py-2.5 bg-white border border-slate-200 rounded-xl text-xs text-slate-400 flex items-center gap-0.5">
-                    <Loader2 size={13} className="animate-spin mr-1.5" />
-                    <span className="text-[11px] font-bold">NEXA AI is typing…</span>
-                    <span className="w-[3px] h-[3px] bg-slate-300 rounded-full animate-bounce mx-0.5" />
-                    <span className="w-[3px] h-[3px] bg-slate-300 rounded-full animate-bounce -mx-0.5" style={{ animationDelay: '0.15s' }} />
-                    <span className="w-[3px] h-[3px] bg-slate-300 rounded-full animate-bounce -mx-0.5" style={{ animationDelay: '0.3s' }} />
+                    {loading && !typing ? (
+                      <>
+                        <Loader2 size={13} className="animate-spin mr-1.5" />
+                        <span className="text-[11px] font-bold">Thinking…</span>
+                      </>
+                    ) : (
+                      <span className="text-[11px] font-bold flex items-center gap-1">
+                        <span className="w-1.5 h-1.5 bg-amber-500 rounded-full animate-bounce" />
+                        <span className="w-1.5 h-1.5 bg-amber-500 rounded-full animate-bounce" style={{ animationDelay: '0.15s' }} />
+                        <span className="w-1.5 h-1.5 bg-amber-500 rounded-full animate-bounce" style={{ animationDelay: '0.3s' }} />
+                        NEXA AI is typing…
+                      </span>
+                    )}
                   </div>
                 </div>
               )}
@@ -238,7 +275,7 @@ export default function NexaAssistant({ user }) {
                   <button
                     key={i}
                     onClick={() => send(q)}
-                    disabled={loading}
+                    disabled={loading || typing}
                     className="text-[11px] px-2.5 py-1 rounded-full border border-amber-300 text-amber-800 bg-amber-50 hover:bg-amber-100 font-medium disabled:opacity-40 transition"
                   >
                     {q}
@@ -272,7 +309,7 @@ export default function NexaAssistant({ user }) {
               />
               <button
                 onClick={() => send()}
-                disabled={loading || !input.trim()}
+                disabled={loading || typing || !input.trim()}
                 className="p-2.5 rounded-lg bg-amber-500 hover:bg-amber-600 text-slate-950 disabled:opacity-40 transition flex-shrink-0"
                 aria-label="Send message"
               >
