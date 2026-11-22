@@ -2042,13 +2042,13 @@ export default function App() {
           <ExecutiveDashboard activeTab={activeTab} />
         )}
         {['compliance-overview', 'compliance-alerts', 'claims-under-review', 'regulatory-reports'].includes(activeTab) && (
-          <ComplianceDashboard />
+          <ComplianceDashboard activeTab={activeTab} />
         )}
         {['investigation-overview', 'fraud-alerts', 'assigned-cases', 'ai-forensic-analysis', 'evidence-management', 'investigation-reports'].includes(activeTab) && (
           <FraudInvestigationDashboard activeTab={activeTab} />
         )}
         {['admin-overview', 'user-management', 'roles-permissions', 'system-monitoring', 'ai-model-monitoring', 'ocr-monitoring', 'system-configuration'].includes(activeTab) && (
-          <AdminDashboard />
+          <AdminDashboard activeTab={activeTab} />
         )}
         {activeTab === 'ocr' && <OCRDocumentPage activeTab="ocr-results" user={user} />}
         {activeTab === 'ocr-results' && <OCRDocumentPage activeTab="ocr-results" user={user} />}

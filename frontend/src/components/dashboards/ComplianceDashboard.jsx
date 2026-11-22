@@ -326,8 +326,12 @@ function ComplianceOverviewTab() {
   );
 }
 
-export default function ComplianceDashboard() {
-  const [tab, setTab] = useState('compliance-overview');
+export default function ComplianceDashboard({ activeTab }) {
+  // Mirror the parent App's activeTab into the internal view so each sidebar
+  // item (Dashboard, Compliance Alerts, Regulatory Reports, …) shows its own
+  // section instead of the default overview.
+  const [tab, setTab] = useState(activeTab || 'compliance-overview');
+  useEffect(() => { if (activeTab) setTab(activeTab); }, [activeTab]);
   return (
     <div className="space-y-6">
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">

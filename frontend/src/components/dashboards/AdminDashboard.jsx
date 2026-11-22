@@ -266,8 +266,14 @@ function ConfigTab() {
   );
 }
 
-export default function AdminDashboard() {
-  const [tab, setTab] = useState('administration-overview');
+export default function AdminDashboard({ activeTab }) {
+  // Map parent App activeTab ids onto the internal view ids so each sidebar
+  // item (User Management, Roles & Permissions, System Monitoring, OCR
+  // Monitoring, System Configuration, …) shows its own section instead of
+  // the default Administration Overview.
+  const toInternalTab = (tab) => (tab === 'admin-overview' ? 'administration-overview' : tab) || 'administration-overview';
+  const [tab, setTab] = useState(toInternalTab(activeTab));
+  useEffect(() => { setTab(toInternalTab(activeTab)); }, [activeTab]);
   const NAV = [
     { id: 'administration-overview', label: 'Administration Overview' },
     { id: 'user-management', label: 'User Management' },
