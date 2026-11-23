@@ -65,8 +65,13 @@ function forceLayout(nodes, edges, width = 760, height = 420) {
   return pos;
 }
 
+const EMPTY_GRAPH = { nodes: [], edges: [], summary: { total_nodes: 0, total_edges: 0, clusters: 0 }, suspicious_nodes: [], suspicious_edges: [] };
+
 export default function FraudNetworkGraph({ user }) {
   const [graph, setGraph] = useState(null);
+  // graphSafe guarantees the page always renders — never blank — even if the
+  // fetch resolved without a usable graph.
+  const graphSafe = graph || EMPTY_GRAPH;
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
   const [expandedEdge, setExpandedEdge] = useState(null);
@@ -99,12 +104,12 @@ export default function FraudNetworkGraph({ user }) {
   useEffect(() => () => { abortRef.current?.abort(); }, []);
 
   const positions = useMemo(
-    () => (graph ? forceLayout(graph.nodes, graph.edges) : new Map()),
-    [graph]
+    () => forceLayout(graphSafe.nodes, graphSafe.edges),
+    [graphSafe]
   );
 
-  const hasEmpty = !graph?.nodes || graph.nodes.length === 0;
-  const suspiciousCount = (graph?.suspicious_nodes?.length || 0) + (graph?.suspicious_edges?.length || 0);
+  const hasEmpty = !graphSafe.nodes || graphSafe.nodes.length === 0;
+  const suspiciousCount = (graphSafe?.suspicious_nodes?.length || 0) + (graphSafe?.suspicious_edges?.length || 0);
 
   if (loading && !graph) {
     return <div className="flex items-center justify-center h-64 text-slate-400"><Network size={20} className="animate-pulse mr-2" /> Loading fraud network…</div>;
@@ -126,11 +131,11 @@ export default function FraudNetworkGraph({ user }) {
       <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
         <div className="bg-white rounded-2xl border border-slate-200 p-5">
           <p className="text-[11px] font-bold uppercase tracking-wider text-slate-500">Total entities analysed</p>
-          <p className="text-3xl font-black text-[#0F2744] mt-2">{graph.summary?.total_nodes ?? 0}</p>
+          <p className="text-3xl font-black text-[#0F2744] mt-2">{graphSafe.summary?.total_nodes ?? 0}</p>
         </div>
         <div className="bg-white rounded-2xl border border-slate-200 p-5">
           <p className="text-[11px] font-bold uppercase tracking-wider text-slate-500">Total relationships identified</p>
-          <p className="text-3xl font-black text-slate-600 mt-2">{graph.summary?.total_edges ?? 0}</p>
+          <p className="text-3xl font-black text-slate-600 mt-2">{graphSafe.summary?.total_edges ?? 0}</p>
         </div>
         <div className="bg-white rounded-2xl border border-slate-200 p-5">
           <p className="text-[11px] font-bold uppercase tracking-wider text-red-500">Suspicious relationships</p>
@@ -138,7 +143,7 @@ export default function FraudNetworkGraph({ user }) {
         </div>
         <div className="bg-white rounded-2xl border border-slate-200 p-5">
           <p className="text-[11px] font-bold uppercase tracking-wider text-slate-500">Connected claim clusters</p>
-          <p className="text-3xl font-black text-slate-800 mt-2">{graph.summary?.clusters ?? 0}</p>
+          <p className="text-3xl font-black text-slate-800 mt-2">{graphSafe.summary?.clusters ?? 0}</p>
         </div>
       </div>
 
@@ -162,7 +167,7 @@ export default function FraudNetworkGraph({ user }) {
           <>
             <div className="relative bg-slate-950">
               <svg viewBox="0 0 760 420" className="w-full h-[420px]">
-                {(graph.edges || []).map(e => {
+                {(graphSafe.edges || []).map(e => {
                   const a = positions.get(e.node_a_id), b = positions.get(e.node_b_id);
                   if (!a || !b) return null;
                   return (
@@ -180,7 +185,7 @@ export default function FraudNetworkGraph({ user }) {
                     </g>
                   );
                 })}
-                {(graph.nodes || []).map(n => {
+                {(graphSafe.nodes || []).map(n => {
                   const p = positions.get(n.id);
                   if (!p) return null;
                   const color = TYPE_COLORS[n.entity_type] || TYPE_COLORS.default;
@@ -199,34 +204,34 @@ export default function FraudNetworkGraph({ user }) {
             <div className="px-6 py-4 grid sm:grid-cols-3 gap-4 border-t border-slate-200 bg-slate-50">
               <div>
                 <h4 className="text-[11px] font-bold uppercase tracking-wider text-slate-500 mb-2">Suspicious nodes</h4>
-                {(graph.suspicious_nodes || []).slice(0, 6).map(n => (
+                {(graphSafe.suspicious_nodes || []).slice(0, 6).map(n => (
                   <div key={n.id} className="text-xs mb-1">
                     <span className="font-semibold">{n.name || n.id}</span>
                     <span className={`px-1.5 py-0.5 rounded text-[9px] ml-1 ${n.risk_score >= 80 ? 'bg-red-50 text-red-700' : 'bg-amber-50 text-amber-800'}`}>{n.risk_score?.toFixed(0)}/100</span>
                     <span className="text-[10px] text-slate-400 block">{TYPE_LABELS[n.entity_type]}{n.claim_id ? ` — claim ${n.claim_id}` : ''}</span>
                   </div>
                 ))}
-                {!graph.suspicious_nodes?.length && <p className="text-xs text-slate-400">None.</p>}
+                {!graphSafe.suspicious_nodes?.length && <p className="text-xs text-slate-400">None.</p>}
               </div>
               <div>
                 <h4 className="text-[11px] font-bold uppercase tracking-wider text-slate-500 mb-2">Suspicious relationships</h4>
-                {(graph.suspicious_edges || []).slice(0, 8).map((e, i) => (
+                {(graphSafe.suspicious_edges || []).slice(0, 8).map((e, i) => (
                   <div key={i} className="text-xs mb-1">
                     <span className="font-semibold">{(e.relationship_type || 'relationship').replace(/_/g, ' ')}</span>
                     <span className="text-[10px] text-slate-500 block">{e.evidence}</span>
                   </div>
                 ))}
-                {!graph.suspicious_edges?.length && <p className="text-xs text-slate-400">None.</p>}
+                {!graphSafe.suspicious_edges?.length && <p className="text-xs text-slate-400">None.</p>}
               </div>
               <div>
                 <h4 className="text-[11px] font-bold uppercase tracking-wider text-slate-500 mb-2">Clusters (review candidates)</h4>
-                {(graph.clusters || []).slice(0, 5).map(c => (
+                {(graphSafe.clusters || []).slice(0, 5).map(c => (
                   <div key={c.cluster_id} className="text-xs mb-1">
                     <span className="font-semibold">{c.claim_ids?.length || 0} claims · {c.member_count} entities</span>
                     <span className="text-[10px] text-red-600 font-semibold block">{(c.relationship_evidence || []).slice(0, 2).join(' ; ')}</span>
                   </div>
                 ))}
-                {!graph.clusters?.length && <p className="text-xs text-slate-400">No suspicious clusters detected.</p>}
+                {!graphSafe.clusters?.length && <p className="text-xs text-slate-400">No suspicious clusters detected.</p>}
               </div>
             </div>
           </>
