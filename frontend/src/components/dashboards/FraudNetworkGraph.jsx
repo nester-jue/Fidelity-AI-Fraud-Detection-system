@@ -41,6 +41,21 @@ function forceLayout(nodes, edges, width = 760, height = 420) {
       const fy = (dy / d) * (target - d) * 0.5;
       a.x += fx; a.y += fy; b.x -= fx; b.y -= fy;
     }
+    // Mutual node repulsion so dense graphs stay readable and nodes don't overlap.
+    for (let i = 0; i < nodes.length; i++) {
+      for (let j = i + 1; j < nodes.length; j++) {
+        const a = pos.get(nodes[i].id), b = pos.get(nodes[j].id);
+        if (!a || !b) continue;
+        let dx = a.x - b.x, dy = a.y - b.y;
+        let d = Math.sqrt(dx * dx + dy * dy) || 1;
+        const minDist = 22;
+        if (d < minDist) {
+          const f = (minDist - d) * 0.5;
+          const fx = (dx / d) * f, fy = (dy / d) * f;
+          a.x += fx; a.y += fy; b.x -= fx; b.y -= fy;
+        }
+      }
+    }
     for (const n of nodes) {
       const p = pos.get(n.id);
       if (!p) continue;
@@ -154,13 +169,13 @@ export default function FraudNetworkGraph({ user }) {
                     <g key={e.id}>
                       <line x1={a.x} y1={a.y} x2={b.x} y2={b.y}
                         stroke={e.is_suspicious ? '#F87171' : '#334155'}
-                        strokeWidth={e.strength * 2.5} strokeOpacity={e.is_suspicious ? 0.85 : 0.35}
+                        strokeWidth={Math.max(e.strength * 3, 0.8)} strokeOpacity={e.is_suspicious ? 0.85 : 0.35}
                         strokeDasharray={e.is_suspicious ? '4,3' : undefined}
                         className={e.is_suspicious ? 'animate-pulse' : ''}
                         onClick={() => setExpandedEdge(e)}
                         cursor={e.is_suspicious ? 'pointer' : 'default'} />
                       {e.is_suspicious && (
-                        <circle cx={(a.x + b.x) / 2} cy={(a.y + b.y) / 2} r="4" fill="#F87171" stroke="#1E3A8A" strokeWidth="1.5" />
+                        <circle cx={(a.x + b.x) / 2} cy={(a.y + b.y) / 2} r="5" fill="#F87171" stroke="#1E3A8A" strokeWidth="2" />
                       )}
                     </g>
                   );
@@ -172,10 +187,10 @@ export default function FraudNetworkGraph({ user }) {
                   const label = (n.name || n.id).slice(0, 14);
                   return (
                     <g key={n.id} transform={`translate(${p.x}, ${p.y})`}>
-                      {n.is_suspicious && <circle r="18" fill="none" stroke="#F87171" strokeWidth="1.5" className="animate-ping opacity-40" />}
-                      <circle r="10" fill={color} stroke={n.is_suspicious ? '#F87171' : '#0F2744'} strokeWidth={n.is_suspicious ? 2 : 1} />
-                      <text textAnchor="middle" y="-14" fill="#CBD5E1" fontSize="8" fontWeight="bold">{label}</text>
-                      <text textAnchor="middle" y="17" fill="white" fontSize="7" fontWeight="bold" fontFamily="monospace">{n.entity_type === 'claim' ? (n.amount ? `${Number(n.amount).toLocaleString()}` : '') : ''}</text>
+                      {n.is_suspicious && <circle r="20" fill="none" stroke="#F87171" strokeWidth="2" className="animate-ping opacity-50" />}
+                      <circle r="11" fill={color} stroke={n.is_suspicious ? '#F87171' : '#0F2744'} strokeWidth={n.is_suspicious ? 2 : 1} />
+                      <text textAnchor="middle" y="-14" fill="#CBD5E1" fontSize="9" fontWeight="bold">{label}</text>
+                      <text textAnchor="middle" y="17" fill="white" fontSize="8" fontWeight="bold" fontFamily="monospace">{n.entity_type === 'claim' ? (n.amount ? `${Number(n.amount).toLocaleString()}` : '') : ''}</text>
                     </g>
                   );
                 })}
