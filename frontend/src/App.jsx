@@ -231,6 +231,25 @@ export default function App() {
   });
   const toggleMobile = () => setMobileOpen(p => !p);
 
+  // Desktop viewport gate: the fixed left rail only renders on md+
+  // (Tailwind `md` = min-width: 768px). Below that the sidebar is hidden and
+  // the main container must not be offset by the rail's width.
+  const [desktopViewport, setDesktopViewport] = useState(() =>
+    typeof window !== 'undefined' ? window.matchMedia('(min-width: 768px)').matches : true
+  );
+  useEffect(() => {
+    if (typeof window === 'undefined') return;
+    const mql = window.matchMedia('(min-width: 768px)');
+    const update = () => setDesktopViewport(mql.matches);
+    update();
+    if (typeof mql.addEventListener === 'function') mql.addEventListener('change', update);
+    else if (typeof mql.addListener === 'function') mql.addListener(update);
+    return () => {
+      if (typeof mql.removeEventListener === 'function') mql.removeEventListener('change', update);
+      else if (typeof mql.removeListener === 'function') mql.removeListener(update);
+    };
+  }, []);
+
   // Filter States
   const [searchQuery, setSearchQuery] = useState('');
   const [riskFilter, setRiskFilter] = useState('');
@@ -1244,7 +1263,7 @@ export default function App() {
       {/* Main Container — shifts right with the collapsible sidebar */}
       <main
         className="flex-1 max-w-7xl w-full mx-auto p-4 sm:p-6 lg:p-8 space-y-8 md:transition-all md:duration-200"
-        style={{ marginLeft: sidebarExpanded ? '264px' : '56px' }}
+        style={{ marginLeft: desktopViewport ? (sidebarExpanded ? '264px' : '56px') : '0px' }}
       >
 
         {/* ========================================================= */}
