@@ -4,7 +4,7 @@ import {
   Activity, LogOut, AlertCircle, FileText, Search,
   Filter, Plus, RotateCw, Sliders, Users,
   ClipboardCheck, AlertTriangle, ArrowRight,
-  CheckCircle2, X, Clock, TrendingUp,
+  CheckCircle, CheckCircle2, X, Clock, TrendingUp,
   Brain, FileCheck, Share2, Layers, Check, MessageSquare, ClipboardList, Upload, Loader2,
   GanttChart, History, Bell, Globe, HeartPulse, ShieldAlert, FileSearch, Database, Link2
 } from 'lucide-react';
