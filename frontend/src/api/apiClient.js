@@ -49,6 +49,12 @@ export const api = {
   // Departmental dashboards
   claimsOfficerDashboard: () => apiCall('/departmental/claims-officer'),
   executiveDashboard: () => apiCall('/departmental/executive'),
+  executiveMonthlyTrends: (query = '') => apiCall(`/departmental/executive/monthly-trends${query}`),
+  executiveYearlyExposure: () => apiCall('/departmental/executive/yearly-exposure'),
+  executiveProductAnalysis: () => apiCall('/departmental/executive/product-analysis'),
+  executiveSuspicions: (query = '') => apiCall(`/departmental/executive/suspicions${query}`),
+  executiveInvestigations: (query = '') => apiCall(`/departmental/executive/investigations${query}`),
+  executiveAiInsights: () => apiCall('/departmental/executive/ai-insights'),
   complianceDashboard: () => apiCall('/departmental/compliance'),
   fraudInvestigatorDashboard: () => apiCall('/departmental/fraud-investigator'),
   adminDashboard: () => apiCall('/departmental/admin'),

@@ -4,7 +4,7 @@ Provides role-specific dashboard data for each department.
 All endpoints enforce role-based access at the backend level.
 """
 from datetime import datetime, timezone, timedelta
-from typing import Dict, Any, List
+from typing import Dict, Any, List, Optional
 from fastapi import APIRouter, Depends, HTTPException, Query, status
 from sqlalchemy.orm import Session
 from sqlalchemy import func, desc
@@ -112,6 +112,9 @@ async def get_claims_officer_dashboard(
     recent_list = []
     for c in recent_claims:
         assessment = c.assessment
+        # OCR extraction status lives on OCRDocument records (ClaimDocument
+        # has no processing_status attribute).
+        claim_ocr_docs = db.query(OCRDocument).filter(OCRDocument.claim_id == c.id).all()
         recent_list.append({
             "claim_id": c.claim_id,
             "customer_name": c.customer.name if c.customer else "Unknown",
@@ -123,8 +126,8 @@ async def get_claims_officer_dashboard(
             "risk_category": assessment.risk_category if assessment else "Pending",
             "documents_count": len(c.documents),
             "ocr_extraction_status": (
-                [d.processing_status for d in c.documents if d.processing_status != "completed"]
-                if any(d.processing_status != "completed" for d in c.documents) else "ok"
+                [d.processing_status for d in claim_ocr_docs if d.processing_status != "completed"]
+                if any(d.processing_status != "completed" for d in claim_ocr_docs) else "ok"
             ),
         })
 
@@ -413,6 +416,8 @@ def _is_suspected(c: Claim, assessment) -> bool:
 @router.get("/executive/monthly-trends", summary="Monthly fraud trends — submissions, suspicious claims and confirmed fraud by month")
 async def get_executive_monthly_trends(
     months: int = Query(24, ge=1, le=60),
+    period_start: Optional[str] = Query(None, description="Filter trends from this date (YYYY-MM-DD)"),
+    period_end: Optional[str] = Query(None, description="Filter trends up to this date (YYYY-MM-DD)"),
     db: Session = Depends(get_db),
     current_user: User = Depends(require_roles(_EXEC_MGMT_ROLES)),
 ):
@@ -433,6 +438,15 @@ async def get_executive_monthly_trends(
             entry["confirmed"] += 1
         elif _is_suspected(c, assessment):
             entry["suspected"] += 1
+
+    # Apply optional date filters (filter to months within the date range).
+    if period_start or period_end:
+        months_sorted = sorted(agg.keys())
+        if period_start:
+            months_sorted = [m for m in months_sorted if m >= str(period_start)[:7]]
+        if period_end:
+            months_sorted = [m for m in months_sorted if m <= str(period_end)[:7]]
+        agg = {m: agg[m] for m in months_sorted}
 
     sorted_months = sorted(agg.keys())[-months:]
     rows = []
@@ -490,7 +504,8 @@ async def get_executive_product_analysis(
         product = (c.claim_type or "Unknown").strip() or "Unknown"
         e = agg.setdefault(product, {"total_claims": 0, "total_exposure": 0.0, "critical_risk": 0,
                                      "high_risk": 0, "medium_risk": 0, "low_risk": 0,
-                                     "confirmed_fraud": 0, "suspected_risk": 0})
+                                     "confirmed_fraud": 0, "suspected_risk": 0,
+                                     "confirmed_fraud_losses": 0.0, "confirmed_fraud_claims": []})
         e["total_claims"] += 1
         e["total_exposure"] += float(c.amount or 0)
         assessment = assessments.get(c.id)
@@ -508,6 +523,19 @@ async def get_executive_product_analysis(
         if investigation := investigations.get(c.id):
             if investigation.status == "confirmed_fraud":
                 e["confirmed_fraud"] += 1
+                e["confirmed_fraud_losses"] += float(c.amount or 0)
+                if len(e["confirmed_fraud_claims"]) < 10:
+                    e["confirmed_fraud_claims"].append({
+                        "claim_id": c.claim_id,
+                        "customer_name": c.customer.name if c.customer else "Unknown",
+                        "claim_type": c.claim_type,
+                        "amount": round(float(c.amount or 0), 2),
+                        "status": c.status,
+                        "risk_score": round(float(assessment.risk_score), 1) if assessment else None,
+                        "risk_category": assessment.risk_category if assessment else None,
+                        "opened_at": investigation.opened_at.isoformat() if investigation.opened_at else None,
+                        "confirmed": True,
+                    })
 
     PRODUCT_DISPLAY_NAMES = {
         "Death Benefit": "Life Assurance (Death Benefit)",
@@ -515,16 +543,19 @@ async def get_executive_product_analysis(
         "Accidental Death": "Accidental Death",
         "Personal Accident": "Personal Accident",
     }
+    total_prevented = round(sum(e["confirmed_fraud_losses"] for e in agg.values()), 2)
     rows = []
     for product, e in agg.items():
         total = e["total_claims"]
         e["product_name"] = PRODUCT_DISPLAY_NAMES.get(product, product)
         e["assessed_share_pct"] = round(((e["critical_risk"] + e["high_risk"] + e["medium_risk"] + e["low_risk"]) / max(total, 1)) * 100, 1)
         e["suspected_share_pct"] = round((e["suspected_risk"] / max(total, 1)) * 100, 1)
+        e["confirmed_fraud_losses"] = round(e["confirmed_fraud_losses"], 2)
+        e["prevented_share_pct"] = round((e["confirmed_fraud_losses"] / total_prevented * 100), 1) if total_prevented else None
         e["total_exposure"] = round(e["total_exposure"], 2)
         rows.append(e)
     rows.sort(key=lambda r: r["total_exposure"], reverse=True)
-    return {"products": len(rows), "rows": rows}
+    return {"products": len(rows), "total_prevented": total_prevented, "rows": rows}
 
 
 @router.get("/executive/suspicions", summary="Priority suspicious claims queue for CRO review")

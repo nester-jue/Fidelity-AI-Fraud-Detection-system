@@ -118,6 +118,7 @@ const ROLE_SIDEBAR = {
     { id: 'fraud-analytics', label: 'Fraud Intelligence', icon: AlertTriangle, section: 'Executive' },
     { id: 'financial-exposure', label: 'Financial Exposure', icon: ShieldCheck, section: 'Executive' },
     { id: 'department-performance', label: 'Department Performance', icon: Users, section: 'Executive' },
+    { id: 'ai-fraud-intelligence', label: 'AI Fraud Intelligence', icon: Brain, section: 'Executive' },
     { id: 'fraud-trends', label: 'Fraud Trends', icon: TrendingUp, section: 'Executive' },
     { id: 'management-reports', label: 'Executive Reports', icon: FileText, section: 'Executive' },
     { id: 'notifications', label: 'Notifications', icon: Activity, section: 'Assistant & Account' },
@@ -2060,7 +2061,7 @@ export default function App() {
         {/* ========================================================= */}
         {/* NEW: DEPARTMENTAL WORKSPACES */}
         {/* ========================================================= */}
-        {['executive-overview', 'claims-performance', 'fraud-analytics', 'financial-exposure', 'department-performance', 'management-reports'].includes(activeTab) && (
+        {['executive-overview', 'claims-performance', 'fraud-analytics', 'financial-exposure', 'department-performance', 'ai-fraud-intelligence', 'management-reports'].includes(activeTab) && (
           <ExecutiveDashboard activeTab={activeTab} />
         )}
         {['compliance-overview', 'compliance-alerts', 'claims-under-review', 'regulatory-reports'].includes(activeTab) && (
