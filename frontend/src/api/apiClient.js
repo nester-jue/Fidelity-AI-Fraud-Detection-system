@@ -138,7 +138,8 @@ export const api = {
 
   // Management reports (Executive)
   getManagementReports: () => apiCall('/management-reports/'),
-  generateManagementReport: (type = 'EXECUTIVE_KPI_SNAPSHOT') => apiCall('/management-reports/', { method: 'POST', body: JSON.stringify({ report_type: type }) }),
+  generateManagementReport: (type = 'EXECUTIVE_KPI_SNAPSHOT', periodMonths = 12) =>
+    apiCall(`/management-reports/?report_type=${encodeURIComponent(type)}&period_months=${periodMonths}`, { method: 'POST' }),
   getManagementReport: (id) => apiCall(`/management-reports/${id}`),
 
   // Compliance reports (Compliance/Admin)

@@ -71,7 +71,7 @@ const ROLE_SIDEBAR = {
     { id: 'escalated', label: 'Escalated Claims', icon: AlertCircle, section: 'Claims Workflow' },
     { id: 'ai-risk-analysis', label: 'AI Risk Analysis', icon: Brain, section: 'Claims Workflow' },
     { id: 'department-reports', label: 'Department Reports', icon: FileText, section: 'Claims Workflow' },
-    { id: 'performance', label: 'Performance Analytics', icon: TrendingUp, section: 'Claims Workflow' },
+    { id: 'performance', label: 'Performance Analytics', icon: TrendingUp, section: 'Performance Analytics' },
     { id: 'notifications', label: 'Notifications', icon: Activity, section: 'Assistant & Account' },
     { id: 'ai-assistant', label: 'AI Assistant', icon: Brain, section: 'Assistant & Account' },
     { id: 'profile', label: 'My Profile', icon: Users, section: 'Account' },

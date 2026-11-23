@@ -21,7 +21,7 @@ import {
   DollarSign, ShieldCheck, Building2, RotateCw, TrendingUp,
   FileText, AlertTriangle, Users, MapPinned, AlertCircle,
   Loader2, CheckCircle, X, ClipboardList, Flag, Activity, ShieldAlert,
-  Star, Download, LineChart,
+  Star, Download, LineChart, PieChart, BarChart3,
 } from 'lucide-react';
 import { api } from '../../api/apiClient';
 
@@ -765,7 +765,7 @@ export default function ExecutiveDashboard({ activeTab }) {
   const generateReport = async (reportType) => {
     setReportsGenerating(reportType);
     try {
-      const res = await api.postManagementReport(reportType, 12);
+      const res = await api.generateManagementReport(reportType, 12);
       const data = await res.json();
       if (res.ok) { setSelectedReport(data); alert(`Report #${data.id} generated successfully.`); }
       else { alert('Report generation failed: ' + (data.detail || 'unknown')); }
