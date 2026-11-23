@@ -5,7 +5,7 @@ All endpoints enforce role-based access at the backend level.
 """
 from datetime import datetime, timezone, timedelta
 from typing import Dict, Any, List
-from fastapi import APIRouter, Depends, HTTPException, status
+from fastapi import APIRouter, Depends, HTTPException, Query, status
 from sqlalchemy.orm import Session
 from sqlalchemy import func, desc
 
@@ -209,6 +209,9 @@ async def get_executive_dashboard(
     high_risk = db.query(FraudAssessment).filter(FraudAssessment.risk_category == "High").count()
     critical_risk = db.query(FraudAssessment).filter(FraudAssessment.risk_category == "Critical").count()
 
+    # Enterprise KPI — high-risk (High + Critical) claims across all assessed claims
+    high_risk_claims = high_risk + critical_risk
+
     confirmed_fraud = db.query(Investigation).filter(Investigation.status == "confirmed_fraud").count()
     under_investigation = db.query(Investigation).filter(
         Investigation.status.in_(["open", "in_review", "escalated"])
@@ -222,6 +225,17 @@ async def get_executive_dashboard(
     prevented_losses = (
         db.query(func.sum(Claim.amount)).filter(Claim.id.in_(confirmed_fraud_ids)).scalar() or 0.0
     )
+
+    # Confirmed fraud losses vs prevented losses (verified fraud records).
+    # The system records authorised interventions asInvestigations with status
+    # 'confirmed_fraud'; the same value feeds both KPI families.
+    confirmed_fraud_losses = prevented_losses
+    losses_prevented = prevented_losses
+    verified_losses_prevented = prevented_losses
+    recovered_funds = 0.0
+
+    # Overall fraud risk percentage — share of assessed claims at High/Critical.
+    overall_fraud_risk_percentage = round((high_risk_claims / max(total_analysed, 1)) * 100, 1)
 
     # Claim type breakdown
     type_breakdown = db.query(
@@ -273,10 +287,19 @@ async def get_executive_dashboard(
             yearly_dist[year] = yearly_dist.get(year, 0) + item["count"]
     yearly_trends = [{"period": y, "count": c} for y, c in sorted(yearly_dist.items())]
 
-    # Departmental performance: claims flowing through each department.
-    # Claims are departmentally assigned via the Claims officer(s) or via the
-    # Claims department queue when unassigned.
+    # Departmental fraud performance: claims + investigation progress per
+    # department. Claims are departmentally assigned via the Claims officer(s)
+    # or via the Claims department queue when unassigned; investigations follow
+    # their claims' assignment (unassigned investigations belong to Claims).
     claims_by_dept = []
+    inv_by_dept: Dict[str, Dict[str, int]] = {}
+    for inv in db.query(Investigation).all():
+        if inv.claim and inv.claim.assigned_officer:
+            d = inv.claim.assigned_officer.department or "Claims"
+        else:
+            d = "Claims"
+        e = inv_by_dept.setdefault(d, {"open": 0, "in_review": 0, "escalated": 0, "confirmed_fraud": 0, "cleared": 0})
+        e[inv.status] = e.get(inv.status, 0) + 1
     for d in ["Claims", "Compliance", "Investigations", "Executive", "IT"]:
         users_in_dept = db.query(User.id).filter(User.department == d).all()
         id_list = [u[0] for u in users_in_dept]
@@ -286,7 +309,8 @@ async def get_executive_dashboard(
                 Claim.status.in_(["flagged", "under_investigation", "pending_documents"]),
                 Claim.assigned_officer_id.is_(None),
             ).count()
-        claims_by_dept.append({"department": d, "claims": n, "users": len(id_list)})
+        dept_entry = {"department": d, "claims": n, "users": len(id_list), **inv_by_dept.get(d, {})}
+        claims_by_dept.append(dept_entry)
 
     # Processing performance metrics
     processed_claims = db.query(Claim).filter(
@@ -334,13 +358,20 @@ async def get_executive_dashboard(
     return {
         "kpis": {
             "total_claims_received": total_claims,
+            "active_insurance_portfolio": total_claims,
             "total_claims_processed": total_analysed,
             "claims_pending": total_pending,
             "claims_flagged": total_flagged,
             "confirmed_fraud_cases": confirmed_fraud,
             "claims_under_investigation": under_investigation,
             "total_financial_exposure": round(total_exposure, 2),
+            "total_confirmed_fraud_losses": round(confirmed_fraud_losses, 2),
+            "total_losses_prevented": round(losses_prevented, 2),
+            "verified_losses_prevented": round(verified_losses_prevented, 2),
+            "recovered_funds": round(recovered_funds, 2),
             "potential_fraud_prevented": round(prevented_losses, 2),
+            "high_risk_claims": high_risk_claims,
+            "overall_fraud_risk_percentage": overall_fraud_risk_percentage,
             "ai_coverage_rate": round((total_analysed / max(total_claims, 1)) * 100, 1),
         },
         "risk_distribution": risk_distribution,
@@ -354,6 +385,384 @@ async def get_executive_dashboard(
         "departmental_performance": claims_by_dept,
         "processing_performance": processing_perf,
         "management_report_id": report.id,
+    }
+
+
+# ─────────────────────────────────────────────
+# EXECUTIVE DEEP-DIVE ANALYTICS
+# (companion endpoints to /executive — fraud trends, product analysis,
+#  suspicious queue, investigation progress and AI insights)
+# ─────────────────────────────────────────────
+
+_EXEC_MGMT_ROLES = [RoleEnum.MANAGEMENT, RoleEnum.SYSTEM_ADMIN]
+
+
+def _exec_claims_with_assessment_and_investigation(db: Session):
+    assessments = {a.claim_id: a for a in db.query(FraudAssessment).all()}
+    investigations = {inv.claim_id: inv for inv in db.query(Investigation).all()}
+    claims = db.query(Claim).all()
+    return claims, assessments, investigations
+
+
+def _is_suspected(c: Claim, assessment) -> bool:
+    if assessment and assessment.risk_category in ("High", "Critical"):
+        return True
+    return c.status in ("flagged", "under_investigation", "pending_documents")
+
+
+@router.get("/executive/monthly-trends", summary="Monthly fraud trends — submissions, suspicious claims and confirmed fraud by month")
+async def get_executive_monthly_trends(
+    months: int = Query(24, ge=1, le=60),
+    db: Session = Depends(get_db),
+    current_user: User = Depends(require_roles(_EXEC_MGMT_ROLES)),
+):
+    """Monthly breakdown: claims received, suspected, confirmed, exposure — with month-over-month change."""
+    claims, assessments, investigations = _exec_claims_with_assessment_and_investigation(db)
+    agg: Dict[str, Dict[str, Any]] = {}
+    for c in claims:
+        if not c.submission_date:
+            continue
+        month = str(c.submission_date)[:7]
+        entry = agg.setdefault(month, {"submitted": 0, "suspected": 0, "confirmed": 0, "exposure_amount": 0.0})
+        entry["exposure_amount"] += float(c.amount or 0)
+        if c.status == "submitted":
+            entry["submitted"] += 1
+        assessment = assessments.get(c.id)
+        investigation = investigations.get(c.id)
+        if investigation and investigation.status == "confirmed_fraud":
+            entry["confirmed"] += 1
+        elif _is_suspected(c, assessment):
+            entry["suspected"] += 1
+
+    sorted_months = sorted(agg.keys())[-months:]
+    rows = []
+    for i, month in enumerate(sorted_months):
+        e = dict(agg[month])
+        row = {"period": month, "submitted": e["submitted"], "suspected": e["suspected"],
+               "confirmed": e["confirmed"], "exposure_amount": round(e["exposure_amount"], 2)}
+        if i > 0:
+            prev = agg[sorted_months[i - 1]]
+            row["month_over_month_change_pct"] = round((e["suspected"] - prev["suspected"]) / max(prev["suspected"], 1) * 100, 1)
+        else:
+            row["month_over_month_change_pct"] = None
+        rows.append(row)
+    return {"period_end": str(datetime.now(timezone.utc).date()), "months": len(rows), "trends": rows}
+
+
+@router.get("/executive/yearly-exposure", summary="Year-over-year financial exposure analytics")
+async def get_executive_yearly_exposure(
+    db: Session = Depends(get_db),
+    current_user: User = Depends(require_roles(_EXEC_MGMT_ROLES)),
+):
+    """Annual financial exposure, claim volume and year-over-year growth."""
+    agg: Dict[str, Dict[str, Any]] = {}
+    for c in db.query(Claim).all():
+        if not c.submission_date:
+            continue
+        year = str(c.submission_date)[:4]
+        e = agg.setdefault(year, {"exposure_amount": 0.0, "claims_count": 0})
+        e["exposure_amount"] += float(c.amount or 0)
+        e["claims_count"] += 1
+
+    sorted_years = sorted(agg.keys())
+    rows = []
+    for i, y in enumerate(sorted_years):
+        e = agg[y]
+        row = {"year": int(y), "exposure_amount": round(e["exposure_amount"], 2), "claims_count": e["claims_count"]}
+        if i > 0:
+            prev = agg[sorted_years[i - 1]]
+            row["year_over_year_growth_pct"] = round((e["exposure_amount"] - prev["exposure_amount"]) / max(prev["exposure_amount"], 1) * 100, 1)
+        else:
+            row["year_over_year_growth_pct"] = None
+        rows.append(row)
+    return {"years": len(rows), "rows": rows}
+
+
+@router.get("/executive/product-analysis", summary="Fraud analysis by insurance product")
+async def get_executive_product_analysis(
+    db: Session = Depends(get_db),
+    current_user: User = Depends(require_roles(_EXEC_MGMT_ROLES)),
+):
+    """Product-level fraud exposure — only products present in the database are listed."""
+    claims, assessments, investigations = _exec_claims_with_assessment_and_investigation(db)
+    agg: Dict[str, Dict[str, Any]] = {}
+    for c in claims:
+        product = (c.claim_type or "Unknown").strip() or "Unknown"
+        e = agg.setdefault(product, {"total_claims": 0, "total_exposure": 0.0, "critical_risk": 0,
+                                     "high_risk": 0, "medium_risk": 0, "low_risk": 0,
+                                     "confirmed_fraud": 0, "suspected_risk": 0})
+        e["total_claims"] += 1
+        e["total_exposure"] += float(c.amount or 0)
+        assessment = assessments.get(c.id)
+        cat = (assessment.risk_category or "").lower() if assessment else ""
+        if cat == "critical":
+            e["critical_risk"] += 1
+        elif cat == "high":
+            e["high_risk"] += 1
+        elif cat == "medium":
+            e["medium_risk"] += 1
+        elif cat == "low":
+            e["low_risk"] += 1
+        if cat in ("critical", "high"):
+            e["suspected_risk"] += 1
+        if investigation := investigations.get(c.id):
+            if investigation.status == "confirmed_fraud":
+                e["confirmed_fraud"] += 1
+
+    PRODUCT_DISPLAY_NAMES = {
+        "Death Benefit": "Life Assurance (Death Benefit)",
+        "Funeral Expense": "Funeral Policies",
+        "Accidental Death": "Accidental Death",
+        "Personal Accident": "Personal Accident",
+    }
+    rows = []
+    for product, e in agg.items():
+        total = e["total_claims"]
+        e["product_name"] = PRODUCT_DISPLAY_NAMES.get(product, product)
+        e["assessed_share_pct"] = round(((e["critical_risk"] + e["high_risk"] + e["medium_risk"] + e["low_risk"]) / max(total, 1)) * 100, 1)
+        e["suspected_share_pct"] = round((e["suspected_risk"] / max(total, 1)) * 100, 1)
+        e["total_exposure"] = round(e["total_exposure"], 2)
+        rows.append(e)
+    rows.sort(key=lambda r: r["total_exposure"], reverse=True)
+    return {"products": len(rows), "rows": rows}
+
+
+@router.get("/executive/suspicions", summary="Priority suspicious claims queue for CRO review")
+async def get_executive_suspicions(
+    limit: int = Query(25, ge=1, le=100),
+    db: Session = Depends(get_db),
+    current_user: User = Depends(require_roles(_EXEC_MGMT_ROLES)),
+):
+    """High/critical risk claims with investigation status, assigned investigator, priority and indicators."""
+    _, assessments, investigations = _exec_claims_with_assessment_and_investigation(db)
+    rows = []
+    for a in db.query(FraudAssessment).filter(FraudAssessment.risk_category.in_(["High", "Critical"])).order_by(desc(FraudAssessment.risk_score)).all():
+        c = a.claim
+        if not c:
+            continue
+        inv = investigations.get(c.id)
+        indicators = a.indicators or []
+        top_indicators = [i.get("code") or i.get("detail") or "AI risk flag" for i in indicators[:3]] or ["AI risk flag"]
+        rows.append({
+            "claim_id": c.claim_id,
+            "customer_name": c.customer.name if c.customer else "Unknown",
+            "claim_type": c.claim_type,
+            "amount": round(float(c.amount or 0), 2),
+            "risk_score": round(float(a.risk_score or 0), 1),
+            "risk_category": a.risk_category,
+            "top_indicators": top_indicators,
+            "investigation_status": inv.status if inv else "none",
+            "investigation_id": inv.id if inv else None,
+            "investigator_name": inv.investigator.full_name if inv and inv.investigator else None,
+            "investigation_opened_at": inv.opened_at.isoformat() if inv and inv.opened_at else None,
+            "submitted_date": c.submission_date.isoformat() if c.submission_date else None,
+            "priority": "CRITICAL" if a.risk_category == "Critical" else "HIGH",
+            "is_confirmed_fraud": bool(inv and inv.status == "confirmed_fraud"),
+        })
+        if len(rows) >= limit:
+            break
+    return {"total": len(rows), "queue": rows}
+
+
+@router.get("/executive/investigations", summary="Outstanding investigation progress for CRO oversight")
+async def get_executive_investigation_progress(
+    limit: int = Query(50, ge=1, le=200),
+    db: Session = Depends(get_db),
+    current_user: User = Depends(require_roles(_EXEC_MGMT_ROLES)),
+):
+    """Investigation progress: status, days open, evidence and notes counts, outcomes."""
+    from ..models.sqlalchemy_models import InvestigationNote
+
+    now = datetime.now(timezone.utc).replace(tzinfo=None)  # naive — matches DB timestamps
+    rows = []
+    summary: Dict[str, int] = {}
+    invs = db.query(Investigation).order_by(desc(Investigation.opened_at)).limit(limit).all()
+    for inv in invs:
+        claim = inv.claim
+        assessment = claim.assessment if claim else None
+        note_count = db.query(InvestigationNote).filter(InvestigationNote.investigation_id == inv.id).count()
+        opened = inv.opened_at
+        summary[inv.status] = summary.get(inv.status, 0) + 1
+        rows.append({
+            "investigation_id": inv.id,
+            "claim_id": claim.claim_id if claim else None,
+            "customer_name": claim.customer.name if claim and claim.customer else "Unknown",
+            "risk_score": assessment.risk_score if assessment else None,
+            "risk_category": assessment.risk_category if assessment else None,
+            "status": inv.status,
+            "opened_at": opened.isoformat() if opened else None,
+            "days_open": max(0, (now - opened).days) if opened else 0,
+            "investigator_name": inv.investigator.full_name if inv.investigator else "Unassigned",
+            "evidence_count": len(inv.evidence_documents or []),
+            "note_count": note_count,
+            "outcome": inv.outcome,
+        })
+    return {"summary": summary, "investigations": rows}
+
+
+@router.get("/executive/ai-insights", summary="Data-driven AI fraud intelligence insights")
+async def get_executive_ai_insights(
+    db: Session = Depends(get_db),
+    current_user: User = Depends(require_roles(_EXEC_MGMT_ROLES)),
+):
+    """Management insights computed from actual system data. AI suspicions are
+    flagged distinctly from confirmed fraud; findings never fabricate data."""
+    claims, assessments, investigations = _exec_claims_with_assessment_and_investigation(db)
+    now = datetime.now(timezone.utc)
+
+    # Monthly aggregation for trend analysis
+    agg: Dict[str, Dict[str, int]] = {}
+    for c in claims:
+        if not c.submission_date:
+            continue
+        month = str(c.submission_date)[:7]
+        e = agg.setdefault(month, {"submitted": 0, "suspected": 0, "confirmed": 0})
+        if c.status == "submitted":
+            e["submitted"] += 1
+        assessment = assessments.get(c.id)
+        if _is_suspected(c, assessment):
+            e["suspected"] += 1
+        if investigations.get(c.id) and investigations[c.id].status == "confirmed_fraud":
+            e["confirmed"] += 1
+    sorted_months = sorted(agg.keys())[-12:]
+    month_list = [(m, agg[m]["suspected"], agg[m]["confirmed"]) for m in sorted_months]
+
+    insights: List[Dict[str, Any]] = []
+
+    def add_insight(insight_id, type_, severity, title, description, data, recommended_action, basis):
+        insights.append({
+            "insight_id": insight_id,
+            "type": type_,
+            "severity": severity,
+            "title": title,
+            "description": description,
+            "data": data,
+            "recommended_action": recommended_action,
+            "basis": basis,
+            "generated_at": now.isoformat(),
+        })
+
+    # 1. Unusual increases in suspicious claims
+    prev_suspected = None
+    prev_month = None
+    for month, suspected, _ in month_list:
+        if prev_suspected is not None and prev_suspected > 0 and suspected > prev_suspected and suspected >= 3:
+            growth_pct = round((suspected - prev_suspected) / prev_suspected * 100, 1)
+            add_insight(
+                f"IN-{month}-INCREASE", "unusual_increase", "WARNING",
+                f"Unusual spike in suspicious claims from {prev_month} to {month}",
+                f"Suspicious claims rose from {prev_suspected} to {suspected} between {prev_month} and {month} ({growth_pct:+.1f}%).",
+                {"previous_period": prev_month, "current_period": month,
+                 "previous_suspected": prev_suspected, "current_suspected": suspected,
+                 "growth_pct": growth_pct},
+                "Review newly flagged claims and determine whether the pattern is coordinated fraud or a processing anomaly.",
+                "ai_detected",
+            )
+        prev_suspected, prev_month = suspected, month
+
+    # 2. Repeated high-risk claim patterns (same policy, amount, incident date)
+    patterns: Dict[tuple, List[Claim]] = {}
+    for c in claims:
+        assessment = assessments.get(c.id)
+        if assessment and assessment.risk_category in ("High", "Critical"):
+            key = (c.policy_id, round(float(c.amount or 0), 2), str(c.incident_date)[:10] if c.incident_date else None)
+            patterns.setdefault(key, []).append(c)
+    for key, cs in patterns.items():
+        if len(cs) >= 2:
+            add_insight(
+                f"IN-DUP-{key[0]}", "repeated_pattern", "SUSPICION",
+                "Repeated high-risk claim pattern detected",
+                f"{len(cs)} claims on the same policy (ID: {key[0]}) share an identical amount and incident date — potential duplicate submission.",
+                {"policy_id": key[0], "claim_ids": [c.claim_id for c in cs],
+                 "amount": key[1], "incident_date": key[2]},
+                "Open an investigation — request claimant verification, review each claim for duplicate payment protection and verify identity documents.",
+                "ai_detected",
+            )
+
+    # 3. High-value claims requiring additional verification
+    high_value_claims = [c for c in claims if assessments.get(c.id) and assessments[c.id].risk_category in ("High", "Critical")]
+    if high_value_claims:
+        amounts = [float(c.amount or 0) for c in high_value_claims]
+        avg_amount = sum(amounts) / len(amounts) if amounts else 0
+        for c in high_value_claims[:10]:
+            a = assessments[c.id]
+            if float(c.amount or 0) > max(avg_amount * 1.5, 10000):
+                inv = investigations.get(c.id)
+                add_insight(
+                    f"IN-HV-{c.id}", "high_value_verification", "WARNING",
+                    f"High-value claim {c.claim_id} requires additional verification",
+                    f"Claim value of ${float(c.amount or 0):,.2f} with {a.risk_category} risk ({a.risk_score}/100) is significantly higher than the high-risk average of ${avg_amount:,.2f}.",
+                    {"claim_id": c.claim_id, "amount": float(c.amount or 0),
+                     "risk_score": a.risk_score, "risk_category": a.risk_category,
+                     "investigation_status": inv.status if inv else "none"},
+                    "Request supporting documentation or initiate an investigation — verify the claimant and payment arrangements.",
+                    "ai_detected",
+                )
+
+    # 4. Emerging trends — suspicious rate increasing across months
+    for i in range(1, len(month_list)):
+        (m_prev, s_prev, _), (m_cur, s_cur, _) = month_list[i - 1], month_list[i]
+        if s_cur > s_prev and s_cur >= 5:
+            add_insight(
+                f"IN-EMERGING-{i}", "emerging_trend", "NOTICE",
+                f"Emerging fraud trend — rising suspicious activity from {m_prev} to {m_cur}",
+                f"Suspicious claim volume increased from {s_prev} to {s_cur}.",
+                {"previous_period": m_prev, "current_period": m_cur,
+                 "previous_suspected": s_prev, "current_suspected": s_cur},
+                "Increase review capacity and consider expanding fraud screening rules for the emerging pattern.",
+                "ai_detected",
+            )
+
+    # 5. Product trends — products whose monthly suspicious rate is increasing
+    per_month_product: Dict[str, Dict[str, Dict[str, int]]] = {}
+    for c in claims:
+        if not c.submission_date:
+            continue
+        month = str(c.submission_date)[:7]
+        product = (c.claim_type or "Unknown").strip() or "Unknown"
+        entry = per_month_product.setdefault(month, {}).setdefault(product, {"claims": 0, "suspected": 0})
+        entry["claims"] += 1
+        if _is_suspected(c, assessments.get(c.id)):
+            entry["suspected"] += 1
+    for product in sorted({p for m_stats in per_month_product.values() for p in m_stats}):
+        months_for_product = [(m, stats[product]) for m, stats in per_month_product.items() if product in stats]
+        if len(months_for_product) >= 2:
+            (m_prev, e_prev), (m_cur, e_cur) = months_for_product[0], months_for_product[-1]
+            rate_prev = round(e_prev["suspected"] / max(e_prev["claims"], 1) * 100, 1)
+            rate_cur = round(e_cur["suspected"] / max(e_cur["claims"], 1) * 100, 1)
+            if rate_cur > rate_prev and e_cur["suspected"] >= 2:
+                add_insight(
+                    f"IN-PROD-{product}", "product_trend", "NOTICE",
+                    f"Fraud activity rising in {product} claims",
+                    f"{product}: suspicious-claim rate rose from {rate_prev}% ({m_prev}) to {rate_cur}% ({m_cur}).",
+                    {"product": product, "previous_period": m_prev, "current_period": m_cur,
+                     "previous_rate_pct": rate_prev, "current_rate_pct": rate_cur},
+                    "Prioritise verification for the affected product lines; consider tighter screening for recent submissions.",
+                    "ai_detected",
+                )
+
+    # 6. Outstanding investigations requiring management attention
+    open_inv = db.query(Investigation).filter(Investigation.status == "open").count()
+    in_review = db.query(Investigation).filter(Investigation.status == "in_review").count()
+    if open_inv or in_review:
+        oldest = db.query(Investigation).filter(Investigation.status.in_(["open", "in_review"])).order_by(Investigation.opened_at).first()
+        add_insight(
+            "IN-OUTSTANDING-1", "outstanding_investigations", "NOTICE",
+            "Outstanding investigation backlog requires management attention",
+            f"{open_inv + in_review} investigations are open or in review." +
+            (f" Oldest opened: {oldest.opened_at.isoformat()}" if oldest and oldest.opened_at else ""),
+            {"open": open_inv, "in_review": in_review,
+             "oldest_opened_at": oldest.opened_at.isoformat() if oldest and oldest.opened_at else None},
+            "Review oldest cases first — prioritise cases with confirmed AI suspicions and set clear escalation deadlines.",
+            "verified_data",
+        )
+
+    return {
+        "generated_at": now.isoformat(),
+        "total_insights": len(insights),
+        "by_type": {t: sum(1 for i in insights if i["type"] == t) for t in sorted({i["type"] for i in insights})},
+        "by_severity": {s: sum(1 for i in insights if i["severity"] == s) for s in sorted({i["severity"] for i in insights})},
+        "insights": insights,
     }
 
 
