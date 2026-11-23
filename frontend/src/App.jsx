@@ -724,7 +724,28 @@ export default function App() {
   const assignedToMe = user?.id
     ? claimsList.filter(c => c.assigned_officer_id === user.id)
     : [];
-  const claimsTableList = activeTab === 'assigned-claims' ? assignedToMe : filteredClaims;
+
+  // Status-filtered claims fetched from the backend. The claims list is
+  // paginated (limit 200) and older claims (e.g. approved/under-investigation
+  // ones) may sit beyond the first page, so filtering by status client-side
+  // on claimsList shows nothing for them. The backend supports the `status`
+  // query param — use it when a status filter is active.
+  const [statusFilteredClaims, setStatusFilteredClaims] = useState([]);
+  useEffect(() => {
+    if (!statusFilter) {
+      setStatusFilteredClaims([]);
+      return;
+    }
+    let cancelled = false;
+    apiCall(`/claims/?status=${encodeURIComponent(statusFilter)}`)
+      .then(r => r.ok ? r.json() : [])
+      .then(d => { if (!cancelled) setStatusFilteredClaims(Array.isArray(d) ? d : []); })
+      .catch(() => {});
+    return () => { cancelled = true; };
+  }, [statusFilter, token, user?.id]);
+
+  const claimsTableList = activeTab === 'assigned-claims' ? assignedToMe
+    : (statusFilter ? statusFilteredClaims : filteredClaims);
 
   const getRiskBadge = (category, score) => {
     const cat = (category || '').toLowerCase();
