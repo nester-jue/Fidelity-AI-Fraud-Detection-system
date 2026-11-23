@@ -2379,7 +2379,9 @@ function NewClaimPanel({ user }) {
         throw new Error(body.detail || `Server error: ${res.status}`);
       }
       const data = await res.json();
-      setSuccess(data);
+      // Always show a success state after a successful submit — never leave
+      // the page blank even if the response payload is unexpected.
+      setSuccess(data && data.claim_id ? data : { claim_id: '', status: 'submitted', message: 'Claim submitted successfully.' });
       setForm({ policy_number: '', claim_type: '', claim_amount: '', incident_date: '', beneficiary_name: '', description: '' });
       setFiles([]);
     } catch (err) {
