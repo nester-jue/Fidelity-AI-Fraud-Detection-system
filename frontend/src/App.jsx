@@ -298,11 +298,12 @@ export default function App() {
   }, [user, token]); // eslint-disable-line react-hooks/exhaustive-deps
 
   // Enforce role-based sidebar guard: users cannot access other departments'
-  // dashboards even via manual navigation.
+  // dashboards even via manual navigation. 'detail' is a claim-view state (not
+  // a sidebar item) and is allowed through.
   useEffect(() => {
     if (!user) return;
     const sidebar = getSidebar(user.role);
-    if (!sidebar.some(t => t.id === activeTab)) {
+    if (activeTab !== 'detail' && !sidebar.some(t => t.id === activeTab)) {
       setActiveTab(firstVisibleTab(sidebar));
     }
   }, [user, activeTab]);
