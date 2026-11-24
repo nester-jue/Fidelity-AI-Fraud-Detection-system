@@ -9,7 +9,7 @@ import {
   GanttChart, History, Bell, Globe, HeartPulse, ShieldAlert, FileSearch, Database, Link2
 } from 'lucide-react';
 import { apiCall, api } from './api/apiClient.js';
-import Sidebar from './components/shared/Sidebar.jsx';
+import Sidebar, { SIDEBAR_WIDTH_EXPANDED, SIDEBAR_WIDTH_COLLAPSED } from './components/shared/Sidebar.jsx';
 import {
   PendingClaimsPanel, MissingInformationPanel, HighRiskClaimsPanel, EscalatedClaimsPanel,
   AIRiskAnalysisPanel, ClaimAllocationPanel, DepartmentReportsPanel, PerformanceAnalyticsPanel,
@@ -1260,10 +1260,17 @@ export default function App() {
         />
       </header>
 
-      {/* Main Container — shifts right with the collapsible sidebar */}
+      {/* Main Container — shifts right with the collapsible sidebar. The
+          max-width is capped at calc(100% - sidebarWidth) so the content never
+          overflows the viewport on narrow screens (laptop/tablet), where the
+          1280px Tailwind max-width plus the sidebar offset used to exceed the
+          available width. */}
       <main
         className="flex-1 max-w-7xl w-full mx-auto p-4 sm:p-6 lg:p-8 space-y-8 md:transition-all md:duration-200"
-        style={{ marginLeft: desktopViewport ? (sidebarExpanded ? '264px' : '56px') : '0px' }}
+        style={{
+          marginLeft: desktopViewport ? (sidebarExpanded ? SIDEBAR_WIDTH_EXPANDED + 'px' : SIDEBAR_WIDTH_COLLAPSED + 'px') : '0px',
+          maxWidth: desktopViewport ? `calc(100% - ${sidebarExpanded ? SIDEBAR_WIDTH_EXPANDED : SIDEBAR_WIDTH_COLLAPSED}px)` : undefined,
+        }}
       >
 
         {/* ========================================================= */}

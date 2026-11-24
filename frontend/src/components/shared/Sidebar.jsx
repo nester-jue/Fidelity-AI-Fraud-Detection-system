@@ -27,6 +27,11 @@ import { ShieldCheck, ChevronLeft, ChevronRight, User } from 'lucide-react';
 //    nav, with its own scrolling region and a bottom account footer.
 // ---------------------------------------------------------------------------
 
+// Width constants — shared with App.jsx so the main-content offset can never
+// drift away from the real rail width.
+export const SIDEBAR_WIDTH_EXPANDED = 264;
+export const SIDEBAR_WIDTH_COLLAPSED = 56;
+
 const groupSections = (items) => {
   const groups = [];
   for (const item of items) {
@@ -57,7 +62,7 @@ export default function Sidebar({ user, sidebar, activeTab, onTab, expanded, onT
     try { window.localStorage.setItem('nexa_sidebar_groups_closed', JSON.stringify(next)); } catch { /* ignore */ }
   };
 
-  const width = expanded ? 264 : 56;
+  const width = expanded ? SIDEBAR_WIDTH_EXPANDED : SIDEBAR_WIDTH_COLLAPSED;
 
   // In collapsed mode the icon rail is always open — labels are hidden there,
   // so a closed group would make its icons permanently unreachable.
@@ -115,7 +120,7 @@ export default function Sidebar({ user, sidebar, activeTab, onTab, expanded, onT
   // Account footer — shared by the desktop rail and the mobile sheet. Statically
   // positioned so it can never cover or overlap navigation items above it.
   const AccountFooter = () => (
-    <div className={`shrink-0 border-t border-slate-700/60 px-3 py-3 flex ${expanded ? 'items-center gap-2.5' : 'flex-col items-center gap-1'}`}>
+    <div className={`shrink-0 mt-3 border-t border-slate-700/60 px-3 py-3 flex ${expanded ? 'items-center gap-2.5' : 'flex-col items-center gap-1'}`}>
       {expanded ? (
         <div className="flex items-center gap-2 min-w-0 flex-1">
           <div className="w-8 h-8 rounded-lg bg-slate-700/70 flex items-center justify-center font-bold text-xs text-amber-300">
@@ -136,7 +141,7 @@ export default function Sidebar({ user, sidebar, activeTab, onTab, expanded, onT
 
   // Brand header — pinned at the top of the sidebar (first flex child).
   const Header = () => (
-    <div className={`flex items-center justify-between gap-3 px-3 shrink-0 border-b border-slate-700/60 ${expanded ? 'px-4 py-5' : 'py-4 justify-center'}`}>
+    <div className={`relative flex items-center justify-between gap-3 px-3 shrink-0 border-b border-slate-700/60 ${expanded ? 'px-4 py-5' : 'py-4 justify-center'}`}>
       {expanded ? (
         <div className="flex items-center gap-2.5 min-w-0">
           <div className="w-9 h-9 rounded-lg bg-gradient-to-br from-amber-400 to-amber-500 flex items-center justify-center shadow text-slate-900 font-black text-lg">
