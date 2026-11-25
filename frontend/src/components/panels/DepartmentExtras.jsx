@@ -76,7 +76,7 @@ function claimsFetcher() {
 function ClaimsTable({ items, emptyTitle, emptyNote, header, extraRow }) {
   return (
     <div className="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden">
-      <div className="px-6 py-4 bg-slate-50 border-b border-slate-100 text-xs font-extrabold uppercase tracking-wider text-slate-600">{header} ({items.length})</div>
+      <div className="px-6 py-4 bg-slate-50 border-b border-slate-100 text-[13px] sm:text-[15px] font-extrabold uppercase tracking-wider text-slate-600">{header} ({items.length})</div>
       <div className="overflow-x-auto">
         <table className="w-full text-left text-xs">
           <tbody className="divide-y divide-slate-100 font-medium">
@@ -109,7 +109,7 @@ export function PendingClaimsPanel({ user }) {
   const pending = items.filter(c => ['flagged', 'submitted', 'under_investigation', 'pending_documents'].includes((c.status || '').toLowerCase()));
   return (
     <div className="space-y-6 max-w-4xl">
-      <div><h1 className="text-2xl font-extrabold text-slate-900">Pending Claims</h1><p className="text-xs text-slate-500 mt-0.5">Claims awaiting your next action or review</p></div>
+      <div><h1 className="nexa-suite-heading text-slate-900">Pending Claims</h1><p className="text-xs text-slate-500 mt-0.5">Claims awaiting your next action or review</p></div>
       {pending.length === 0 ? <PanelEmpty title="No pending claims" note="All claims in your portfolio are in a state that does not require your attention." /> : (
         <ClaimsTable items={pending} header="Pending Claims" emptyTitle="" emptyNote=""
           extraRow={(c) => (
@@ -157,7 +157,7 @@ export function HighRiskClaimsPanel({ user }) {
   const high = items.filter(c => ['Critical', 'High'].includes(c.risk_category));
   return (
     <div className="space-y-6 max-w-4xl">
-      <div><h1 className="text-2xl font-extrabold text-slate-900">High-Risk Claims</h1><p className="text-xs text-slate-500 mt-0.5">Claims flagged with Critical or High risk by the AI assessment</p></div>
+      <div><h1 className="nexa-suite-heading text-slate-900">High-Risk Claims</h1><p className="text-xs text-slate-500 mt-0.5">Claims flagged with Critical or High risk by the AI assessment</p></div>
       {high.length === 0 ? <PanelEmpty title="No high-risk claims" note="The fraud engine has not flagged any claims as Critical or High at this time." /> : (
         <ClaimsTable items={high} header="High-Risk Claims" emptyTitle="" emptyNote=""
           extraRow={(c) => (
@@ -180,7 +180,7 @@ export function EscalatedClaimsPanel({ user }) {
   const esc = items.filter(c => (c.status || '').toLowerCase() === 'escalated');
   return (
     <div className="space-y-6 max-w-4xl">
-      <div><h1 className="text-2xl font-extrabold text-slate-900">Escalated Claims</h1><p className="text-xs text-slate-500 mt-0.5">Claims escalated for senior review or fraud investigation</p></div>
+      <div><h1 className="nexa-suite-heading text-slate-900">Escalated Claims</h1><p className="text-xs text-slate-500 mt-0.5">Claims escalated for senior review or fraud investigation</p></div>
       {esc.length === 0 ? <PanelEmpty title="No escalated claims" note="There are no escalated claims assigned to the escalation queue at this time." /> : (
         <ClaimsTable items={esc} header="Escalated Claims" emptyTitle="" emptyNote=""
           extraRow={(c) => (
@@ -203,7 +203,7 @@ export function AIRiskAnalysisPanel({ user }) {
   const risky = items.filter(c => ['Critical', 'High'].includes(c.risk_category));
   return (
     <div className="space-y-6 max-w-4xl">
-      <div><h1 className="text-2xl font-extrabold text-slate-900">AI Risk Analysis</h1><p className="text-xs text-slate-500 mt-0.5">AI-assessed claims with significant fraud risk and recommended actions</p></div>
+      <div><h1 className="nexa-suite-heading text-slate-900">AI Risk Analysis</h1><p className="text-xs text-slate-500 mt-0.5">AI-assessed claims with significant fraud risk and recommended actions</p></div>
       {risky.length === 0 ? <PanelEmpty title="No AI risk alerts" note="The AI engine has not produced high-risk assessments for active claims at this time." /> : (
         <ClaimsTable items={risky} header="Claims With High AI Risk" emptyTitle="" emptyNote=""
           extraRow={(c) => (
@@ -227,7 +227,7 @@ export function ClaimAllocationPanel({ user }) {
   const alloc = items.filter(c => ['submitted', 'flagged', 'pending_documents'].includes((c.status || '').toLowerCase()));
   return (
     <div className="space-y-6 max-w-4xl">
-      <div><h1 className="text-2xl font-extrabold text-slate-900">Claim Allocation</h1><p className="text-xs text-slate-500 mt-0.5">Claims ready to be allocated to Case Managers, investigators and relevant departments</p></div>
+      <div><h1 className="nexa-suite-heading text-slate-900">Claim Allocation</h1><p className="text-xs text-slate-500 mt-0.5">Claims ready to be allocated to Case Managers, investigators and relevant departments</p></div>
       {alloc.length === 0 ? <PanelEmpty title="No claims awaiting allocation" note="All received claims have been allocated or cleared." /> : (
         <ClaimsTable items={alloc} header="Claims Awaiting Allocation" emptyTitle="" emptyNote=""
           extraRow={(c) => (
@@ -250,7 +250,7 @@ export function DepartmentReportsPanel({ user }) {
   if (error) return <PanelError error={error} onRetry={retry} />;
   return (
     <div className="space-y-6 max-w-3xl">
-      <div><h1 className="text-2xl font-extrabold text-slate-900">Department Reports</h1><p className="text-xs text-slate-500 mt-0.5">Available management and departmental reports</p></div>
+      <div><h1 className="nexa-suite-heading text-slate-900">Department Reports</h1><p className="text-xs text-slate-500 mt-0.5">Available management and departmental reports</p></div>
       {items.length === 0 ? <PanelEmpty title="No reports available" note="The report generation service has no published reports at this time. Reports are generated on demand through the Management Reports module." /> : (
         <div className="bg-white rounded-2xl border border-slate-200 shadow-sm">
           <div className="px-6 py-4 bg-slate-50 border-b border-slate-100 text-xs font-extrabold uppercase tracking-wider text-slate-600">Available Reports ({items.length})</div>
@@ -282,7 +282,7 @@ export function PerformanceAnalyticsPanel({ user }) {
   ];
   return (
     <div className="space-y-6 max-w-4xl">
-      <div><h1 className="text-2xl font-extrabold text-slate-900">Performance Analytics</h1><p className="text-xs text-slate-500 mt-0.5">Claims, AI analysis coverage and risk workload key performance indicators</p></div>
+      <div><h1 className="nexa-suite-heading text-slate-900">Performance Analytics</h1><p className="text-xs text-slate-500 mt-0.5">Claims, AI analysis coverage and risk workload key performance indicators</p></div>
       {items && stats.length === 0 ? null : (
         <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
           {stats.map(([label, value]) => (

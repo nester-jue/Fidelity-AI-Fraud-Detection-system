@@ -165,7 +165,7 @@ function TableHeader({ children }) {
 
 function Th({ children, className = '' }) {
   return (
-    <th className={`px-4 py-3 text-left text-[10px] font-extrabold uppercase tracking-wider text-slate-500 whitespace-nowrap ${className}`}>
+    <th className={`px-4 py-3 text-left text-[13px] sm:text-[15px] font-extrabold uppercase tracking-wider text-slate-500 whitespace-nowrap ${className}`}>
       {children}
     </th>
   );
@@ -241,7 +241,7 @@ function DashboardTab({ user }) {
       {/* Header */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
         <div>
-          <h1 className="text-lg font-extrabold text-slate-800">Claims Officer Dashboard</h1>
+          <h1 className="nexa-suite-heading text-slate-800">Claims Officer Dashboard</h1>
           <p className="text-xs text-slate-500 mt-0.5">
             Welcome back, <span className="font-semibold text-slate-700">{user?.full_name || user?.username || 'Officer'}</span>
           </p>
@@ -269,7 +269,7 @@ function DashboardTab({ user }) {
                 </div>
                 <div>
                   <p className="text-[10px] font-extrabold uppercase tracking-wider text-slate-500">{k.label}</p>
-                  <p className="text-2xl font-extrabold text-slate-800 mt-0.5">{k.value.toLocaleString()}</p>
+                  <p className="nexa-suite-card mt-0.5">{k.value.toLocaleString()}</p>
                 </div>
               </div>
             ))}
@@ -280,7 +280,7 @@ function DashboardTab({ user }) {
             <div className="px-5 py-4 border-b border-slate-200 flex items-center justify-between">
               <div className="flex items-center gap-2">
                 <ClipboardList className="w-4 h-4 text-blue-500" />
-                <h2 className="text-sm font-extrabold uppercase tracking-wider text-slate-700">Recent Claims</h2>
+                <h2 className="nexa-suite-section text-slate-700">Recent Claims</h2>
               </div>
               <span className="text-xs text-slate-400">{recentClaims.length} claims</span>
             </div>
@@ -479,7 +479,7 @@ function MyClaimsTab() {
 
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
         <div>
-          <h1 className="text-lg font-extrabold text-slate-800">Claims Register</h1>
+          <h1 className="nexa-suite-heading text-slate-800">Claims Register</h1>
           <p className="text-xs text-slate-500 mt-0.5">All submitted claims assigned to your portfolio</p>
         </div>
         <button onClick={load} disabled={loading} className="inline-flex items-center gap-2 px-4 py-2 text-xs font-semibold bg-blue-600 text-white rounded-xl hover:bg-blue-700 disabled:opacity-60 transition-colors shadow-sm">
@@ -660,7 +660,7 @@ function NewClaimTab() {
   return (
     <div className="space-y-6 max-w-3xl">
       <div>
-        <h1 className="text-lg font-extrabold text-slate-800">Register New Claim</h1>
+        <h1 className="nexa-suite-heading text-slate-800">Register New Claim</h1>
         <p className="text-xs text-slate-500 mt-0.5">Complete all required fields to submit a new insurance claim</p>
       </div>
 
@@ -697,7 +697,7 @@ function NewClaimTab() {
         <SectionCard>
           <div className="px-6 py-4 border-b border-slate-200 flex items-center gap-2">
             <FileText className="w-4 h-4 text-blue-500" />
-            <h2 className="text-sm font-extrabold uppercase tracking-wider text-slate-700">Claim Details</h2>
+            <h2 className="nexa-suite-section text-slate-700">Claim Details</h2>
           </div>
           <form onSubmit={handleSubmit} className="p-6 space-y-5">
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
@@ -988,7 +988,7 @@ function FnolTab() {
 
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
         <div>
-          <h1 className="text-lg font-extrabold text-slate-800">FNOL Intake</h1>
+          <h1 className="nexa-suite-heading text-slate-800">FNOL Intake</h1>
           <p className="text-xs text-slate-500 mt-0.5">First Notice of Loss — incoming event notifications</p>
         </div>
         <div className="flex gap-2">
@@ -1162,7 +1162,7 @@ function AiAssessmentTab() {
 
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
         <div>
-          <h1 className="text-lg font-extrabold text-slate-800">AI Risk Assessment</h1>
+          <h1 className="nexa-suite-heading text-slate-800">AI Risk Assessment</h1>
           <p className="text-xs text-slate-500 mt-0.5">Machine-learning fraud scores for all submitted claims</p>
         </div>
         <button onClick={load} disabled={loading} className="inline-flex items-center gap-2 px-4 py-2 text-xs font-semibold bg-blue-600 text-white rounded-xl hover:bg-blue-700 disabled:opacity-60 transition-colors shadow-sm">
@@ -1276,7 +1276,7 @@ function ProfileTab({ user }) {
   return (
     <div className="space-y-6 max-w-xl">
       <div>
-        <h1 className="text-lg font-extrabold text-slate-800">My Profile</h1>
+        <h1 className="nexa-suite-heading text-slate-800">My Profile</h1>
         <p className="text-xs text-slate-500 mt-0.5">Your account information and role details</p>
       </div>
 
