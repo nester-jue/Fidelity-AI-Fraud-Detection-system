@@ -135,7 +135,7 @@ export default function DashboardLayout({ user, activeTab, setActiveTab, onLogou
     <div className="min-h-screen bg-slate-50 flex flex-col font-sans">
       {/* Top Header */}
       <header className="bg-[#0A192F] text-white border-b border-slate-700/80 sticky top-0 z-50 shadow-lg">
-        <div className="px-4 sm:px-6 h-16 flex items-center justify-between">
+        <div className="px-4 sm:px-6 h-16 flex items-center justify-between gap-3 flex-wrap min-w-0">
           {/* Brand */}
           <div className="flex items-center space-x-3">
             <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-amber-500 to-amber-600 flex items-center justify-center shadow-md">
@@ -180,7 +180,7 @@ export default function DashboardLayout({ user, activeTab, setActiveTab, onLogou
 
       <div className="flex flex-1 overflow-hidden">
         {/* Sidebar */}
-        <aside className={`w-56 bg-gradient-to-b ${navConfig.color} flex flex-col flex-shrink-0 overflow-y-auto`}>
+        <aside className={`w-56 bg-gradient-to-b ${navConfig.color} flex flex-col flex-shrink-0 overflow-y-auto min-w-0`}>
           {/* Department label */}
           <div className="px-4 py-4 border-b border-white/10">
             <span className="text-[10px] text-white/50 uppercase font-black tracking-widest">Department</span>
@@ -219,7 +219,7 @@ export default function DashboardLayout({ user, activeTab, setActiveTab, onLogou
         </aside>
 
         {/* Main content area */}
-        <main className="flex-1 overflow-y-auto bg-slate-50 p-5 lg:p-6">
+        <main className="flex-1 min-w-0 overflow-y-auto bg-slate-50 p-5 lg:p-6">
           {children}
         </main>
       </div>

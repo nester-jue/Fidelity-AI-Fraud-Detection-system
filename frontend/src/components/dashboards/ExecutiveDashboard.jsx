@@ -37,11 +37,11 @@ const fmtYmd = (v) => (v ? v.slice(0, 10) : '—');
 
 function KpiCard({ icon: Icon, title, value, trend, colorCls = 'border-t-blue-600', topColor = '#0F2744' }) {
   return (
-    <div className={`bg-white border border-slate-200 rounded-2xl p-5 border-t-4 ${colorCls}`}>
+    <div className={`bg-white border border-slate-200 rounded-2xl p-5 border-t-4 min-w-0 min-h-[140px] ${colorCls}`}>
       <div className="flex items-start justify-between">
         <div>
           <p className="text-[10px] font-extrabold uppercase tracking-wider text-slate-500 mb-1.5">{title}</p>
-          <p className="text-3xl font-extrabold text-slate-900 mt-1 leading-none">{value}</p>
+          <p className="nexa-suite-card text-slate-900 mt-1 leading-tight break-words">{value}</p>
         </div>
         <div className="p-3 rounded-xl bg-slate-50 text-slate-900">
           <Icon className="w-5 h-5" />
@@ -57,7 +57,7 @@ function StatCard({ icon: Icon, title, value, subtitle, colorCls = 'border-t-blu
     <div className={`bg-white p-5 rounded-2xl border border-slate-200 shadow-sm border-t-4 ${colorCls}`}>
       <div className="flex justify-between items-center">
         <div className="p-3 rounded-xl bg-slate-50 text-slate-900"><Icon className="w-5 h-5" /></div>
-        <div className="text-right"><p className="text-3xl font-extrabold text-slate-900 mt-1">{value}</p></div>
+        <div className="text-right min-w-0"><p className="nexa-suite-card text-slate-900 mt-1 break-words">{value}</p></div>
       </div>
       <div className="mt-2">
         <p className="text-[10px] font-extrabold uppercase tracking-wider text-slate-500">{title}</p>
@@ -207,28 +207,75 @@ function ProductAnalysisChart({ rows }) {
   );
 }
 
+// Normalize segment percentages to integers that always sum to 100 when
+// claims exist (largest-remainder method) — the bar segments and labels then
+// reflect the real proportions of the actual fraud-risk classification data.
+function riskDistPct(items, total) {
+  if (!total || !items.length) return items.map(it => ({ ...it, pct: 0 }));
+  const exact = items.map(it => ({ ...it, pct: Number.isFinite(it.count) ? (it.count / total) * 100 : 0 }));
+  const base = exact.map(it => ({ ...it, pct: Math.floor(it.pct) }));
+  let deficit = 100 - base.reduce((a, it) => a + it.pct, 0);
+  const fracOrder = [...exact].map((e, i) => ({ i, frac: e.pct - Math.floor(e.pct) })).sort((a, b) => b.frac - a.frac);
+  let fi = 0;
+  while (deficit > 0 && fracOrder.length) {
+    base[fracOrder[fi % fracOrder.length].i].pct += 1;
+    deficit -= 1;
+    fi += 1;
+  }
+  return base;
+}
+
 function RiskDistributionChart({ riskDist }) {
   const data = riskDist || [];
-  const map = { Critical: { color: '#EF4444', label: 'Critical' }, High: { color: '#F97316', label: 'High' }, Medium: { color: '#F59E0B', label: 'Medium' }, Low: { color: '#10B981', label: 'Low' } };
-  const items = Object.entries(map).map(([k, v]) => {
+  const map = { Critical: { color: '#EF4444', label: 'CRITICAL', icon: AlertTriangle }, High: { color: '#F97316', label: 'HIGH', icon: AlertTriangle }, Medium: { color: '#F59E0B', label: 'MEDIUM', icon: ShieldCheck }, Low: { color: '#10B981', label: 'LOW', icon: ShieldCheck } };
+  const rawItems = Object.entries(map).map(([k, v]) => {
     const row = data.find(d => (d.name || '').startsWith(k));
-    return { ...v, count: row?.count || 0, pct: row?.percentage || 0 };
-  }).filter(x => x.count > 0);
-  const max = Math.max(...items.map(x => x.count), 1);
-  const W = 620, H = 96;
-  const padL = 70;
+    return { ...v, key: k, label: row?.name?.split('(')[0]?.trim() || v.label, count: row?.count || 0, color: row?.color || v.color };
+  });
+  const total = rawItems.reduce((a, it) => a + (it.count || 0), 0);
+  const items = riskDistPct(rawItems, total);
+  const hasData = items.some(x => (x.count || 0) > 0) || data.length > 0;
+  if (!hasData) {
+    return (
+      <div className="w-full min-w-0" role="status" aria-label="Fraud risk distribution">
+        <h3 className="nexa-suite-section text-slate-700 mb-3 flex items-center gap-2"><ShieldCheck size={16} className="text-red-600" />Fraud Risk Distribution</h3>
+        <div className="bg-slate-100 rounded-xl py-10 text-center text-sm font-semibold text-slate-500 border border-dashed border-slate-300">No risk distribution data available.</div>
+      </div>
+    );
+  }
+  const W = 620, H = 80;
+  const barW = 460;
+  const prefix = [];
+  items.reduce((a, it, i) => { prefix.push(a); return a + it.pct; }, 0);
   return (
-    <svg viewBox={`0 0 ${W} ${H}`} className="w-full h-[96px]" role="img" aria-label="Fraud risk distribution">
-      {items.map((it, i) => (
-        <g key={it.label} transform={`translate(${padL}, 0)`}>
-          <rect x={0} y={8} width={((it.count / max) * 460)} height={16} fill={it.color} rx="8" />
-          <text x={(it.count / max) * 460 + 6} y={22} fontSize="8" fontWeight="bold" fill={it.color}>{num(it.count)}</text>
-          <text x={0} y={38} fontSize="8" fontWeight="bold" fill="#475569">{it.label}</text>
-          <text x={0} y={51} fontSize="7" fill="#94A3B8">{fmtPct(it.pct)} of assessed</text>
-        </g>
-      ))}
-      {items.length === 0 && <text x={14} y={16} fontSize="9" fill="#94A3B8">No risk distribution data available.</text>}
-    </svg>
+    <div className="w-full min-w-0 space-y-3" role="region" aria-label="Fraud risk distribution">
+      <h3 className="nexa-suite-section text-slate-700 flex items-center gap-2"><ShieldCheck size={16} className="text-red-600" />Fraud Risk Distribution</h3>
+      {/* Bar — proportional to the real normalized percentages; segments carry tooltips */}
+      <svg viewBox={`0 0 ${W} ${H}`} className="w-full h-[80px] block" role="img" aria-label="Fraud risk distribution segments">
+        {items.map((it, i) => (
+          <g key={it.key}>
+            <title>{`${it.label} — ${num(it.count)} claims (${it.pct}% of total)`}</title>
+            <rect x={prefix[i]} y={8} width={Math.max((it.pct / 100) * barW, 2)} height={16} fill={it.color} rx="8">
+              <title>{`${it.label}: ${num(it.count)} claims — ${it.pct}% of total`}</title>
+            </rect>
+          </g>
+        ))}
+      </svg>
+      {/* Readable labels under the bar — category, claims count, % of total */}
+      <div className="grid grid-cols-2 md:grid-cols-4 gap-3 min-w-0">
+        {items.map(it => (
+          <div
+            key={it.key}
+            className="bg-white rounded-xl border border-slate-200 p-3 shadow-sm min-w-0"
+            title={`${it.label} — ${num(it.count)} claims (${it.pct}% of total)`}
+          >
+            <p className="text-[10px] font-bold uppercase tracking-wide break-words" style={{ color: it.color }}>{it.label}</p>
+            <p className="text-lg font-extrabold text-slate-900 mt-1 leading-tight break-words">{num(it.count)} <span className="text-sm font-normal text-slate-500">claims</span></p>
+            <p className="text-sm font-semibold text-slate-600 mt-0.5 break-words">{it.pct}% of total</p>
+          </div>
+        ))}
+      </div>
+    </div>
   );
 }
 
@@ -423,12 +470,12 @@ function PriorityQueue({ queue, total, onOpen }) {
   };
   return (
     <div className="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden">
-      <div className="px-6 py-4 bg-slate-50 border-b border-slate-100 flex flex-col sm:flex-row sm:items-center justify-between gap-2">
-        <h3 className="text-sm font-extrabold text-slate-900 uppercase tracking-wider flex items-center gap-2"><AlertTriangle size={16} className="text-red-500" /><span>Priority Suspicious Claims Queue</span></h3>
+      <div className="px-6 py-4 bg-slate-50 border-b border-slate-100 flex flex-col sm:flex-row sm:items-center justify-between gap-2 min-w-0">
+        <h3 className="nexa-suite-section text-slate-900 flex items-center gap-2"><AlertTriangle size={16} className="text-red-500" /><span>Priority Suspicious Claims Queue</span></h3>
         <p className="text-xs text-slate-500 font-bold">{total} flagged claims awaiting review</p>
       </div>
-      <div className="overflow-x-auto">
-        <table className="w-full text-left text-xs">
+      <div className="overflow-x-auto min-w-[max-content]">
+        <table className="w-full min-w-max-content text-left text-xs">
           <thead className="bg-slate-50 text-slate-500 uppercase font-bold border-b border-slate-200">
             <tr>
               <th className="py-3 px-4">Claim ID</th>
@@ -793,7 +840,7 @@ export default function ExecutiveDashboard({ activeTab }) {
         <div className="space-y-8">
           <section>
             <div className="flex items-center gap-3 mb-3">
-              <h2 className="text-sm font-extrabold text-slate-900 uppercase tracking-wider flex items-center gap-2"><LineChart size={16} className="text-red-500" /><span>Monthly Fraud Trends</span></h2>
+              <h2 className="nexa-suite-section text-slate-900 uppercase flex items-center gap-2"><LineChart size={16} className="text-red-500" /><span>Monthly Fraud Trends</span></h2>
               <p className="text-xs text-slate-500">Compare submissions vs suspected/confirmed claims vs exposure — month-over-month changes.</p>
             </div>
             <div className="flex gap-3 mb-4 flex-wrap">
@@ -812,7 +859,7 @@ export default function ExecutiveDashboard({ activeTab }) {
 
           <section>
             <div className="flex items-center gap-3 mb-3">
-              <h2 className="text-sm font-extrabold text-slate-900 uppercase tracking-wider flex items-center gap-2"><TrendingUp size={16} className="text-red-500" /><span>Year-over-Year Financial Exposure</span></h2>
+              <h2 className="nexa-suite-section text-slate-900 uppercase flex items-center gap-2"><TrendingUp size={16} className="text-red-500" /><span>Year-over-Year Financial Exposure</span></h2>
             </div>
             <YoYExposureChart rows={yearly} />
             {yearly.length === 0 && <EmptyState icon={TrendingUp} title="No yearly exposure data" note="Annual exposure is derived from claim submission dates." />}
@@ -820,21 +867,21 @@ export default function ExecutiveDashboard({ activeTab }) {
 
           <section>
             <div className="flex items-center gap-3 mb-3">
-              <h2 className="text-sm font-extrabold text-slate-900 uppercase tracking-wider flex items-center gap-2"><Flag size={16} className="text-red-500" /><span>Insurance Product Fraud Analysis</span></h2>
+              <h2 className="nexa-suite-section text-slate-900 uppercase flex items-center gap-2"><Flag size={16} className="text-red-500" /><span>Insurance Product Fraud Analysis</span></h2>
             </div>
             <ProductAnalysisChart rows={products} />
           </section>
 
           <section>
             <div className="flex items-center gap-3 mb-3">
-              <h2 className="text-sm font-extrabold text-slate-900 uppercase tracking-wider flex items-center gap-2"><ShieldAlert size={16} className="text-red-500" /><span>Fraud Risk Distribution</span></h2>
+              <h2 className="nexa-suite-section text-slate-900 uppercase flex items-center gap-2"><ShieldAlert size={16} className="text-red-500" /><span>Fraud Risk Distribution</span></h2>
             </div>
             <RiskDistributionChart riskDist={riskDist} />
           </section>
 
           <section>
             <div className="flex items-center gap-3 mb-3">
-              <h2 className="text-sm font-extrabold text-slate-900 uppercase tracking-wider flex items-center gap-2"><Activity size={16} className="text-red-500" /><span>Departmental Fraud Performance</span></h2>
+              <h2 className="nexa-suite-section text-slate-900 uppercase flex items-center gap-2"><Activity size={16} className="text-red-500" /><span>Departmental Fraud Performance</span></h2>
             </div>
             <Table
               headers={['Department', 'Active Claims', 'Investigations', 'Open', 'In Review', 'Confirmed Fraud', 'Cleared']}
@@ -928,7 +975,7 @@ export default function ExecutiveDashboard({ activeTab }) {
             <KpiCard icon={ShieldCheck} title="AI Coverage Rate" value={fmtPct(perf.ai_coverage_rate)} colorCls="border-t-purple-500" />
           </div>
           <div className="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden">
-            <div className="p-4 border-b border-slate-200 flex items-center gap-2"><AlertTriangle size={15} className="text-amber-500" /><h3 className="text-sm font-extrabold text-slate-700 uppercase tracking-wider">Claims Performance Breakdown</h3></div>
+            <div className="p-4 border-b border-slate-200 flex items-center gap-2 min-w-0"><AlertTriangle size={15} className="text-amber-500" /><h3 className="nexa-suite-section text-slate-700 uppercase min-w-0">Claims Performance Breakdown</h3></div>
             <div className="overflow-x-auto">
               <table className="w-full text-left text-xs">
                 <thead className="bg-slate-50 text-slate-500 uppercase font-bold border-b border-slate-200"><tr><th className="py-3 px-4">Claim ID</th><th className="py-3 px-4">Policyholder</th><th className="py-3 px-4">Product</th><th className="py-3 px-4">Amount</th><th className="py-3 px-4">Risk Assessment</th><th className="py-3 px-4">Primary Anomaly</th></tr></thead>
@@ -954,7 +1001,7 @@ export default function ExecutiveDashboard({ activeTab }) {
     // executive-overview (default)
     return (
       <div className="space-y-8">
-        <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-8 gap-4">
+        <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-8 gap-4 min-w-0">
           <KpiCard icon={DollarSign} title="Total Financial Exposure" value={money(kpis?.total_financial_exposure)} colorCls="border-t-blue-600" />
           <KpiCard icon={CheckCircle} title="Total Confirmed Fraud Losses" value={money(kpis?.total_confirmed_fraud_losses)} colorCls="border-t-red-600" />
           <KpiCard icon={ShieldCheck} title="Losses Prevented (Verified)" value={money(kpis?.total_losses_prevented)} subtitle={`${preventShare}% of exposure`} colorCls="border-t-emerald-600" />
@@ -965,17 +1012,17 @@ export default function ExecutiveDashboard({ activeTab }) {
           <KpiCard icon={PieChart} title="Overall Fraud Risk %" value={fmtPct(kpis?.overall_fraud_risk_percentage)} colorCls="border-t-amber-500" />
         </div>
 
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-          <div className="bg-white rounded-2xl border border-slate-200 p-5 space-y-2">
-            <div className="flex justify-between items-center">
-              <h3 className="text-sm font-extrabold text-slate-700 uppercase tracking-wider flex items-center gap-2"><AlertTriangle size={15} className="text-red-500" />Priority Suspicious Claims Queue</h3>
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 min-w-0">
+          <div className="min-w-0">
+            <div className="flex justify-between items-center pb-3">
+              <h3 className="nexa-suite-section text-slate-700 uppercase flex items-center gap-2"><AlertTriangle size={15} className="text-red-500" />Priority Suspicious Claims Queue</h3>
               <span className="text-xs text-slate-500 font-bold">{suspicions.length} queued</span>
             </div>
             <PriorityQueue queue={suspicions} total={suspicions.length} onOpen={(id) => { setViewedClaimId(id); setClaimModalOpen(true); }} />
           </div>
-          <div className="bg-white rounded-2xl border border-slate-200 p-5 space-y-2">
-            <div className="flex justify-between items-center">
-              <h3 className="text-sm font-extrabold text-slate-700 uppercase tracking-wider flex items-center gap-2"><ShieldCheck size={15} className="text-red-500" />AI Fraud Intelligence Snapshot</h3>
+          <div className="min-w-0">
+            <div className="flex justify-between items-center pb-3">
+              <h3 className="nexa-suite-section text-slate-700 uppercase flex items-center gap-2"><ShieldCheck size={15} className="text-red-500" />AI Fraud Intelligence Snapshot</h3>
               <button onClick={loadInsights} className="text-xs text-slate-400 hover:text-slate-700"><RotateCw size={13} /></button>
             </div>
             <div className="space-y-2">
@@ -990,7 +1037,7 @@ export default function ExecutiveDashboard({ activeTab }) {
           </div>
         </div>
 
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 min-w-0">
           <RiskDistributionChart riskDist={riskDist} />
           <Table
             headers={['Department', 'Active Claims', 'Users', 'Open', 'In Review', 'Confirmed Fraud', 'Cleared']}
@@ -1009,7 +1056,7 @@ export default function ExecutiveDashboard({ activeTab }) {
 
         <section>
           <div className="flex items-center gap-3 mb-3">
-            <h2 className="text-sm font-extrabold text-slate-900 uppercase tracking-wider flex items-center gap-2"><LineChart size={16} className="text-red-500" /><span>Monthly Fraud Trends</span></h2>
+            <h2 className="nexa-suite-section text-slate-900 uppercase flex items-center gap-2"><LineChart size={16} className="text-red-500" /><span>Monthly Fraud Trends</span></h2>
             <p className="text-xs text-slate-500">Submissions vs suspected/confirmed claims — month-over-month change.</p>
           </div>
           <MonthlyTrendsChart trends={monthly} />
@@ -1023,7 +1070,7 @@ export default function ExecutiveDashboard({ activeTab }) {
 
         <section>
           <div className="flex items-center gap-3 mb-3">
-            <h2 className="text-sm font-extrabold text-slate-900 uppercase tracking-wider flex items-center gap-2"><TrendingUp size={16} className="text-red-500" /><span>Year-over-Year Financial Exposure</span></h2>
+            <h2 className="nexa-suite-section text-slate-900 uppercase flex items-center gap-2"><TrendingUp size={16} className="text-red-500" /><span>Year-over-Year Financial Exposure</span></h2>
           </div>
           <YoYExposureChart rows={yearly} />
           {yearly.length === 0 && <EmptyState icon={TrendingUp} title="No yearly exposure data" note="Annual exposure is derived from claim submission dates." />}
@@ -1032,7 +1079,7 @@ export default function ExecutiveDashboard({ activeTab }) {
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
           <div>
             <div className="flex items-center gap-3 mb-3">
-              <h2 className="text-sm font-extrabold text-slate-900 uppercase tracking-wider flex items-center gap-2"><Flag size={16} className="text-red-500" /><span>Insurance Product Fraud Analysis</span></h2>
+              <h2 className="nexa-suite-section text-slate-900 uppercase flex items-center gap-2"><Flag size={16} className="text-red-500" /><span>Insurance Product Fraud Analysis</span></h2>
             </div>
             <ProductAnalysisChart rows={products} />
           </div>
@@ -1066,10 +1113,10 @@ export default function ExecutiveDashboard({ activeTab }) {
     <div className="space-y-6">
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
         <div>
-          <h1 className="text-2xl font-extrabold text-slate-900">Executive Management Suite — Fraud Intelligence & Decision Support</h1>
+          <h1 className="nexa-suite-heading text-slate-900">Executive Management Suite — Fraud Intelligence & Decision Support</h1>
           <p className="text-xs text-slate-500 mt-0.5">High-level organisational intelligence — fraud trends, financial exposure, product risk, AI insights, loss prevention & executive reporting</p>
         </div>
-        <div className="flex gap-2 flex-wrap">
+        <div className="flex gap-3 flex-wrap min-w-0">
           {[
             { id: 'executive-overview', label: 'Dashboard', icon: MapPinned },
             { id: 'claims-performance', label: 'Claims Performance', icon: TrendingUp },
@@ -1080,7 +1127,7 @@ export default function ExecutiveDashboard({ activeTab }) {
             { id: 'management-reports', label: 'Executive Reports', icon: FileText },
           ].map(t => (
             <button key={t.id} onClick={() => setTab(t.id)}
-              className={`px-4 py-2 text-xs font-bold rounded-xl transition-colors flex items-center gap-1.5 ${tab === t.id ? 'bg-[#0F2744] text-white' : 'bg-white text-slate-600 hover:bg-slate-50 border border-slate-200'}`}>
+              className={`shrink-0 px-4 py-2 text-xs font-bold rounded-xl transition-colors flex items-center gap-1.5 ${tab === t.id ? 'bg-[#0F2744] text-white' : 'bg-white text-slate-600 hover:bg-slate-50 border border-slate-200'}`}>
               <t.icon size={13} className={tab === t.id ? '' : 'opacity-50'} /> {t.label}
             </button>
           ))}

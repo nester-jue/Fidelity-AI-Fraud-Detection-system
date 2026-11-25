@@ -116,6 +116,14 @@ html {
 .nexa-secondary   { font-size: var(--fs-secondary); }
 .nexa-report      { font-family: var(--font-formal);  font-size: var(--fs-formal); line-height: var(--lh-formal); font-weight: 400; overflow-wrap: anywhere; }
 
+/* ── Executive Management Suite typography ───────────────────────────────
+   Times New Roman (--font-formal) at suite sizes: main headings 24–28px,
+   section headings 17–20px, dashboard card values 23–28px. Used by the
+   suite headings and card values; tables stay in Inter for readability. */
+.nexa-suite-heading { font-family: var(--font-formal); font-size: clamp(24px, 2vw, 28px);  font-weight: 700; line-height: 1.3; overflow-wrap: anywhere; }
+.nexa-suite-section { font-family: var(--font-formal); font-size: clamp(17px, 1.3vw, 20px); font-weight: 600; line-height: 1.35; }
+.nexa-suite-card    { font-family: var(--font-formal); font-size: clamp(23px, 1.8vw, 28px); font-weight: 800; line-height: 1.2; }
+
 button, input {
   font: inherit;
 }
