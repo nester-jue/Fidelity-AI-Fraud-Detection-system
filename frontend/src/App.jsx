@@ -1286,7 +1286,7 @@ export default function App() {
                     <span className="w-2 h-2 rounded-full bg-amber-500 animate-pulse"></span>
                     <span>FIDELITY LIFE ASSURANCE &bull; EXECUTIVE FRAUD SURVEILLANCE</span>
                   </div>
-                  <h1 className="text-2xl sm:text-3xl lg:text-4xl font-extrabold text-slate-900 tracking-tight leading-tight">
+                  <h1 className="nexa-suite-heading font-extrabold text-slate-900 tracking-tight leading-tight">
                     Executive Claims & Fraud Intelligence Suite
                   </h1>
                   <div className="mt-3 flex items-center space-x-2">
@@ -1328,7 +1328,7 @@ export default function App() {
             <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
               <div className="bg-white p-5 rounded-2xl border border-slate-200 shadow-sm border-t-4 border-t-[#0F2744]">
                 <span className="text-[11px] font-bold uppercase tracking-wider text-slate-500">Total Claims</span>
-                <p className="text-3xl font-black text-slate-900 mt-2">{kpis?.total_claims_received ?? '—'}</p>
+                <p className="nexa-suite-card mt-2">{kpis?.total_claims_received ?? '—'}</p>
                 <div className="text-[11px] text-emerald-600 font-bold mt-2 flex items-center space-x-1">
                   <TrendingUp size={13} />
                   <span>Active Portfolio</span>
@@ -1337,7 +1337,7 @@ export default function App() {
 
               <div className="bg-white p-5 rounded-2xl border border-slate-200 shadow-sm border-t-4 border-t-purple-600">
                 <span className="text-[11px] font-bold uppercase tracking-wider text-slate-500">AI Analysed</span>
-                <p className="text-3xl font-black text-purple-700 mt-2">{kpis?.claims_analysed_by_ai ?? '—'}</p>
+                <p className="nexa-suite-card mt-2">{kpis?.claims_analysed_by_ai ?? '—'}</p>
                 <div className="text-[11px] text-slate-500 font-bold mt-2">
                   <span>{kpis?.ai_coverage_rate ?? 100}% Coverage</span>
                 </div>
@@ -1345,13 +1345,13 @@ export default function App() {
 
               <div className="bg-white p-5 rounded-2xl border border-slate-200 shadow-sm border-t-4 border-t-red-600">
                 <span className="text-[11px] font-bold uppercase tracking-wider text-slate-500">Critical Risk</span>
-                <p className="text-3xl font-black text-red-600 mt-2">{kpis?.critical_risk_claims ?? '—'}</p>
+                <p className="nexa-suite-card mt-2">{kpis?.critical_risk_claims ?? '—'}</p>
                 <div className="text-[11px] text-red-700 font-extrabold mt-2 uppercase">Payment Hold</div>
               </div>
 
               <div className="bg-white p-5 rounded-2xl border border-amber-200 shadow-sm border-t-4 border-t-amber-500 bg-gradient-to-br from-white to-amber-50/40">
                 <span className="text-[11px] font-bold uppercase tracking-wider text-amber-800">Losses Prevented</span>
-                <p className="text-2xl sm:text-3xl font-black text-slate-950 mt-2">
+                <p className="text-nexaDisplay font-black text-slate-950 mt-2">
                   ${kpis ? Number(kpis.prevented_fraud_losses_usd).toLocaleString() : '0'}
                 </p>
                 <div className="text-[11px] text-emerald-700 font-extrabold mt-2 flex items-center space-x-1">
@@ -1410,7 +1410,7 @@ export default function App() {
 
                 <div className="overflow-x-auto">
                   <table className="w-full text-left text-xs">
-                    <thead className="bg-slate-50 text-slate-500 uppercase font-bold border-b border-slate-200">
+                    <thead className="bg-slate-50 text-slate-500 text-nexaTable uppercase font-bold border-b border-slate-200">
                       <tr>
                         <th className="py-2.5 px-3">Claim ID</th>
                         <th className="py-2.5 px-3">Policyholder</th>
@@ -1459,7 +1459,7 @@ export default function App() {
                     <Layers size={14} className="text-amber-600" />
                     <span>SECTION 4.4 &bull; FIRST NOTICE OF LOSS (FNOL) INTAKE</span>
                   </div>
-                  <h1 className="text-2xl sm:text-3xl lg:text-4xl font-extrabold text-slate-900 tracking-tight leading-tight">
+                  <h1 className="text-nexaDisplay font-extrabold text-slate-900 tracking-tight leading-tight">
                     First Notice of Loss (FNOL) Intake & Triage
                   </h1>
                   <div className="mt-3 flex items-center space-x-2">
@@ -1488,7 +1488,7 @@ export default function App() {
               </div>
               <div className="overflow-x-auto">
                 <table className="w-full text-left text-xs">
-                  <thead className="bg-slate-50 text-slate-500 uppercase font-bold border-b border-slate-200">
+                  <thead className="bg-slate-50 text-slate-500 text-nexaTable uppercase font-bold border-b border-slate-200">
                     <tr>
                       <th className="py-3 px-4">FNOL Ref #</th>
                       <th className="py-3 px-4">Associated Claim</th>
@@ -1505,20 +1505,20 @@ export default function App() {
                   <tbody className="divide-y divide-slate-100 font-medium">
                     {fnolList.map((f, i) => (
                       <tr key={i} className="hover:bg-slate-50 transition">
-                        <td className="py-3 px-4 font-mono font-bold text-amber-700">{f.fnol_reference}</td>
-                        <td className="py-3 px-4 font-mono font-bold text-blue-900 cursor-pointer hover:underline" onClick={() => { fetchClaimDetail(f.claim_id); setActiveTab('detail'); }}>{f.claim_id}</td>
-                        <td className="py-3 px-4 font-mono text-slate-600">{f.policy_number}</td>
-                        <td className="py-3 px-4 font-bold text-slate-800">{f.claimant_name}</td>
-                        <td className="py-3 px-4">{f.event_type}</td>
-                        <td className="py-3 px-4 font-mono text-slate-500">{f.incident_date}</td>
-                        <td className="py-3 px-4"><span className="px-2 py-0.5 rounded-full bg-slate-100 text-slate-700 text-[10px] font-bold">{f.reporting_channel}</span></td>
-                        <td className="py-3 px-4 font-mono font-bold">${Number(f.estimated_amount).toLocaleString()}</td>
-                        <td className="py-3 px-4">
+                        <td className="text-nexaTable py-3 px-4 font-mono font-bold text-amber-700">{f.fnol_reference}</td>
+                        <td className="text-nexaTable py-3 px-4 font-mono font-bold text-blue-900 cursor-pointer hover:underline" onClick={() => { fetchClaimDetail(f.claim_id); setActiveTab('detail'); }}>{f.claim_id}</td>
+                        <td className="text-nexaTable py-3 px-4 font-mono text-slate-600">{f.policy_number}</td>
+                        <td className="text-nexaTable py-3 px-4 font-bold text-slate-800">{f.claimant_name}</td>
+                        <td className="text-nexaTable py-3 px-4">{f.event_type}</td>
+                        <td className="text-nexaTable py-3 px-4 font-mono text-slate-500">{f.incident_date}</td>
+                        <td className="text-nexaTable py-3 px-4"><span className="px-2 py-0.5 rounded-full bg-slate-100 text-slate-700 text-[10px] font-bold">{f.reporting_channel}</span></td>
+                        <td className="text-nexaTable py-3 px-4 font-mono font-bold">${Number(f.estimated_amount).toLocaleString()}</td>
+                        <td className="text-nexaTable py-3 px-4">
                           <span className={`px-2 py-0.5 rounded text-[10px] font-bold ${f.initial_triage?.includes('SIU') ? 'bg-red-100 text-red-800' : 'bg-emerald-100 text-emerald-800'}`}>
                             {f.initial_triage}
                           </span>
                         </td>
-                        <td className="py-3 px-4"><span className="px-2 py-0.5 rounded text-[10px] font-bold bg-blue-100 text-blue-800">{f.status}</span></td>
+                        <td className="text-nexaTable py-3 px-4"><span className="px-2 py-0.5 rounded text-[10px] font-bold bg-blue-100 text-blue-800">{f.status}</span></td>
                       </tr>
                     ))}
                   </tbody>
@@ -1540,7 +1540,7 @@ export default function App() {
                     <FileText size={14} className="text-blue-900" />
                     <span>CLAIMS LIFECYCLE & RISK REGISTER</span>
                   </div>
-                  <h1 className="text-2xl sm:text-3xl lg:text-4xl font-extrabold text-slate-900 tracking-tight leading-tight">
+                  <h1 className="nexa-suite-heading font-extrabold text-slate-900 tracking-tight leading-tight">
                     Claims Processing & Comprehensive Risk Register
                   </h1>
                   <div className="mt-3 flex items-center space-x-2">
@@ -1612,7 +1612,7 @@ export default function App() {
             <div className="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden">
               <div className="overflow-x-auto">
                 <table className="w-full text-left text-xs">
-                  <thead className="bg-slate-50 text-slate-500 uppercase font-bold border-b border-slate-200">
+                  <thead className="bg-slate-50 text-slate-500 text-[13px] sm:text-[15px] uppercase font-bold border-b border-slate-200">
                     <tr>
                       <th className="py-3.5 px-4">Claim ID</th>
                       <th className="py-3.5 px-4">Policy #</th>
@@ -1628,15 +1628,15 @@ export default function App() {
                   <tbody className="divide-y divide-slate-100 font-medium">
                     {claimsTableList.map((c, i) => (
                       <tr key={i} className="hover:bg-slate-50 transition cursor-pointer" onClick={() => { fetchClaimDetail(c.claim_id); setActiveTab('detail'); }}>
-                        <td className="py-3 px-4 font-mono font-bold text-slate-900">{c.claim_id}</td>
-                        <td className="py-3 px-4 font-mono text-slate-600">{c.policy_number}</td>
-                        <td className="py-3 px-4 font-semibold text-slate-800">{c.customer_name}</td>
-                        <td className="py-3 px-4">{c.claim_type}</td>
-                        <td className="py-3 px-4 font-mono font-bold">${Number(c.amount).toLocaleString()}</td>
-                        <td className="py-3 px-4 text-slate-500 font-mono">{c.incident_date?.slice(0, 10)}</td>
-                        <td className="py-3 px-4">{getRiskBadge(c.risk_category, c.risk_score)}</td>
-                        <td className="py-3 px-4"><span className="px-2 py-0.5 rounded text-[10px] font-bold uppercase bg-slate-100 text-slate-700">{c.status}</span></td>
-                        <td className="py-3 px-4 text-right">
+                        <td className="text-nexaTable py-3 px-4 font-mono font-bold text-slate-900">{c.claim_id}</td>
+                        <td className="text-nexaTable py-3 px-4 font-mono text-slate-600">{c.policy_number}</td>
+                        <td className="text-nexaTable py-3 px-4 font-semibold text-slate-800">{c.customer_name}</td>
+                        <td className="text-nexaTable py-3 px-4">{c.claim_type}</td>
+                        <td className="text-nexaTable py-3 px-4 font-mono font-bold">${Number(c.amount).toLocaleString()}</td>
+                        <td className="text-nexaTable py-3 px-4 text-slate-500 font-mono">{c.incident_date?.slice(0, 10)}</td>
+                        <td className="text-nexaTable py-3 px-4">{getRiskBadge(c.risk_category, c.risk_score)}</td>
+                        <td className="text-nexaTable py-3 px-4"><span className="px-2 py-0.5 rounded text-[10px] font-bold uppercase bg-slate-100 text-slate-700">{c.status}</span></td>
+                        <td className="text-nexaTable py-3 px-4 text-right">
                           <button
                             onClick={(e) => { e.stopPropagation(); fetchClaimDetail(c.claim_id); setActiveTab('detail'); }}
                             className="px-3 py-1 rounded-xl bg-[#0F2744] text-white text-[11px] font-bold hover:bg-[#1B3A57] shadow-sm"
@@ -1847,7 +1847,7 @@ export default function App() {
                     <ShieldCheck size={14} className="text-red-600" />
                     <span>SPECIAL INVESTIGATION UNIT (SIU) &bull; CASE WORKSPACE</span>
                   </div>
-                  <h1 className="text-2xl sm:text-3xl lg:text-4xl font-extrabold text-slate-900 tracking-tight leading-tight">
+                  <h1 className="text-nexaDisplay font-extrabold text-slate-900 tracking-tight leading-tight">
                     Fraud Investigation Case Management Workspace
                   </h1>
                   <div className="mt-3 flex items-center space-x-2">
@@ -1865,7 +1865,7 @@ export default function App() {
             <div className="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden">
               <div className="overflow-x-auto">
                 <table className="w-full text-left text-xs">
-                  <thead className="bg-slate-50 text-slate-500 uppercase font-bold border-b border-slate-200">
+                  <thead className="bg-slate-50 text-slate-500 text-nexaTable uppercase font-bold border-b border-slate-200">
                     <tr>
                       <th className="py-3.5 px-4">Case #</th>
                       <th className="py-3.5 px-4">Target Claim</th>
@@ -1881,15 +1881,15 @@ export default function App() {
                   <tbody className="divide-y divide-slate-100 font-medium">
                     {investigationsList.map((inv, i) => (
                       <tr key={i} className="hover:bg-slate-50 transition">
-                        <td className="py-3 px-4 font-mono font-bold text-slate-900">INV-{inv.id}</td>
-                        <td className="py-3 px-4 font-mono font-bold text-blue-900 cursor-pointer hover:underline" onClick={() => { fetchClaimDetail(inv.claim_id); setActiveTab('detail'); }}>{inv.claim_id}</td>
-                        <td className="py-3 px-4 font-semibold text-slate-800">{inv.customer_name}</td>
-                        <td className="py-3 px-4 font-mono font-bold">${Number(inv.claim_amount).toLocaleString()}</td>
-                        <td className="py-3 px-4">{getRiskBadge(inv.risk_category, inv.risk_score)}</td>
-                        <td className="py-3 px-4 text-slate-600 font-medium">{inv.investigator}</td>
-                        <td className="py-3 px-4"><span className="px-2 py-0.5 rounded text-[10px] font-bold uppercase bg-slate-100 text-slate-700">{inv.status}</span></td>
-                        <td className="py-3 px-4 text-slate-600 truncate max-w-xs">{inv.notes}</td>
-                        <td className="py-3 px-4 text-right">
+                        <td className="text-nexaTable py-3 px-4 font-mono font-bold text-slate-900">INV-{inv.id}</td>
+                        <td className="text-nexaTable py-3 px-4 font-mono font-bold text-blue-900 cursor-pointer hover:underline" onClick={() => { fetchClaimDetail(inv.claim_id); setActiveTab('detail'); }}>{inv.claim_id}</td>
+                        <td className="text-nexaTable py-3 px-4 font-semibold text-slate-800">{inv.customer_name}</td>
+                        <td className="text-nexaTable py-3 px-4 font-mono font-bold">${Number(inv.claim_amount).toLocaleString()}</td>
+                        <td className="text-nexaTable py-3 px-4">{getRiskBadge(inv.risk_category, inv.risk_score)}</td>
+                        <td className="text-nexaTable py-3 px-4 text-slate-600 font-medium">{inv.investigator}</td>
+                        <td className="text-nexaTable py-3 px-4"><span className="px-2 py-0.5 rounded text-[10px] font-bold uppercase bg-slate-100 text-slate-700">{inv.status}</span></td>
+                        <td className="text-nexaTable py-3 px-4 text-slate-600 truncate max-w-xs">{inv.notes}</td>
+                        <td className="text-nexaTable py-3 px-4 text-right">
                           <button
                             onClick={() => {
                               setInvCaseData({
@@ -1931,7 +1931,7 @@ export default function App() {
                     <Sliders size={14} className="text-emerald-600" />
                     <span>SECTION 10 & 11 &bull; MODEL GOVERNANCE & FALSE-POSITIVE DRIFT</span>
                   </div>
-                  <h1 className="text-2xl sm:text-3xl lg:text-4xl font-extrabold text-slate-900 tracking-tight leading-tight">
+                  <h1 className="text-nexaDisplay font-extrabold text-slate-900 tracking-tight leading-tight">
                     AI Model Governance & False-Positive Monitoring
                   </h1>
                   <div className="mt-3 flex items-center space-x-2">
@@ -1949,19 +1949,19 @@ export default function App() {
             <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
               <div className="bg-white p-5 rounded-2xl border border-slate-200 shadow-sm">
                 <span className="text-xs font-bold uppercase tracking-wider text-slate-500">Model Precision</span>
-                <p className="text-3xl font-black text-emerald-600 mt-2">94.6%</p>
+                <p className="text-nexaFigure text-emerald-600 mt-2">94.6%</p>
               </div>
               <div className="bg-white p-5 rounded-2xl border border-slate-200 shadow-sm">
                 <span className="text-xs font-bold uppercase tracking-wider text-slate-500">Model Recall</span>
-                <p className="text-3xl font-black text-blue-600 mt-2">92.1%</p>
+                <p className="text-nexaFigure text-blue-600 mt-2">92.1%</p>
               </div>
               <div className="bg-white p-5 rounded-2xl border border-slate-200 shadow-sm">
                 <span className="text-xs font-bold uppercase tracking-wider text-slate-500">F1 Score</span>
-                <p className="text-3xl font-black text-purple-600 mt-2">93.3%</p>
+                <p className="text-nexaFigure text-purple-600 mt-2">93.3%</p>
               </div>
               <div className="bg-white p-5 rounded-2xl border border-slate-200 shadow-sm">
                 <span className="text-xs font-bold uppercase tracking-wider text-slate-500">False Positive Rate</span>
-                <p className="text-3xl font-black text-amber-600 mt-2">2.3%</p>
+                <p className="text-nexaFigure text-amber-600 mt-2">2.3%</p>
               </div>
             </div>
           </div>
@@ -1973,7 +1973,7 @@ export default function App() {
         {activeTab === 'registry' && (
           <div className="space-y-8">
             <div className="relative overflow-hidden bg-gradient-to-r from-white via-slate-50 to-amber-50/40 rounded-3xl p-6 sm:p-8 border border-slate-200 shadow-md">
-              <h1 className="text-2xl sm:text-3xl lg:text-4xl font-extrabold text-slate-900 tracking-tight leading-tight">
+              <h1 className="text-nexaDisplay font-extrabold text-slate-900 tracking-tight leading-tight">
                 Policyholder & Insurance Policy Registry
               </h1>
               <p className="mt-2 text-xs sm:text-sm text-slate-600 max-w-3xl leading-relaxed">
@@ -1986,7 +1986,7 @@ export default function App() {
                 <h3 className="text-sm font-extrabold text-slate-900 uppercase tracking-wider">Registered Policyholders</h3>
                 <div className="overflow-x-auto">
                   <table className="w-full text-left text-xs">
-                    <thead className="bg-slate-50 text-slate-500 uppercase font-bold border-b border-slate-200">
+                    <thead className="bg-slate-50 text-slate-500 text-nexaTable uppercase font-bold border-b border-slate-200">
                       <tr>
                         <th className="py-2.5 px-3">Customer ID</th>
                         <th className="py-2.5 px-3">Name</th>
@@ -2014,7 +2014,7 @@ export default function App() {
                 <h3 className="text-sm font-extrabold text-slate-900 uppercase tracking-wider">Active Insurance Policies</h3>
                 <div className="overflow-x-auto">
                   <table className="w-full text-left text-xs">
-                    <thead className="bg-slate-50 text-slate-500 uppercase font-bold border-b border-slate-200">
+                    <thead className="bg-slate-50 text-slate-500 text-nexaTable uppercase font-bold border-b border-slate-200">
                       <tr>
                         <th className="py-2.5 px-3">Policy #</th>
                         <th className="py-2.5 px-3">Product Type</th>
@@ -2045,7 +2045,7 @@ export default function App() {
         {activeTab === 'audit' && (
           <div className="space-y-8">
             <div className="relative overflow-hidden bg-gradient-to-r from-white via-slate-50 to-blue-50/40 rounded-3xl p-6 sm:p-8 border border-slate-200 shadow-md">
-              <h1 className="text-2xl sm:text-3xl lg:text-4xl font-extrabold text-slate-900 tracking-tight leading-tight">
+              <h1 className="text-nexaDisplay font-extrabold text-slate-900 tracking-tight leading-tight">
                 Regulatory Compliance & Immutable Audit Trail
               </h1>
               <p className="mt-2 text-xs sm:text-sm text-slate-600 max-w-3xl leading-relaxed">
@@ -2056,7 +2056,7 @@ export default function App() {
             <div className="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden">
               <div className="overflow-x-auto">
                 <table className="w-full text-left text-xs">
-                  <thead className="bg-slate-50 text-slate-500 uppercase font-bold border-b border-slate-200">
+                  <thead className="bg-slate-50 text-slate-500 text-nexaTable uppercase font-bold border-b border-slate-200">
                     <tr>
                       <th className="py-3 px-4">Timestamp (UTC)</th>
                       <th className="py-3 px-4">User</th>
