@@ -144,7 +144,7 @@ export default function OCRDocumentPage({ user, activeTab }) {
               <Upload size={20} className="text-blue-700" />
             </div>
             <div>
-              <h1 className="text-lg font-extrabold text-slate-900">Document Upload & OCR Processing</h1>
+              <h1 className="nexa-suite-heading text-slate-900">Document Upload & OCR Processing</h1>
               <p className="text-xs text-slate-500">Upload claim documents for automated text extraction and fraud analysis integration.</p>
             </div>
           </div>
@@ -152,7 +152,7 @@ export default function OCRDocumentPage({ user, activeTab }) {
 
         {/* Upload Form */}
         <div className="bg-white rounded-2xl border border-slate-200 shadow-sm p-6">
-          <h2 className="text-sm font-extrabold text-slate-900 uppercase tracking-wider mb-4">Upload Document</h2>
+          <h2 className="nexa-suite-section text-slate-900 uppercase mb-4">Upload Document</h2>
           <form onSubmit={handleUpload} className="space-y-4">
             <div>
               <label className="block text-xs font-bold text-slate-700 mb-1">Select Document *</label>
@@ -263,7 +263,7 @@ export default function OCRDocumentPage({ user, activeTab }) {
             ].map((kpi, i) => (
               <div key={i} className={`bg-white p-4 rounded-2xl border border-slate-200 shadow-sm border-t-4 ${kpi.color}`}>
                 <p className="text-[11px] font-bold uppercase tracking-wider text-slate-500">{kpi.label}</p>
-                <p className="text-2xl font-black text-slate-900 mt-1">{kpi.value ?? '—'}</p>
+                <p className="nexa-suite-card mt-1">{kpi.value ?? '—'}</p>
               </div>
             ))}
           </div>
@@ -278,7 +278,7 @@ export default function OCRDocumentPage({ user, activeTab }) {
       <div className="space-y-6">
         <div className="bg-white rounded-2xl p-5 border border-slate-200 shadow-sm flex items-center justify-between">
           <div>
-            <h1 className="text-lg font-extrabold text-slate-900">Genuine Claim Forms (Sample Documents)</h1>
+            <h1 className="nexa-suite-heading text-slate-900">Genuine Claim Forms (Sample Documents)</h1>
             <p className="text-xs text-slate-500">
               Real, publicly-available insurance, medical, funeral, hospitalisation and accident/disability claim forms,
               ingested from verified institutions. Extracted information and OCR results are shown below.
@@ -350,7 +350,7 @@ export default function OCRDocumentPage({ user, activeTab }) {
             <div className="bg-white rounded-3xl max-w-3xl w-full shadow-2xl border border-slate-200 max-h-[85vh] overflow-y-auto">
               <div className="sticky top-0 bg-white border-b border-slate-200 p-5 flex items-center justify-between rounded-t-3xl">
                 <div>
-                  <h2 className="text-base font-extrabold text-slate-900">Sample Claim Form — OCR Details</h2>
+                  <h2 className="nexa-suite-section text-slate-900">Sample Claim Form — OCR Details</h2>
                   <p className="text-xs text-slate-500">{sampleDetail.filename} · {sampleDetail.source_institution || 'n/a'}</p>
                 </div>
                 <button onClick={() => setSampleDetail(null)} className="p-2 text-slate-400 hover:text-slate-700 rounded-xl hover:bg-slate-100">
@@ -386,7 +386,7 @@ export default function OCRDocumentPage({ user, activeTab }) {
                     <p className="text-xs text-amber-800 font-semibold">Date mismatch detected between document and claim date.</p>
                   </div>
                 )}
-                <h3 className="text-xs font-extrabold uppercase tracking-wider text-slate-700">Structured Extracted Fields</h3>
+                <h3 className="nexa-suite-section text-slate-700 uppercase">Structured Extracted Fields</h3>
                 <div className="grid grid-cols-2 gap-3 text-xs">
                   {[
                     ['Claimant Name', sampleDetail.extracted_fields?.claimant_name],
@@ -406,7 +406,7 @@ export default function OCRDocumentPage({ user, activeTab }) {
                     </div>
                   ))}
                 </div>
-                <h3 className="text-xs font-extrabold uppercase tracking-wider text-slate-700 mt-4">Observed Data</h3>
+                <h3 className="nexa-suite-section text-slate-700 uppercase mt-4">Observed Data</h3>
                 <div className="grid grid-cols-1 gap-3 text-xs">
                   {sampleDetail.extracted_dates?.length > 0 && (
                     <div className="bg-slate-50 rounded-xl p-3">
@@ -452,7 +452,7 @@ export default function OCRDocumentPage({ user, activeTab }) {
                 )}
                 {sampleDetail.raw_text_snippet && (
                   <div>
-                    <h3 className="text-xs font-extrabold uppercase tracking-wider text-slate-700 mb-2">Extracted Text (Snippet)</h3>
+                    <h3 className="nexa-suite-section text-slate-700 uppercase mb-2">Extracted Text (Snippet)</h3>
                     <div className="bg-slate-900 text-slate-200 rounded-xl p-4 text-[11px] font-mono whitespace-pre-wrap max-h-40 overflow-y-auto">
                       {sampleDetail.raw_text_snippet}
                     </div>
@@ -473,7 +473,7 @@ export default function OCRDocumentPage({ user, activeTab }) {
       <div className="space-y-6">
         <div className="bg-white rounded-2xl p-5 border border-slate-200 shadow-sm flex items-center justify-between">
           <div>
-            <h1 className="text-lg font-extrabold text-slate-900">Document Forensics</h1>
+            <h1 className="nexa-suite-heading text-slate-900">Document Forensics</h1>
             <p className="text-xs text-slate-500">
               Duplicate documents, cross-document inconsistencies and suspicious flags — all findings require human review.
             </p>
@@ -487,22 +487,22 @@ export default function OCRDocumentPage({ user, activeTab }) {
         <div className="grid grid-cols-3 gap-4">
           <div className="bg-white p-4 rounded-2xl border border-slate-200 shadow-sm border-t-4 border-blue-500">
             <p className="text-[11px] font-bold text-slate-500 uppercase">Duplicate Groups</p>
-            <p className="text-2xl font-black text-slate-900 mt-1">{analysis.summary?.duplicate_groups ?? analysis.duplicate_groups.length}</p>
+            <p className="nexa-suite-card mt-1">{analysis.summary?.duplicate_groups ?? analysis.duplicate_groups.length}</p>
           </div>
           <div className="bg-white p-4 rounded-2xl border border-slate-200 shadow-sm border-t-4 border-amber-500">
             <p className="text-[11px] font-bold text-slate-500 uppercase">Consistency Issues</p>
-            <p className="text-2xl font-black text-slate-900 mt-1">{analysis.summary?.claim_consistency_issues ?? analysis.claim_consistency_issues.length}</p>
+            <p className="nexa-suite-card mt-1">{analysis.summary?.claim_consistency_issues ?? analysis.claim_consistency_issues.length}</p>
           </div>
           <div className="bg-white p-4 rounded-2xl border border-slate-200 shadow-sm border-t-4 border-red-500">
             <p className="text-[11px] font-bold text-slate-500 uppercase">Suspicious Flags</p>
-            <p className="text-2xl font-black text-slate-900 mt-1">{analysis.summary?.suspicious_flags ?? analysis.suspicious_flags.length}</p>
+            <p className="nexa-suite-card mt-1">{analysis.summary?.suspicious_flags ?? analysis.suspicious_flags.length}</p>
           </div>
         </div>
 
         {/* Duplicate groups */}
         <div className="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden">
           <div className="p-4 border-b border-slate-200">
-            <h2 className="text-sm font-extrabold text-slate-900 uppercase tracking-wider">Duplicate Documents (SHA-256 fingerprint match)</h2>
+            <h2 className="nexa-suite-section text-slate-900 uppercase">Duplicate Documents (SHA-256 fingerprint match)</h2>
           </div>
           {analysis.duplicate_groups.length === 0 ? (
             <div className="p-8 text-center text-slate-400 text-sm">No duplicate documents found.</div>
@@ -525,7 +525,7 @@ export default function OCRDocumentPage({ user, activeTab }) {
         {/* Cross-document consistency issues */}
         <div className="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden">
           <div className="p-4 border-b border-slate-200">
-            <h2 className="text-sm font-extrabold text-slate-900 uppercase tracking-wider">Cross-Document Consistency Issues</h2>
+            <h2 className="nexa-suite-section text-slate-900 uppercase">Cross-Document Consistency Issues</h2>
           </div>
           {analysis.claim_consistency_issues.length === 0 ? (
             <div className="p-8 text-center text-slate-400 text-sm">No consistency issues found across documents.</div>
@@ -550,7 +550,7 @@ export default function OCRDocumentPage({ user, activeTab }) {
         {/* Suspicious flags */}
         <div className="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden">
           <div className="p-4 border-b border-slate-200">
-            <h2 className="text-sm font-extrabold text-slate-900 uppercase tracking-wider">Suspicious Flags</h2>
+            <h2 className="nexa-suite-section text-slate-900 uppercase">Suspicious Flags</h2>
           </div>
           {analysis.suspicious_flags.length === 0 ? (
             <div className="p-8 text-center text-slate-400 text-sm">No suspicious flags found.</div>
@@ -574,7 +574,7 @@ export default function OCRDocumentPage({ user, activeTab }) {
     <div className="space-y-6">
       <div className="bg-white rounded-2xl p-5 border border-slate-200 shadow-sm flex items-center justify-between">
         <div>
-          <h1 className="text-lg font-extrabold text-slate-900">OCR Extraction Results</h1>
+          <h1 className="nexa-suite-heading text-slate-900">OCR Extraction Results</h1>
           <p className="text-xs text-slate-500">View, verify and correct OCR-extracted document information.</p>
         </div>
         <button onClick={loadData} className="px-4 py-2 bg-slate-100 hover:bg-slate-200 rounded-xl text-xs font-bold text-slate-700 transition">
@@ -661,7 +661,7 @@ export default function OCRDocumentPage({ user, activeTab }) {
           <div className="bg-white rounded-3xl max-w-3xl w-full shadow-2xl border border-slate-200 max-h-[90vh] overflow-y-auto">
             <div className="sticky top-0 bg-white border-b border-slate-200 p-5 flex items-center justify-between rounded-t-3xl">
               <div>
-                <h2 className="text-base font-extrabold text-slate-900">OCR Verification Interface</h2>
+                <h2 className="nexa-suite-section text-slate-900">OCR Verification Interface</h2>
                 <p className="text-xs text-slate-500">{selectedDoc.filename}</p>
               </div>
               <button onClick={() => { setSelectedDoc(null); setShowCorrectionForm(false); }}
@@ -709,7 +709,7 @@ export default function OCRDocumentPage({ user, activeTab }) {
 
               {/* Extracted fields */}
               <div>
-                <h3 className="text-xs font-extrabold uppercase tracking-wider text-slate-700 mb-3">Extracted Information</h3>
+                <h3 className="nexa-suite-section text-slate-700 uppercase mb-3">Extracted Information</h3>
                 <div className="grid grid-cols-1 gap-3">
                   {selectedDoc.extracted_dates?.length > 0 && (
                     <div className="bg-slate-50 rounded-xl p-3">
@@ -750,7 +750,7 @@ export default function OCRDocumentPage({ user, activeTab }) {
               {/* Raw text snippet */}
               {selectedDoc.raw_text_snippet && (
                 <div>
-                  <h3 className="text-xs font-extrabold uppercase tracking-wider text-slate-700 mb-2">Extracted Text (Snippet)</h3>
+                  <h3 className="nexa-suite-section text-slate-700 uppercase mb-2">Extracted Text (Snippet)</h3>
                   <div className="bg-slate-900 text-slate-200 rounded-xl p-4 text-[11px] font-mono whitespace-pre-wrap max-h-40 overflow-y-auto">
                     {selectedDoc.raw_text_snippet}
                   </div>
@@ -760,7 +760,7 @@ export default function OCRDocumentPage({ user, activeTab }) {
               {/* Corrections history */}
               {selectedDoc.corrections?.length > 0 && (
                 <div>
-                  <h3 className="text-xs font-extrabold uppercase tracking-wider text-slate-700 mb-2">Manual Corrections (Audit Trail)</h3>
+                  <h3 className="nexa-suite-section text-slate-700 uppercase mb-2">Manual Corrections (Audit Trail)</h3>
                   <div className="space-y-2">
                     {selectedDoc.corrections.map((c, i) => (
                       <div key={i} className="bg-amber-50 border border-amber-200 rounded-xl p-3 text-xs">

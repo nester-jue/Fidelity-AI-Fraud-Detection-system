@@ -49,7 +49,7 @@ export default function HistoricalBehaviorPanel({ user }) {
   return (
     <div className="space-y-6">
       <div className="bg-white rounded-2xl border border-slate-200 p-6 shadow-sm">
-        <h1 className="text-2xl font-extrabold text-[#0F2744] flex items-center gap-3"><History size={22} className="text-amber-500" /> Historical Claim Behaviour Intelligence</h1>
+        <h1 className="nexa-suite-heading text-[#0F2744] flex items-center gap-3"><History size={22} className="text-amber-500" /> Historical Claim Behaviour Intelligence</h1>
         <p className="text-xs text-slate-500 font-medium mt-1">Comparisons of the current claim against policyholder history, similar historical claims and policy information — all real records.</p>
       </div>
 
@@ -59,7 +59,7 @@ export default function HistoricalBehaviorPanel({ user }) {
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
           <div className="space-y-4">
             <div className="bg-white rounded-2xl border border-slate-200 p-5">
-              <h3 className="text-sm font-extrabold text-slate-700 uppercase tracking-wider mb-3">Policyholder Statistics</h3>
+              <h3 className="nexa-suite-section text-slate-700 uppercase mb-3">Policyholder Statistics</h3>
               <div className="grid grid-cols-2 gap-2 text-sm">
                 <p>Prior claims: <span className="font-black">{data.stats?.claim_count ?? '—'}</span></p>
                 <p>Total amount: <span className="font-black">{data.stats?.total_amount != null ? `$${data.stats.total_amount.toLocaleString()}` : '—'}</span></p>
@@ -68,7 +68,7 @@ export default function HistoricalBehaviorPanel({ user }) {
               </div>
             </div>
             <div className="bg-white rounded-2xl border border-slate-200 p-5">
-              <h3 className="text-sm font-extrabold text-slate-700 uppercase tracking-wider mb-3">Current Claim</h3>
+              <h3 className="nexa-suite-section text-slate-700 uppercase mb-3">Current Claim</h3>
               <div className="text-sm">
                 <p><span className="font-bold">{data.claim?.claim_id}</span> — {data.claim?.claim_type}</p>
                 <p className="mt-1">Amount: <span className="font-black">${(data.claim?.amount || 0).toLocaleString()}</span></p>
@@ -76,7 +76,7 @@ export default function HistoricalBehaviorPanel({ user }) {
               </div>
             </div>
             <div className="bg-white rounded-2xl border border-slate-200 p-5">
-              <h3 className="text-sm font-extrabold text-slate-700 uppercase tracking-wider mb-3 flex items-center gap-2"><ShieldAlert size={14} /> Anomalies</h3>
+              <h3 className="nexa-suite-section text-slate-700 uppercase flex items-center gap-2"><ShieldAlert size={14} /> Anomalies</h3>
               {anomalies.length === 0 && <p className="text-xs text-slate-400">No anomalies found in historical patterns.</p>}
               {anomalies.map((a, i) => (
                 <div key={i} className="text-xs mb-2 bg-slate-50 border border-slate-100 rounded-xl px-3 py-2">
@@ -90,7 +90,7 @@ export default function HistoricalBehaviorPanel({ user }) {
 
           <div className="space-y-4">
             <div className="bg-white rounded-2xl border border-slate-200 p-5">
-              <h3 className="text-sm font-extrabold text-slate-700 uppercase tracking-wider mb-3">Previous Claims ({prevClaims.length})</h3>
+              <h3 className="nexa-suite-section text-slate-700 uppercase mb-3">Previous Claims ({prevClaims.length})</h3>
               <table className="w-full text-left text-xs">
                 <thead><tr className="border-b border-slate-100 text-slate-400"><th className="py-1 font-semibold">Claim</th><th className="py-1 font-semibold">Type</th><th className="py-1 font-semibold">Amount</th><th className="py-1 font-semibold">Incident</th><th className="py-1 font-semibold">Δ days</th></tr></thead>
                 <tbody>
@@ -108,7 +108,7 @@ export default function HistoricalBehaviorPanel({ user }) {
               </table>
             </div>
             <div className="bg-white rounded-2xl border border-slate-200 p-5">
-              <h3 className="text-sm font-extrabold text-slate-700 uppercase tracking-wider mb-3">Similar Historical Claims ({(data.similar_historical_claims || []).length})</h3>
+              <h3 className="nexa-suite-section text-slate-700 uppercase mb-3">Similar Historical Claims ({(data.similar_historical_claims || []).length})</h3>
               {(data.similar_historical_claims || []).slice(0, 5).map((c, i) => (
                 <div key={i} className="text-xs mb-2 bg-slate-50 border border-slate-100 rounded-xl px-3 py-2">
                   <p className="font-semibold text-slate-600">{c.claim_id} · {c.claim_type}</p>
@@ -122,7 +122,7 @@ export default function HistoricalBehaviorPanel({ user }) {
 
           <div className="space-y-4">
             <div className="bg-white rounded-2xl border border-slate-200 p-5">
-              <h3 className="text-sm font-extrabold text-slate-700 uppercase tracking-wider mb-3">Comparisons — Current Claim vs History</h3>
+              <h3 className="nexa-suite-section text-slate-700 uppercase mb-3">Comparisons — Current Claim vs History</h3>
               {comparisons.length === 0 && <p className="text-xs text-slate-400">No notable comparisons found.</p>}
               {comparisons.map((c, i) => (
                 <div key={i} className="text-xs mb-2 bg-slate-50 border border-slate-100 rounded-xl px-3 py-2">

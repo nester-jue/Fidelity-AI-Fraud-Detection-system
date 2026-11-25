@@ -2560,7 +2560,7 @@ function NotificationsPanel({ user, token, onCountChange }) {
   };
   return (
     <div className="bg-white rounded-2xl border border-slate-200 shadow-sm p-6 max-w-3xl">
-      <h1 className="text-2xl font-extrabold text-slate-900 mb-2 flex items-center space-x-2"><Activity size={22} className="text-blue-600" /><span>Notifications & Alerts</span></h1>
+      <h1 className="nexa-suite-heading text-slate-900 mb-2 flex items-center space-x-2"><Activity size={22} className="text-blue-600" /><span>Notifications & Alerts</span></h1>
       <p className="text-xs text-slate-500 mb-4">AI fraud alerts and platform notifications</p>
       {loading ? <div className="py-10 text-center"><Loader2 className="w-6 h-6 animate-spin text-blue-500" /></div> : (
         <div className="divide-y divide-slate-100">
@@ -2571,7 +2571,7 @@ function NotificationsPanel({ user, token, onCountChange }) {
               <div key={n.id} className={`py-3 flex gap-3 ${n.read ? 'bg-white' : 'bg-blue-50/50 border-l-2 border-l-blue-500'}`}>
                 <Activity size={15} className={n.read ? 'text-slate-400' : 'text-blue-600 animate-pulse'} />
                 <div className="flex-1">
-                  <p className={`text-xs ${n.read ? 'text-slate-500' : 'text-slate-900 font-semibold'}`}>{n.message}</p>
+                  <p className={`text-sm sm:text-base ${n.read ? 'text-slate-500' : 'text-slate-900 font-semibold'}`}>{n.message}</p>
                   <p className="text-[10px] font-mono text-slate-400 mt-0.5">{n.created_at ? new Date(n.created_at).toLocaleString('en-ZA') : ''}</p>
                 </div>
                 {!n.read && <button onClick={() => markRead(n.id)} className="text-[10px] font-bold text-blue-600">Mark read</button>}

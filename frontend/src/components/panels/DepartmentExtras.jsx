@@ -134,7 +134,7 @@ export function MissingInformationPanel({ user }) {
   const missing = items.filter(c => (c.status || '').toLowerCase() === 'pending_documents');
   return (
     <div className="space-y-6 max-w-4xl">
-      <div><h1 className="text-2xl font-extrabold text-slate-900">Missing Information</h1><p className="text-xs text-slate-500 mt-0.5">Claims that require additional documentation or evidence</p></div>
+      <div><h1 className="nexa-suite-heading text-slate-900">Missing Information</h1><p className="text-xs text-slate-500 mt-0.5">Claims that require additional documentation or evidence</p></div>
       {missing.length === 0 ? <PanelEmpty title="No claims missing information" note="Every claim in the system has its documentation status up to date." /> : (
         <ClaimsTable items={missing} header="Claims Missing Documentation" emptyTitle="" emptyNote=""
           extraRow={(c) => (
