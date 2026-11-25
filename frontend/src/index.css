@@ -1,3 +1,14 @@
+/* ══════════════════════════════════════════════════════════════════════════
+   NEXA CENTRAL TYPOGRAPHY STANDARD — loaded fonts (single import point)
+   ────────────────────────────────────────────────────────────────────────
+   Inter is the PRIMARY font for every screen of the application interface
+   (dashboards, navigation, tables, forms, AI intelligence outputs, buttons
+   and notifications). Times New Roman is reserved for formal reports and
+   printable official documents. All sizes/weights/line-heights are the
+   reusable CSS variables in the :root block below — the single source of
+   truth for every NEXA module. Changes here propagate everywhere.
+   ══════════════════════════════════════════════════════════════════════════ */
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap');
 @import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800;900&display=swap');
 
 @tailwind base;
@@ -8,18 +19,102 @@
   box-sizing: border-box;
 }
 
+/* ── Central font-family overrides ────────────────────────────────────────
+   Inter is primary everywhere; Jakarta is only a fallback behind it. The
+   body and Tailwind's .font-sans (used by DashboardLayout and others) both
+   resolve to var(--font-body). */
 body {
   margin: 0;
-  font-family: 'Inter', Arial, sans-serif;
+  font-family: var(--font-body);
   background: #f4f6fa;
   color: #17243a;
 }
 
-/* System-wide font enlargement — readable from afar. Scales every Tailwind
-   rem-based text utility up (text-xs ≈ 13.5px, text-sm ≈ 15.5px). */
+.font-sans {
+  font-family: var(--font-body);
+}
+
+/* Base size — readable on desktop, laptop and tablet screens. */
 html {
   font-size: 15px;
 }
+
+/* ── Print: formal documents print in Times New Roman ────────────────────
+   Exported/printable report pages (Print to PDF buttons, print()) render
+   with the formal serif stack, matching the formal-report rule. */
+@media print {
+  body,
+  .font-sans,
+  .nexa-report {
+    font-family: var(--font-formal);
+  }
+}
+
+/* ══════════════════════════════════════════════════════════════════════════
+   NEXA CENTRAL TYPOGRAPHY STANDARD (unified corporate typography)
+   ────────────────────────────────────────────────────────────────────────
+   Tokens below are the single source of truth for every NEXA module.
+   Apply them with the reusable `.nexa-*` utility classes defined at the
+   bottom of this block. Changes here propagate everywhere consistently.
+   ══════════════════════════════════════════════════════════════════════════ */
+:root {
+  /* Font families — Inter is primary; Jakarta remains a graceful fallback.
+     Times New Roman is reserved for formal reports and printable documents. */
+  --font-display: 'Inter', 'Plus Jakarta Sans', -apple-system, Arial, sans-serif;
+  --font-body:    'Inter', Arial, sans-serif;
+  --font-sans:    var(--font-body);
+  --font-formal:  'Times New Roman', Times, serif;
+
+  /* Font sizes (px, responsive via clamp — scales from laptop to tablet
+     screens without overflow or clipping). Targets: display 28–32, section
+     22–24, card 15–17, figure 26–32, sidebar 15–17, table 14–16,
+     form/button 15–16, body 15–16, secondary 13–14. */
+  --fs-display:       clamp(26px, 2.2vw, 32px);   /* main page headings */
+  --fs-section:       clamp(21px, 1.5vw, 24px);   /* section headings */
+  --fs-card-heading:  clamp(15px, 1vw, 17px);     /* dashboard card headings */
+  --fs-figure:        clamp(26px, 1.8vw, 32px);   /* financial figures (claim amounts, totals) */
+  --fs-sidebar:       clamp(15px, 1vw, 17px);     /* sidebar navigation labels */
+  --fs-table:         clamp(14px, 1vw, 16px);     /* table headings + contents */
+  --fs-form:          clamp(15px, 1vw, 16px);     /* form labels, inputs, buttons */
+  --fs-button:        clamp(15px, 1vw, 16px);     /* buttons & action labels */
+  --fs-body:          clamp(14px, 1vw, 16px);     /* general body text */
+  --fs-secondary:     clamp(11px, 0.8vw, 13px);   /* secondary info */
+  --fs-formal:        16px;                       /* formal report body */
+
+  /* Font weights — Inter supports all of these */
+  --fw-display:   800;
+  --fw-section:   700;
+  --fw-card:      600;
+  --fw-table:     500;
+  --fw-form:      600;
+  --fw-button:    700;
+  --fw-body:      400;
+
+  /* Line heights — generous but not loose */
+  --lh-display:   1.2;
+  --lh-section:   1.3;
+  --lh-table:     1.5;
+  --lh-formal:    1.6;
+  --lh-body:      1.55;
+  --lh-secondary: 1.4;
+  --lh-form:      1.5;
+}
+
+/* Reusable typography utilities — use these on every NEXA surface.
+   Readability safeguards on tables/figures: tabular numerals keep figures,
+   claim references and risk scores aligned; overflow-wrap prevents clipped
+   or hidden text when Inter replaces system fonts on smaller screens. */
+.nexa-display     { font-family: var(--font-display); font-size: var(--fs-display);      font-weight: var(--fw-display); line-height: var(--lh-display); }
+.nexa-section     { font-family: var(--font-display); font-size: var(--fs-section);      font-weight: var(--fw-section); line-height: 1.3; }
+.nexa-card-heading{ font-family: var(--font-display); font-size: var(--fs-card-heading);font-weight: var(--fw-card);    line-height: 1.4; }
+.nexa-figure      { font-family: var(--font-display); font-size: var(--fs-figure);      font-weight: 800; line-height: 1.2; font-variant-numeric: tabular-nums; }
+.nexa-sidebar     { font-family: var(--font-display); font-size: var(--fs-sidebar);      font-weight: var(--fw-card);    line-height: 1.4; }
+.nexa-table       { font-family: var(--font-display); font-size: var(--fs-table);        font-weight: var(--fw-table);  line-height: var(--lh-table); font-variant-numeric: tabular-nums; overflow-wrap: anywhere; }
+.nexa-form        { font-family: var(--font-display); font-size: var(--fs-form);         font-weight: var(--fw-form);   line-height: var(--lh-form); }
+.nexa-button      { font-family: var(--font-display); font-size: var(--fs-button);       font-weight: var(--fw-button); line-height: 1.3; }
+.nexa-body        { font-family: var(--font-body);    font-size: var(--fs-body);         font-weight: var(--fw-body);   line-height: var(--lh-body); }
+.nexa-secondary   { font-size: var(--fs-secondary); }
+.nexa-report      { font-family: var(--font-formal);  font-size: var(--fs-formal); line-height: var(--lh-formal); font-weight: 400; overflow-wrap: anywhere; }
 
 button, input {
   font: inherit;

@@ -569,8 +569,8 @@ function ReportsSection({ reportsList, generating, generate, filterType, setFilt
     <div className="space-y-6">
       <div className="flex items-center justify-between flex-wrap gap-3">
         <div>
-          <h3 className="text-sm font-extrabold text-slate-900 uppercase tracking-wider flex items-center gap-2"><FileText size={16} className="text-blue-600" /><span>Executive Reports</span></h3>
-          <p className="text-xs text-slate-500 mt-0.5">Reports contain company/report identification, reporting period, executive summary, statistical findings, financial analysis, fraud trends, recommendations and generation date.</p>
+          <h3 className="nexa-report text-sm font-extrabold text-slate-900 uppercase tracking-wider flex items-center gap-2"><FileText size={16} className="text-blue-600" /><span>Executive Reports</span></h3>
+          <p className="nexa-report text-xs text-slate-500 mt-0.5">Reports contain company/report identification, reporting period, executive summary, statistical findings, financial analysis, fraud trends, recommendations and generation date.</p>
         </div>
         <select
           value={filterType || ''}
@@ -609,7 +609,7 @@ function ReportsSection({ reportsList, generating, generate, filterType, setFilt
       {selectedReport && (
         <div className="bg-white rounded-2xl border border-slate-200 p-6 shadow-sm">
           <div className="flex justify-between items-center mb-4 pb-3 border-b border-slate-100">
-            <div><p className="text-base font-extrabold text-slate-900">{selectedReport.report_type}</p><p className="text-xs text-slate-500">#{selectedReport.id} · {selectedReport.generated_by}</p></div>
+            <div><p className="nexa-report text-base font-extrabold text-slate-900">{selectedReport.report_type}</p><p className="nexa-report text-xs text-slate-500">#{selectedReport.id} · {selectedReport.generated_by}</p></div>
             <div className="flex gap-2">
               <button onClick={() => exportCsv(`nexa_${selectedReport.report_type}.csv`, flattenCsvRows(selectedReport.summary))} className="px-3 py-1.5 bg-emerald-600 text-white text-xs font-bold rounded-lg hover:bg-emerald-700"><Download size={13} /> Export Excel (CSV)</button>
               <button onClick={() => window.print()} className="px-3 py-1.5 bg-red-600 text-white text-xs font-bold rounded-lg hover:bg-red-700"><FileText size={13} /> Print to PDF</button>
@@ -639,7 +639,7 @@ function ReportDetail({ report }) {
   const s = report.summary || {};
   const { executive_summary, statistical_findings, financial_analysis, fraud_trends, recommendations, reporting_period } = s;
   return (
-    <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 text-xs">
+    <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 text-xs nexa-report">
       <div>
         <h4 className="text-xs font-extrabold uppercase text-slate-500 mb-2">Executive Summary</h4>
         <p className="text-slate-700 leading-relaxed mb-3">{executive_summary || '—'}</p>

@@ -202,7 +202,7 @@ function RegulatoryReportsTab() {
   }, []);
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-6 nexa-report">
       <div className="flex items-center justify-between">
         <h3 className="text-sm font-extrabold text-slate-900 uppercase tracking-wider flex items-center space-x-2"><FileUp size={14} className="text-red-600" /><span>Regulatory Compliance Reports</span></h3>
         <button className="px-4 py-2 text-xs font-bold bg-red-600 text-white rounded-xl hover:bg-red-700 transition-colors disabled:opacity-50" disabled={loading} onClick={async () => {

@@ -260,7 +260,7 @@ export default function FraudInvestigationDashboard({ activeTab }) {
 
       {/* ─── INVESTIGATION REPORTS ─── */}
       {tab === 'investigation-reports' && (
-        <div className="space-y-6">
+        <div className="space-y-6 nexa-report">
           <div className="flex items-center justify-between">
             <h2 className="text-sm font-extrabold uppercase tracking-wider text-slate-700 flex items-center space-x-2"><FileText size={15} className="text-red-600" /><span>Investigation Reports & Outcomes</span></h2>
             <button onClick={() => load()} className="text-xs font-bold bg-slate-100 text-slate-700 px-3 py-1.5 rounded-lg hover:bg-slate-200"><RotateCw size={13} /> Refresh</button>

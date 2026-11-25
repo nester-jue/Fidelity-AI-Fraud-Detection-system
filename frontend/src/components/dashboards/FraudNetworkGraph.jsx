@@ -34,28 +34,40 @@ const EDGE_STROKE = '#334155';
 const EDGE_STRONG = '#F87171';
 const EDGE_SUSPICIOUS_MID = '#F87171';
 
+// Enlarged layout: the fraud relationship network gets a much bigger canvas
+// (1400x960 instead of 760x480) and the card is centered on the page.
+const GRAPH_W = 1400;
+const GRAPH_H = 960;
+const GRAPH_ASPECT = 'aspect-[35/24]'; // matches GRAPH_W / GRAPH_H (1400 / 960)
+
 // ---------------------------------------------------------------------------
 // Layout
 // ---------------------------------------------------------------------------
 
-function forceLayout(nodes, edges, width = 760, height = 480) {
+function forceLayout(nodes, edges, width = 1400, height = 960) {
   const pos = new Map();
   const cx = width / 2, cy = height / 2;
-  const r = Math.min(width, height) * 0.40;
+  // Start nodes on a wider ring so dense graphs don't collapse into a tiny core.
+  const r = Math.min(width, height) * 0.48;
   nodes.forEach((n, i) => {
     const a = (i / Math.max(1, nodes.length)) * 2 * Math.PI;
-    pos.set(n.id, { x: cx + r * Math.cos(a), y: cy + r * Math.sin(a) });
+    const orbit = r * (0.2 + 0.8 * ((i + 1) / Math.max(2, nodes.length)));
+    pos.set(n.id, { x: cx + orbit * Math.cos(a), y: cy + orbit * Math.sin(a) });
   });
   for (let it = 0; it < 100; it++) {
     for (const e of edges) {
       const a = pos.get(e.node_a_id), b = pos.get(e.node_b_id);
       if (!a || !b) continue;
-      let dx = b.x - a.x, dy = b.y - a.y;
-      let d = Math.sqrt(dx * dx + dy * dy) || 1;
-      const target = (1 - e.strength) * 3 + 1.5;
-      const fx = (dx / d) * (target - d) * 0.5;
-      const fy = (dy / d) * (target - d) * 0.5;
-      a.x += fx; a.y += fy; b.x -= fx; b.y -= fy;
+      const dx = b.x - a.x, dy = b.y - a.y;
+      const d = Math.sqrt(dx * dx + dy * dy) || 1;
+      // Broader rest length for edges: even strong edges sit apart instead of stacking.
+      const target = (1 - e.strength) * 4 + 3;
+      if (d > target) {
+        // Pull the pair together toward the rest length (no expansion beyond target).
+        const f = (d - target) * 0.5;
+        a.x += (dx / d) * f; b.x -= (dx / d) * f;
+        a.y += (dy / d) * f; b.y -= (dy / d) * f;
+      }
     }
     // Mutual node repulsion so the graph doesn't become unreadable.
     for (let i = 0; i < nodes.length; i++) {
@@ -64,7 +76,7 @@ function forceLayout(nodes, edges, width = 760, height = 480) {
         if (!a || !b) continue;
         let dx = a.x - b.x, dy = a.y - b.y;
         let d = Math.sqrt(dx * dx + dy * dy) || 1;
-        const minDist = 22;
+        const minDist = 28;
         if (d < minDist) {
           const f = (minDist - d) * 0.6;
           const fx = (dx / d) * f, fy = (dy / d) * f;
@@ -78,6 +90,31 @@ function forceLayout(nodes, edges, width = 760, height = 480) {
       if (!p) continue;
       if (n.is_suspicious) { p.x += (cx - p.x) * 0.03; p.y += (cy - p.y) * 0.03; }
     }
+  }
+
+  // ── Final pass: spread the whole layout wider and recentre it on the canvas ──
+  let minX = Infinity, maxX = -Infinity, minY = Infinity, maxY = -Infinity;
+  for (const p of pos.values()) {
+    if (p.x < minX) minX = p.x;
+    if (p.x > maxX) maxX = p.x;
+    if (p.y < minY) minY = p.y;
+    if (p.y > maxY) maxY = p.y;
+  }
+  if (maxX === minX && maxY === minY) {
+    // Single point (e.g. one node) — just place it at the centre.
+    for (const p of pos.values()) { p.x = cx; p.y = cy; }
+    return pos;
+  }
+  const spanW = (maxX - minX) || 1, spanH = (maxY - minY) || 1;
+  const pad = 72;
+  const targetW = Math.max(width - 2 * pad, spanW), targetH = Math.max(height - 2 * pad, spanH);
+  const scale = Math.min(targetW / spanW, targetH / spanH);
+  const bw = spanW * scale, bh = spanH * scale;
+  const ox = cx - bw / 2 - minX * scale;
+  const oy = cy - bh / 2 - minY * scale;
+  for (const p of pos.values()) {
+    p.x = p.x * scale + ox;
+    p.y = p.y * scale + oy;
   }
   return pos;
 }
@@ -128,7 +165,7 @@ export default function FraudNetworkGraph({ user }) {
     summary: { total_nodes: 0, total_edges: 0, clusters: 0 },
     suspicious_nodes: [], suspicious_edges: [],
   };
-  const positions = useMemo(() => forceLayout(g.nodes, g.edges), [g.nodes, g.edges]);
+  const positions = useMemo(() => forceLayout(g.nodes, g.edges, GRAPH_W, GRAPH_H), [g.nodes, g.edges]);
   const hasEmpty = !g.nodes || g.nodes.length === 0;
   const suspiciousCount = (g.suspicious_nodes?.length || 0) + (g.suspicious_edges?.length || 0);
 
@@ -186,7 +223,7 @@ export default function FraudNetworkGraph({ user }) {
           </div>
 
           {/* ── Live Graph ── */}
-          <div className="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden">
+          <div className="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden max-w-5xl mx-auto">
             <div className="px-6 py-4 bg-[#0F2744] text-white flex items-center justify-between">
               <div className="flex items-center gap-2 font-bold">
                 <Network size={16} className="text-amber-400" />
@@ -197,7 +234,7 @@ export default function FraudNetworkGraph({ user }) {
               </span>
             </div>
             <div className="relative bg-slate-950">
-              <svg viewBox="0 0 760 480" className="w-full h-[480px]" role="img" aria-label="Fraud relationship network graph">
+              <svg viewBox={`0 0 ${GRAPH_W} ${GRAPH_H}`} className={`w-full ${GRAPH_ASPECT}`} role="img" aria-label="Fraud relationship network graph">
                 {/* Edges */}
                 {(g.edges || []).map((e, i) => {
                   const a = positions.get(e.node_a_id), b = positions.get(e.node_b_id);
@@ -229,7 +266,7 @@ export default function FraudNetworkGraph({ user }) {
                       {n.is_suspicious && <circle r="22" fill="none" stroke="#F87171" strokeWidth="2" className="animate-ping opacity-45" />}
                       <circle r="12" fill={color} stroke={n.is_suspicious ? '#F87171' : '#0F2744'} strokeWidth={n.is_suspicious ? 3 : 1.5} />
                       <text textAnchor="middle" y="-15" fill="#CBD5E1" fontSize="8" fontWeight="bold">{label}</text>
-                      <text textAnchor="middle" y="18" fill="white" fontSize="7" fontWeight="bold" fontFamily="monospace">
+                      <text textAnchor="middle" y="18" fill="white" fontSize="7" fontWeight="bold">
                         {n.entity_type === 'claim' ? (n.amount ? `${new Intl.NumberFormat('en-US', { maximumFractionDigits: 0 }).format(n.amount)}` : '') : ''}
                       </text>
                     </g>
