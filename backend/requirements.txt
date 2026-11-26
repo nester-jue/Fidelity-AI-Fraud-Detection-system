@@ -12,6 +12,8 @@ PyJWT
 scikit-learn
 pandas
 numpy
+# Supervised fraud classifier artefacts
+joblib
 # Knowledge base document ingestion
 pypdf
 python-docx

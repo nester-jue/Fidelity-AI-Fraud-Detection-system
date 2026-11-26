@@ -260,6 +260,36 @@ SQLite (online backup) or PostgreSQL (`pg_dump`) file plus a JSON manifest;
 relying on these scripts in production. `MIGRATIONS.md` records the historical
 schema evolution applied by the startup helper.
 
+### Supervised fraud classifier (optional advisory signal)
+
+`ml/train_supervised.py` trains on all labelled CSVs in `datasets/huggingface/`
+using `fraud_label` as the target. Outcome-revealing columns
+(`fraud_probability`, `fraud_scheme_type`, `detection_method`,
+`recovery_amount_usd`, `record_id`) are excluded. The script runs repeated
+stratified evaluations, saves the selected pipeline to
+`backend/app/ml/models/fraud_classifier.joblib`, and writes a JSON report to
+`ml/training_report.json`. The source CSVs are local inputs and are not
+committed; copy them into `datasets/huggingface/` before retraining.
+
+```powershell
+python ml/train_supervised.py --runs 10 --compare-forest
+```
+
+The supplied 360,000 labelled rows produced a logistic classifier with mean
+ROC-AUC **0.7169 ± 0.0019** and PR-AUC **0.3660 ± 0.0039** across 10 stratified
+splits (precision 0.2752, recall 0.5418, F1 0.3650). It was selected over the
+one-split Random Forest comparison (PR-AUC 0.3607). These are moderate scores,
+not production-grade certainty; the low precision is why the output remains
+advisory and cannot block a claim.
+
+The trained classifier is **advisory only**: it contributes a bounded,
+explainable signal to the existing rule engine and never auto-rejects a claim.
+If the artefact is absent, the engine behaves exactly as before. Set
+`SUPERVISED_MODEL_ENABLED=false` or point `FRAUD_MODEL_PATH` elsewhere to
+disable/replace it. `backend/app/ml/supervised.py` contains the live claim to
+model-feature mapping; default values for missing fields come from the training
+data and are stored in the artefact metadata.
+
 ## 8. Verification & Test Results
 
 The full backend suite is run from the repository root with `python -m pytest -q`.
@@ -267,7 +297,7 @@ Frontend tests and production build are run from `frontend` with `npm test` and
 `npm run build`.
 
 ```text
-Backend: 181 passed, 1 skipped (1 Starlette/httpx deprecation warning) — ephemeral SQLite test database
+Backend: 185 passed, 1 skipped (1 Starlette/httpx deprecation warning) — ephemeral SQLite test database
 Frontend tests: 9 passed (Vitest + jsdom)
 Frontend build: 1487 modules transformed; no chunk over 500 kB (largest JS chunk 398.53 kB)
 ```
@@ -281,6 +311,8 @@ database guards. `tests/test_enterprise_operations.py` covers public enquiries,
 FNOL persistence, the SMTP reset flow (with a fake SMTP server), tenant
 filtering/isolation, Alembic baseline migration, backup/restore round-trip,
 production-restore protection, DOCX ingestion and non-synthesising adapters.
+`tests/test_supervised_model.py` covers claim-to-feature mapping, absent-artefact
+fallback and engine behaviour with supervised scoring disabled.
 `.github/workflows/ci.yml` runs both suites and the build on pushes and PRs.
 
 Important caveats, stated plainly:

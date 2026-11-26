@@ -11,6 +11,12 @@ frontend/dist/
 .env
 *.local
 
+# Locally supplied training CSVs (large; not part of the application release)
+datasets/
+
+# OCR text generated during local test/demo runs
+data/documents/OCR_*.txt
+
 # OS files
 .DS_Store
 Thumbs.db

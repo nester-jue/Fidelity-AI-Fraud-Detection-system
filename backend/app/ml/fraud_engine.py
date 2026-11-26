@@ -6,6 +6,7 @@ from datetime import datetime, timezone
 from typing import Any, Dict, List, Optional, Tuple
 
 from ..core.config import settings
+from .supervised import score_claim as supervised_score
 
 logger = logging.getLogger("fraud_engine")
 
@@ -467,7 +468,49 @@ class FraudDetectionEngine:
                 explanations.append(f"Isolation anomaly score {isolation_score:.2f} higher than typical claims; flagged for human review.")
 
         # ---------------------------------------------------------
-        # 8. SCORE CALIBRATION & CATEGORIZATION
+        # 9. OPTIONAL SUPERVISED MODEL (advisory evidence only)
+        # ---------------------------------------------------------
+        # A trained classifier adds a bounded, explainable signal. It never
+        # rejects a claim: investigators still adjudicate every alert.
+        supervised_probability = None
+        supervised_threshold = None
+        supervised_version = None
+        try:
+            supervised = supervised_score(
+                claim_data=claim_data,
+                policy_data=policy_data,
+                customer_data=customer_data,
+                historical_claims=historical_claims,
+                indicators=indicators,
+                settings=settings,
+            )
+            if supervised:
+                supervised_probability, supervised_threshold, supervised_version = supervised
+                if supervised_probability >= supervised_threshold:
+                    weight = round(min(25.0, supervised_probability * 25.0), 2)
+                    indicators.append({
+                        "code": "SUPERVISED_MODEL_ALERT",
+                        "severity": "HIGH",
+                        "weight": weight,
+                        "detail": (
+                            f"Trained classifier assigned {supervised_probability:.1%} fraud probability "
+                            f"(decision threshold {supervised_threshold:.1%}); recorded as investigative "
+                            "evidence, not proof of fraud."
+                        ),
+                    })
+                    rule_score += weight
+                    explanations.append(
+                        f"Supervised model probability {supervised_probability:.1%} exceeded its "
+                        f"{supervised_threshold:.1%} advisory threshold."
+                    )
+                    recommended_actions.append(
+                        "Cross-check the classifier indicators against policy, document and claimant evidence before any decision."
+                    )
+        except Exception as exc:  # pragma: no cover - defensive: scoring must not crash
+            logger.warning("Supervised scoring skipped: %s", exc)
+
+        # ---------------------------------------------------------
+        # 10. SCORE CALIBRATION & CATEGORIZATION
         # ---------------------------------------------------------
         # Cap score between 0 and 100
         calibrated_score = round(min(100.0, max(0.0, rule_score)), 1)
@@ -508,8 +551,15 @@ class FraudDetectionEngine:
             # Ensemble components (Phase 2 upgrade)
             "rule_score": round(rule_score_pre_isolation, 2),
             "isolation_score": isolation_score,
+            "supervised_probability": supervised_probability,
+            "supervised_threshold": supervised_threshold,
+            "supervised_model_version": supervised_version,
             "ensemble_score": calibrated_score,
-            "ensemble_method": "rule_ensemble + statistical_isolation_scorer",
+            "ensemble_method": (
+                "rule_ensemble + statistical_isolation_scorer + supervised_advisory"
+                if supervised_probability is not None
+                else "rule_ensemble + statistical_isolation_scorer"
+            ),
         }
 
     def _check_duplicate_claims(

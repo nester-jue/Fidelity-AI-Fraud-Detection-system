@@ -63,6 +63,9 @@ class Settings(BaseModel):
     # FraudDetectionEngine.MODEL_VERSION; override per deployment if needed.
     MODEL_VERSION: str = Field(default_factory=lambda: os.getenv("MODEL_VERSION", "v1.2-ensemble-hybrid"))
     MODEL_DIR: str = Field(default_factory=lambda: os.getenv("MODEL_DIR", os.path.abspath(os.path.join(os.path.dirname(__file__), "..", "..", "..", "ml", "models"))))
+    # Optional supervised classifier. Advisory only; absence of the artefact or
+    # an explicit false value restores rule/isolation scoring unchanged.
+    SUPERVISED_MODEL_ENABLED: bool = Field(default_factory=lambda: os.getenv("SUPERVISED_MODEL_ENABLED", "true").lower() == "true")
 
     # Fraud risk classification thresholds (configurable)
     RISK_THRESHOLD_LOW_MAX: int = int(os.getenv("RISK_THRESHOLD_LOW_MAX", "29"))
