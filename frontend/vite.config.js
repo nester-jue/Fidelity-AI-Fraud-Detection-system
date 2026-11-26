@@ -34,6 +34,33 @@ export default defineConfig({
       '/historical': 'http://localhost:8010',
       '/predictive': 'http://localhost:8010',
       '/model-performance': 'http://localhost:8010',
+      '/security': 'http://localhost:8010',
+      '/enquiries': 'http://localhost:8010',
     }
-  }
+  },
+  build: {
+    rollupOptions: {
+      output: {
+        // Keep third-party libraries out of the application chunk so the
+        // emitted JavaScript chunks stay below Vite's 500 kB warning limit.
+        manualChunks(id) {
+          const path = id.replace(/\\/g, '/');
+          if (path.includes('/node_modules/')) {
+            if (/\/node_modules\/(react|react-dom|scheduler)\//.test(path)) return 'react-vendor';
+            if (path.includes('/node_modules/lucide-react/')) return 'lucide-vendor';
+            return;
+          }
+          if (path.includes('/src/') && /\.(jsx?|tsx?)$/.test(path)) return 'app';
+          return;
+        },
+      },
+    },
+  },
+  test: {
+    environment: 'jsdom',
+    setupFiles: ['./src/test/setup.js'],
+    restoreMocks: true,
+    clearMocks: true,
+    css: false,
+  },
 });

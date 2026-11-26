@@ -133,13 +133,18 @@ def scan_for_pending_alerts(db: Session, max_alerts: int = 50) -> List[Dict[str,
                 created.append(_serialize(rec))
 
     # --- 4. High-risk document submissions ---
-    high_risk_docs = db.query(OCRDocument).filter(
+    candidate_docs = db.query(OCRDocument).filter(
         or_(
-            OCRDocument.flags.contains("duplicate_document_hash"),
-            OCRDocument.flags.contains("date_inconsistency"),
             OCRDocument.has_date_mismatch == True,  # noqa: E712
+            OCRDocument.flags.isnot(None),
         )
-    ).limit(20).all()
+    ).limit(100).all()
+    high_risk_docs = [
+        d for d in candidate_docs
+        if d.has_date_mismatch
+        or "duplicate_document_hash" in (d.flags or [])
+        or "date_inconsistency" in (d.flags or [])
+    ][:20]
     for d in high_risk_docs:
         rec = _alert(
             db, alert_type="HIGH_RISK_DOCUMENT_SUBMISSION", severity="WARNING",

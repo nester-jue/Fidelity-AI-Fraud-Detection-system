@@ -1,9 +1,13 @@
+import base64
 import hashlib
 import hmac
 import os
 import secrets
+import struct
+import time
 from datetime import datetime, timedelta, timezone
 from typing import Optional, Tuple
+from urllib.parse import quote
 import jwt
 from .core.config import settings
 from .models.sqlalchemy_models import RoleEnum
@@ -60,3 +64,39 @@ def decode_access_token(token: str) -> Optional[dict]:
         return payload
     except Exception:
         return None
+
+
+# ── Authenticator-app MFA ( RFC 6238 TOTP, pure standard library ) ──────
+def generate_totp_secret() -> str:
+    """Return a base32 secret suitable for Google Authenticator / Authy."""
+    return base64.b32encode(secrets.token_bytes(20)).decode("ascii").rstrip("=")
+
+
+def _totp_at(secret: str, counter: int) -> str:
+    padded = secret + "=" * (-len(secret) % 8)
+    key = base64.b32decode(padded, casefold=True)
+    message = struct.pack(">Q", counter)
+    digest = hmac.new(key, message, hashlib.sha1).digest()
+    offset = digest[-1] & 0x0F
+    value = struct.unpack(">I", digest[offset:offset + 4])[0] & 0x7FFFFFFF
+    return str(value % 1_000_000).zfill(6)
+
+
+def verify_totp(secret: str, code: str, window: int = 1) -> bool:
+    """Verify a 6-digit code, allowing a one-step clock skew by default."""
+    if not secret or not code or not str(code).isdigit():
+        return False
+    step = int(time.time()) // 30
+    for delta in range(-window, window + 1):
+        if hmac.compare_digest(_totp_at(secret, step + delta), str(code).zfill(6)):
+            return True
+    return False
+
+
+def totp_provisioning_uri(username: str, secret: str, issuer: str = None) -> str:
+    issuer = issuer or settings.ORGANIZATION
+    label = quote(f"{issuer}:{username}")
+    return (
+        f"otpauth://totp/{label}?secret={secret}"
+        f"&issuer={quote(issuer)}&algorithm=SHA1&digits=6&period=30"
+    )

@@ -19,11 +19,25 @@ services:
     ports:
       - "8010:8010"
     environment:
+      ENVIRONMENT: ${ENVIRONMENT:-development}
       POSTGRES_HOST: db
-      POSTGRES_USER: postgres
-      POSTGRES_PASSWORD: postgres
-      POSTGRES_DB: frauddb
-      JWT_SECRET_KEY: fidelity-life-nexa-fraud-detection-secret-2026
+      POSTGRES_USER: ${POSTGRES_USER:-postgres}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-postgres}
+      POSTGRES_DB: ${POSTGRES_DB:-frauddb}
+      JWT_SECRET_KEY: ${JWT_SECRET_KEY:-local-development-only-change-me}
+      DEMO_MODE: ${DEMO_MODE:-false}
+      ALLOW_PUBLIC_REGISTRATION: ${ALLOW_PUBLIC_REGISTRATION:-false}
+      MFA_REQUIRED: ${MFA_REQUIRED:-false}
+      TENANT_ISOLATION_ENABLED: ${TENANT_ISOLATION_ENABLED:-false}
+      DEFAULT_ORGANISATION_ID: ${DEFAULT_ORGANISATION_ID:-}
+      CORS_ORIGINS: ${CORS_ORIGINS:-http://localhost:5174}
+      PASSWORD_RESET_EMAIL_ENABLED: ${PASSWORD_RESET_EMAIL_ENABLED:-false}
+      SMTP_HOST: ${SMTP_HOST:-}
+      SMTP_PORT: ${SMTP_PORT:-587}
+      SMTP_USER: ${SMTP_USER:-}
+      SMTP_PASSWORD: ${SMTP_PASSWORD:-}
+      FRONTEND_RESET_URL: ${FRONTEND_RESET_URL:-http://localhost:5174}
+      FRONTEND_URL: ${FRONTEND_URL:-http://localhost:5174}
       PORT: 8010
 volumes:
   fide_db_data:

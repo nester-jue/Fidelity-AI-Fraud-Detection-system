@@ -108,6 +108,7 @@ ROLE_CAPABILITIES: Dict[RoleEnum, List[str]] = {
     RoleEnum.COMPLIANCE_OFFICER: [CAP_COMPLIANCE, CAP_FRAUD, CAP_OCR, CAP_INVESTIGATIONS, CAP_FORENSICS, CAP_AUDIT, CAP_NOTIFICATIONS, CAP_CUSTOMERS, CAP_POLICIES, CAP_TIMELINE, CAP_EVIDENCE, CAP_HISTORICAL],
     RoleEnum.MANAGEMENT: [CAP_MANAGEMENT, CAP_FRAUD, CAP_NOTIFICATIONS, CAP_CUSTOMERS, CAP_POLICIES, CAP_MANAGEMENT_REPORTS, CAP_NETWORK, CAP_TIMELINE, CAP_HISTORICAL, CAP_EXPOSURE, CAP_PREDICTIVE, CAP_MODEL_PERFORMANCE],
     RoleEnum.SYSTEM_ADMIN: [CAP_ADMIN, CAP_MANAGEMENT, CAP_FRAUD, CAP_OCR, CAP_INVESTIGATIONS, CAP_COMPLIANCE, CAP_CLAIMS, CAP_FORENSICS, CAP_AUDIT, CAP_USERS, CAP_NOTIFICATIONS, CAP_NOTES, CAP_CUSTOMERS, CAP_POLICIES, CAP_MANAGEMENT_REPORTS, CAP_NETWORK, CAP_TIMELINE, CAP_EVIDENCE, CAP_HISTORICAL, CAP_PREDICTIVE, CAP_ZIM, CAP_MODEL_PERFORMANCE, CAP_EXPOSURE],
+    RoleEnum.CHIEF_RISK_OFFICER: [CAP_FRAUD, CAP_OCR, CAP_INVESTIGATIONS, CAP_FORENSICS, CAP_MANAGEMENT, CAP_NOTIFICATIONS, CAP_CUSTOMERS, CAP_POLICIES, CAP_NETWORK, CAP_TIMELINE, CAP_HISTORICAL, CAP_EVIDENCE, CAP_PREDICTIVE, CAP_MODEL_PERFORMANCE, CAP_EXPOSURE],
 }
 
 ROLE_NAME: Dict[RoleEnum, str] = {
@@ -115,7 +116,8 @@ ROLE_NAME: Dict[RoleEnum, str] = {
     RoleEnum.CLAIMS_MANAGER: "Claims Manager",
     RoleEnum.FRAUD_INVESTIGATOR: "Fraud Investigator",
     RoleEnum.COMPLIANCE_OFFICER: "Compliance Officer",
-    RoleEnum.MANAGEMENT: "Executive Management (CRO)",
+    RoleEnum.MANAGEMENT: "Executive Management",
+    RoleEnum.CHIEF_RISK_OFFICER: "Chief Risk Officer",
     RoleEnum.SYSTEM_ADMIN: "System Administrator",
 }
 
@@ -127,6 +129,7 @@ ROLE_DEPARTMENT: Dict[RoleEnum, str] = {
     RoleEnum.FRAUD_INVESTIGATOR: "fraud_investigator",
     RoleEnum.COMPLIANCE_OFFICER: "compliance_officer",
     RoleEnum.MANAGEMENT: "executive_management",
+    RoleEnum.CHIEF_RISK_OFFICER: "executive_management",
     RoleEnum.SYSTEM_ADMIN: "system_admin",
 }
 
@@ -189,6 +192,13 @@ SUGGESTED_QUESTIONS: Dict[str, List[str]] = {
         "Show me the model performance metrics (precision, recall, false positives).",
         "Which emerging fraud patterns should I be aware of?",
         "What is the current fraud exposure estimate?",
+    ],
+    "chief_risk_officer": [
+        "Which claims currently present the highest fraud risk?",
+        "Summarise the fraud network intelligence findings.",
+        "Show the AI model performance metrics and data quality indicators.",
+        "Which predictive alerts are still open?",
+        "Show the recent investigation outcomes.",
     ],
     "system_admin": [
         "Are all AI and document-processing services operational?",

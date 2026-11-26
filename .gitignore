@@ -1,0 +1,16 @@
+# Python
+__pycache__/
+*.py[cod]
+.pytest_cache/
+
+# Node / build output
+node_modules/
+frontend/dist/
+
+# Local secrets
+.env
+*.local
+
+# OS files
+.DS_Store
+Thumbs.db

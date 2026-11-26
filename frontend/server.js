@@ -20,6 +20,7 @@ const API_PREFIXES = [
   '/departmental', '/forensics', '/ocr', '/compliance-reports', '/management-reports', '/chatbot', '/health',
   // NEXA advanced intelligence modules (were missing — caused endless loading)
   '/fraud-network', '/zim', '/timeline', '/evidence', '/historical', '/predictive', '/model-performance',
+  '/security', '/enquiries',
 ];
 
 async function proxyToBackend(req, res, body) {

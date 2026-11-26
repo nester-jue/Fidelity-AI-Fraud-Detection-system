@@ -1,0 +1,6 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 80 80" fill="none" role="img" aria-label="Enterprise Security">
+  <rect width="80" height="80" rx="16" fill="#EEF2FF"/>
+  <path d="M40 16L21 24V39C21 51.2 29.1 61.1 40 64C50.9 61.1 59 51.2 59 39V24L40 16Z" fill="#0A192F" stroke="#C8A951" stroke-width="2"/>
+  <rect x="33" y="37" width="14" height="12" rx="2.5" fill="#38BDF8"/>
+  <path d="M36 37V33C36 30.8 37.8 29 40 29C42.2 29 44 30.8 44 33V37" stroke="#FFFFFF" stroke-width="2" stroke-linecap="round"/>
+</svg>

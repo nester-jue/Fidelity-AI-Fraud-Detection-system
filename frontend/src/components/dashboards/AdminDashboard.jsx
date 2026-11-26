@@ -228,20 +228,28 @@ function OcrMonitoringTab() {
 }
 
 function AITab() {
+  const [perf, setPerf] = useState(null);
+  useEffect(() => {
+    let mounted = true;
+    api.modelPerformanceDashboard()
+      .then(r => r.ok ? r.json() : null)
+      .then(d => { if (mounted && d) setPerf(d); })
+      .catch(() => {});
+    return () => { mounted = false; };
+  }, []);
+  const metrics = perf?.metrics || {};
+  const versions = perf?.model_versions || [];
   return (
     <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
-      <Card icon={ShieldCheck} title="AI Engine" value={(['v1.2-ensemble-hybrid']).join(' &bull; ')} colorCls="border-t-purple-600" sub="Fraud Detection Ensemble" />
-      <Card icon={Activity} title="Model Status" value="Active" colorCls="border-t-emerald-600" sub="v1.2-ensemble-hybrid" />
-      <Card icon={Activity} title="Monitoring Status" value="Available" colorCls="border-t-blue-600" />
-      <Card icon={Activity} title="Time to Classify" value="~32 ms" colorCls="border-t-cyan-600" />
+      <Card icon={ShieldCheck} title="Registered model versions" value={versions.length || '—'} colorCls="border-t-purple-600" sub="From the model registry" />
+      <Card icon={Activity} title="Claims assessed" value={perf?.claims_assessed ?? '—'} colorCls="border-t-emerald-600" />
+      <Card icon={Activity} title="Precision" value={metrics.precision != null ? `${(metrics.precision * 100).toFixed(1)}%` : 'Not evaluated'} colorCls="border-t-blue-600" sub="Confirmed outcomes only" />
+      <Card icon={Activity} title="Assessments with explanation" value={perf?.data_quality?.assessments_with_explanation ?? '—'} colorCls="border-t-cyan-600" />
     </div>
   );
 }
 
 function ConfigTab() {
-  const [orgName] = useState('FIDELITY LIFE ASSURANCE');
-  const [sysName] = useState('NEXA AI Fraud Detection System');
-  const [healthNote] = useState('');
   return (
     <div className="space-y-6">
       <div className="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden">
@@ -249,19 +257,60 @@ function ConfigTab() {
         <table className="w-full text-left text-xs">
           <tbody className="divide-y divide-slate-100">
             {[
-              ['Organization', orgName, 'Fidelity Life Assurance Company'],
-              ['System', sysName, 'NEXA AI Fraud Claims Detection Platform'],
-              ['API Endpoint', '/api/v1', 'FastAPI backend'],
-              ['Database', 'PostgreSQL with SQLite dev fallback', 'Model migration supported'],
+              ['Organization', 'Set in deployment environment', 'ORGANIZATION'],
+              ['System', 'NEXA Enterprise Insurance Fraud Intelligence Platform', 'APP_NAME'],
+              ['Runtime environment', 'Set in deployment environment', 'ENVIRONMENT — production guards apply when set to production'],
+              ['Database', 'Configured via DATABASE_URL / PostgreSQL settings', 'SQLite is refused when ENVIRONMENT=production'],
               ['Frontend', 'React + Vite (ESM)', 'Tailwind CSS, Lucide icons'],
-              ['Auth', 'JWT (PyJWT, HS256)', 'PBKDF2-HMAC-SHA256 password hashing'],
-              ['JWT Expiry', '480 minutes', 'Configurable via JWT_SECRET_KEY'],
+              ['Auth', 'JWT (PyJWT, HS256)', 'PBKDF2-HMAC-SHA256 password hashing; optional TOTP MFA'],
+              ['Browser origins', 'Configured via CORS_ORIGINS', 'Wildcard origins are removed in production'],
             ].map(([k, v, note]) => (
               <tr key={k}><td className="py-3 px-4 font-semibold text-slate-700 w-1/4">{k}</td><td className="py-3 px-4 font-mono font-bold text-slate-900">{v}</td><td className="py-3 px-4 text-slate-500">{note}</td></tr>
             ))}
           </tbody>
         </table>
       </div>
+    </div>
+  );
+}
+
+function RealOverview() {
+  const [data, setData] = useState({ users: '—', api: '—', modelVersions: '—', db: '—', failedLogins: '—' });
+  useEffect(() => {
+    let mounted = true;
+    (async () => {
+      const [admin, health, security, model] = await Promise.allSettled([
+        api.adminDashboard(), api.health(), api.securityOverview(), api.modelPerformanceDashboard(),
+      ]);
+      if (!mounted) return;
+      const next = { users: '—', api: '—', modelVersions: '—', db: '—', failedLogins: '—' };
+      if (admin.status === 'fulfilled' && admin.value.ok) {
+        const d = await admin.value.json();
+        next.users = d.total_users ?? d.users ?? '—';
+      }
+      if (health.status === 'fulfilled' && health.value.ok) {
+        next.api = (await health.value.json()).status ?? '—';
+      }
+      if (security.status === 'fulfilled' && security.value.ok) {
+        const s = await security.value.json();
+        next.db = s.database?.status ?? '—';
+        next.failedLogins = s.authentication?.failed_logins ?? '—';
+      }
+      if (model.status === 'fulfilled' && model.value.ok) {
+        const m = await model.value.json();
+        next.modelVersions = m.model_versions?.length ?? '—';
+      }
+      setData(next);
+    })();
+    return () => { mounted = false; };
+  }, []);
+  return (
+    <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-4 mb-6">
+      <Card icon={Users} title="Total Users" value={data.users} colorCls="border-t-blue-600" />
+      <Card icon={Activity} title="API Status" value={data.api} colorCls="border-t-emerald-600" />
+      <Card icon={ShieldCheck} title="Model Versions" value={data.modelVersions} colorCls="border-t-purple-600" />
+      <Card icon={Database} title="Database" value={data.db} colorCls="border-t-cyan-600" />
+      <Card icon={AlertTriangle} title="Failed Sign-ins" value={data.failedLogins} colorCls="border-t-red-600" />
     </div>
   );
 }
@@ -335,13 +384,8 @@ export default function AdminDashboard({ activeTab }) {
       </div>
       {tab === 'administration-overview' && (
         <div>
-          <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-4 mb-6">
-            <Card icon={Users} title="Total Users" value="—" colorCls="border-t-blue-600" />
-            <Card icon={Activity} title="API Status" value="Operational" colorCls="border-t-emerald-600" />
-            <Card icon={ShieldCheck} title="AI Model Status" value="Active" colorCls="border-t-purple-600" />
-            <Card icon={Plug} title="OCR Status" value="Active (Tesseract)" colorCls="border-t-cyan-600" />
-            <Card icon={AlertTriangle} title="Security Alerts" value="0" colorCls="border-t-red-600" />
-          </div>
+          <RealOverview />
+          <p className="text-[12px] text-slate-500 mb-4">Status values are read from the live API, Security Centre and model registry; no service status is assumed.</p>
         </div>
       )}
       {tab === 'user-management' && <UsersTab />}

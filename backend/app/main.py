@@ -6,13 +6,15 @@ from fastapi.middleware.cors import CORSMiddleware
 from fastapi.staticfiles import StaticFiles
 from fastapi.responses import FileResponse
 from .services.db import init_db
+from .services import tenant as tenant_service
+from .auth import decode_access_token
 from .core.config import settings
 from .api import auth, claims, fraud, investigations, dashboard, audit, lookup, users, chatbot
 from .api import ocr, forensics, sample_claim_documents, departmental_dashboards, compliance_reports, management_reports
 # Advanced NEXA Intelligence modules (enterprise upgrade)
 from .api import (
     fraud_network, claim_timeline, evidence, historical_behavior,
-    predictive, zim, model_performance,
+    predictive, zim, model_performance, security, enquiries,
 )
 
 logger = logging.getLogger("fraud_app")
@@ -48,8 +50,8 @@ async def lifespan(app: FastAPI):
     yield
 
 app = FastAPI(
-    title="FIDELITY LIFE ASSURANCE - AI Fraud Claims Detection API",
-    description="Enterprise production AI fraud detection, OCR document analysis, and claims risk intelligence platform.",
+    title=f"{settings.APP_NAME} — API",
+    description="Enterprise insurance fraud detection, forensic document analysis, claims investigation and risk intelligence API.",
     version="2.0.0",
     lifespan=lifespan,
 )
@@ -62,6 +64,34 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
+
+# Bind the organisation from the signed token to the request context before
+# any database work happens. Public credential endpoints are explicitly
+# unscoped so a user can be located by username/email; they never return
+# tenant records. Requests without a usable token fail closed.
+_PUBLIC_TENANT_PATHS = (
+    "/auth/token", "/auth/register", "/auth/forgot-password",
+    "/auth/reset-password", "/enquiries", "/static", "/docs", "/redoc", "/openapi.json",
+)
+
+
+@app.middleware("http")
+async def tenant_context_middleware(request, call_next):
+    if not settings.TENANT_ISOLATION_ENABLED:
+        return await call_next(request)
+    path = request.url.path
+    if path in {"/", "/dashboard", "/health"} or path.startswith(_PUBLIC_TENANT_PATHS):
+        token = tenant_service.set_tenant(tenant_service.PUBLIC_ACCESS)
+    else:
+        header = request.headers.get("authorization", "")
+        payload = decode_access_token(header[7:]) if header.lower().startswith("bearer ") else None
+        org_id = payload.get("organisation_id") if payload else None
+        token = tenant_service.set_tenant(org_id if isinstance(org_id, int) else None)
+    try:
+        return await call_next(request)
+    finally:
+        tenant_service.reset_tenant(token)
+
 
 # Register API routers
 app.include_router(auth.router)
@@ -90,6 +120,8 @@ app.include_router(historical_behavior.router)  # Phase 5 — Historical behavio
 app.include_router(predictive.router)           # Phase 11 — Predictive monitoring
 app.include_router(zim.router)                  # Phase 9 — Zimbabwe intelligence
 app.include_router(model_performance.router)    # Phase 13 — AI model performance
+app.include_router(security.router)             # Enterprise Security Centre
+app.include_router(enquiries.router)            # Public product enquiries
 
 # Mount static web dashboard
 static_dir = os.path.join(os.path.dirname(__file__), "static")
@@ -113,7 +145,11 @@ async def dashboard_page():
     index_file = os.path.join(static_dir, "index.html")
     if os.path.exists(index_file):
         return FileResponse(index_file)
-    return FileResponse(index_file)
+    return {
+        "organization": settings.ORGANIZATION,
+        "system": settings.APP_NAME,
+        "status": "UI build not deployed; API is operational.",
+    }
 
 @app.get("/health", tags=["Health"])
 async def health_check():

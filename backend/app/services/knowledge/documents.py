@@ -1,8 +1,8 @@
 """Parsing helpers for knowledge documents.
 
-Phase 5 supports text documents (.txt/.md). PDF/DOCX parsing — the Phase 6
-feature for ingesting Fidelity manuals, policies and procedures — is a stub
-below; add `pypdf`/`python-docx` and implement here when that phase starts.
+Supported formats: plain text/markdown/CSV/TSV/RST, PDF (``pypdf``) and
+DOCX (``python-docx``). Missing optional libraries produce a clear runtime
+error naming the dependency instead of a silent stub.
 """
 
 import logging
@@ -13,11 +13,7 @@ logger = logging.getLogger("knowledge_documents")
 
 
 def parse_document(path: Path, text: Optional[str] = None) -> str:
-    """Returns the text content of a knowledge document.
-
-    Phase 5 supports text formats (.txt, .md, .csv, .tsv, .rst). PDF/DOCX
-    parsing arrives in Phase 6 — the stubs below raise ``NotImplementedError``
-    unless the optional libraries are installed.
+    """Return the text content of a knowledge document.
 
     Args:
         path: file path (may not exist for in-memory text uploads).
@@ -30,23 +26,29 @@ def parse_document(path: Path, text: Optional[str] = None) -> str:
         return Path(path).read_text(encoding="utf-8", errors="replace")
     if lower.endswith(".pdf"):
         try:
-            from pypdf import PdfReader  # Phase 6: pip install pypdf
-        except ImportError:
-            raise NotImplementedError(
-                f"PDF parsing needs pypdf installed (Phase 6); "
-                f"document: {path}"
-            )
-        return "\n".join((page.extract_text() or "") for page in PdfReader(str(path)).pages)
+            from pypdf import PdfReader
+        except ImportError as exc:
+            raise RuntimeError("PDF ingestion requires 'pypdf' in backend/requirements.txt") from exc
+        reader = PdfReader(str(path))
+        pages = [(page.extract_text() or "") for page in reader.pages]
+        content = "\n".join(pages).strip()
+        if not content:
+            raise ValueError(f"PDF contains no extractable text (it may be a scan): {path}")
+        return content
     if lower.endswith(".docx"):
         try:
-            from docx import Document  # Phase 6: pip install python-docx
-        except ImportError:
-            raise NotImplementedError(
-                f"DOCX parsing needs python-docx installed (Phase 6); "
-                f"document: {path}"
-            )
+            from docx import Document
+        except ImportError as exc:
+            raise RuntimeError("DOCX ingestion requires 'python-docx' in backend/requirements.txt") from exc
         doc = Document(str(path))
-        return "\n".join(paragraph.text for paragraph in doc.paragraphs)
-    raise NotImplementedError(
-        f"Unsupported document type: {path} (supported: .txt/.md/.csv/.tsv/.rst; PDF/DOCX in Phase 6)."
+        parts = [p.text for p in doc.paragraphs]
+        for table in doc.tables:
+            for row in table.rows:
+                parts.append(" | ".join(cell.text for cell in row.cells))
+        content = "\n".join(part for part in parts if part.strip()).strip()
+        if not content:
+            raise ValueError(f"DOCX contains no extractable text: {path}")
+        return content
+    raise ValueError(
+        f"Unsupported document type: {path} (supported: .txt/.md/.csv/.tsv/.rst/.pdf/.docx)."
     )

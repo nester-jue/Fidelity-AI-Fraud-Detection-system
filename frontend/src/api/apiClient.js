@@ -12,7 +12,9 @@ export const apiCall = async (path, options = {}) => {
     ...(options.headers || {}),
     ...(token ? { Authorization: `Bearer ${token}` } : {}),
   };
-  if (!(options.body instanceof FormData) && options.method && options.method !== 'GET') {
+  // Never overwrite an explicit Content-Type (login sends form-encoded data).
+  if (!(options.body instanceof FormData) && options.method && options.method !== 'GET'
+      && !Object.keys(headers).some(h => h.toLowerCase() === 'content-type')) {
     headers['Content-Type'] = 'application/json';
   }
   // Reasonable default timeout (10s) so a hung request never blocks the UI
@@ -37,11 +39,26 @@ export const apiCall = async (path, options = {}) => {
 };
 
 export const api = {
+  // Public enquiries
+  submitEnquiry: (data) => apiCall('/enquiries/', { method: 'POST', body: JSON.stringify(data) }),
+
   // Auth
   login: (formData) => apiCall('/auth/token', { method: 'POST', headers: { 'Content-Type': 'application/x-www-form-urlencoded' }, body: formData }),
   register: (data) => apiCall('/auth/register', { method: 'POST', body: JSON.stringify(data) }),
   me: () => apiCall('/auth/me'),
   forgotPassword: (email) => apiCall('/auth/forgot-password', { method: 'POST', body: JSON.stringify({ email }) }),
+  resetPassword: (token, newPassword) => apiCall('/auth/reset-password', { method: 'POST', body: JSON.stringify({ token, new_password: newPassword }) }),
+  mfaStatus: () => apiCall('/auth/mfa/status'),
+  mfaSetup: () => apiCall('/auth/mfa/setup', { method: 'POST' }),
+  mfaEnable: (code) => apiCall('/auth/mfa/enable', { method: 'POST', body: JSON.stringify({ code }) }),
+  mfaDisable: (payload) => apiCall('/auth/mfa/disable', { method: 'POST', body: JSON.stringify(payload) }),
+
+  // Enterprise Security Centre
+  securityOverview: (days = 30) => apiCall(`/security/overview?days=${days}`),
+  securityEvents: (params = {}) => {
+    const q = new URLSearchParams(params).toString();
+    return apiCall(`/security/events${q ? '?' + q : ''}`);
+  },
 
   // Profile
   myProfile: () => apiCall('/departmental/my-profile'),

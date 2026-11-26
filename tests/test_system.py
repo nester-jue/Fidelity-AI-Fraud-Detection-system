@@ -243,6 +243,7 @@ def test_model_governance_endpoint(client, auth_headers):
     data = res.json()
     assert "active_model" in data
     assert "metrics" in data
-    assert data["metrics"]["precision"] > 90.0
+    # Precision is null when there are no reviewed outcomes; it is never inflated.
+    assert data["metrics"]["precision"] is None or 0.0 <= data["metrics"]["precision"] <= 100.0
     assert "confusion_matrix" in data
 

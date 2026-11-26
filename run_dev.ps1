@@ -27,6 +27,28 @@ Write-Host "  • Fraud Investigator:   investigator / Investigate123!" -Foregro
 Write-Host "  • Compliance Officer:   compliance / Compliance123!" -ForegroundColor White
 Write-Host "  • Executive Management: executive / Executive123!`n" -ForegroundColor White
 
-# Launch frontend in background job or parallel process, then launch backend on port 8010
+# Start the API first, wait until it answers, then start the frontend proxy.
+# Starting both at once made the first sign-in attempt race the backend startup
+# and produced a misleading "Failed to fetch" error in the browser.
+$env:PYTHONPATH = "."
+$api = Start-Process python -ArgumentList "-m uvicorn backend.app.main:app --host 0.0.0.0 --port 8010 --reload" -PassThru
+$ready = $false
+for ($i = 0; $i -lt 40; $i++) {
+  Start-Sleep -Milliseconds 500
+  try {
+    $health = Invoke-WebRequest -Uri "http://127.0.0.1:8010/health" -UseBasicParsing -TimeoutSec 2
+    if ($health.StatusCode -eq 200) { $ready = $true; break }
+  } catch { }
+}
+if (-not $ready) {
+  Write-Host "ERROR: Backend did not become ready on http://127.0.0.1:8010/health" -ForegroundColor Red
+  Write-Host "Check the API terminal for startup errors. The frontend was not started." -ForegroundColor Red
+  exit 1
+}
+Write-Host "Backend ready. Starting frontend proxy..." -ForegroundColor Green
 Start-Process node -ArgumentList "frontend/server.js" -NoNewWindow
-python -m uvicorn backend.app.main:app --host 0.0.0.0 --port 8010 --reload
+try {
+  while (-not $api.HasExited) { Start-Sleep -Seconds 2 }
+} finally {
+  if (-not $api.HasExited) { Stop-Process -Id $api.Id -Force }
+}

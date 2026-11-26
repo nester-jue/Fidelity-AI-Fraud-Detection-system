@@ -397,7 +397,7 @@ async def get_executive_dashboard(
 #  suspicious queue, investigation progress and AI insights)
 # ─────────────────────────────────────────────
 
-_EXEC_MGMT_ROLES = [RoleEnum.MANAGEMENT, RoleEnum.SYSTEM_ADMIN]
+_EXEC_MGMT_ROLES = [RoleEnum.MANAGEMENT, RoleEnum.CHIEF_RISK_OFFICER, RoleEnum.SYSTEM_ADMIN]
 
 
 def _exec_claims_with_assessment_and_investigation(db: Session):

@@ -1,17 +1,18 @@
 import os
 import uuid
-from datetime import datetime, timezone
+from datetime import date, datetime, timezone
 from typing import List, Optional
 from fastapi import APIRouter, Depends, HTTPException, UploadFile, File, Form, BackgroundTasks, Query, status
 from sqlalchemy.orm import Session
 from sqlalchemy import desc
 
 from ..services.db import get_db, SessionLocal
+from ..services import tenant as tenant_service
 from ..models.sqlalchemy_models import (
-    Claim, ClaimDocument, ClaimNote, FraudAssessment, Notification, User, RoleEnum, Policy, Customer, Investigation
+    Claim, ClaimDocument, ClaimNote, FraudAssessment, Notification, User, RoleEnum, Policy, Customer,
+    Investigation, FirstNoticeOfLoss,
 )
 from ..dependencies import get_current_active_user, require_roles, require_department, log_audit_trail
-from ..integrations.mock_services import PolicyService, CustomerService, ClaimsService
 from ..ocr.ocr_service import process_document
 from ..ml.fraud_engine import fraud_engine, isolation_features_from_claim, isolation_baseline_from_claims
 from ..services import document_forensics
@@ -30,8 +31,14 @@ def save_uploaded_file(upload: UploadFile, claim_id: str) -> str:
         buffer.write(upload.file.read())
     return file_path
 
-def run_ai_claim_analysis(claim_id: int):
-    """Background task: Performs OCR document analysis, extracts features, and runs FraudDetectionEngine."""
+def run_ai_claim_analysis(claim_id: int, organisation_id: int | None = None):
+    """Background entry point: carry the request's tenant into the task."""
+    with tenant_service.bound_tenant(organisation_id):
+        _run_ai_claim_analysis(claim_id)
+
+
+def _run_ai_claim_analysis(claim_id: int):
+    """Performs OCR document analysis, extracts features and scores the claim."""
     db = SessionLocal()
     try:
         claim = db.query(Claim).filter(Claim.id == claim_id).first()
@@ -230,35 +237,14 @@ async def submit_claim(
     except ValueError:
         raise HTTPException(status_code=400, detail="Invalid incident_date format. Use YYYY-MM-DD.")
 
-    # 1. Lookup or create Policy & Customer
-    policy = db.query(Policy).filter(Policy.policy_number == policy_number).first()
+    # 1. Resolve the policy from the system of record. Unknown policies are
+    #    rejected rather than fabricated from a random mock generator.
+    policy = db.query(Policy).filter(Policy.policy_number == policy_number.strip()).first()
     if not policy:
-        # Query Policy Mock Service
-        mock_p = PolicyService().get_policy(policy_number)
-        # Check customer
-        cust = db.query(Customer).filter(Customer.customer_id == mock_p["customer_id"]).first()
-        if not cust:
-            mock_c = CustomerService().get_customer(mock_p["customer_id"])
-            cust = Customer(
-                customer_id=mock_c["customer_id"],
-                name=mock_c["name"],
-                national_id=mock_c["national_id"],
-                date_of_birth=datetime.fromisoformat(mock_c["date_of_birth"]),
-            )
-            db.add(cust)
-            db.commit()
-            db.refresh(cust)
-
-        policy = Policy(
-            policy_number=policy_number,
-            policy_type=claim_type,
-            customer_id=cust.id,
-            effective_date=datetime.fromisoformat(mock_p["effective_date"]),
-            expiry_date=datetime.fromisoformat(mock_p["expiry_date"]),
+        raise HTTPException(
+            status_code=404,
+            detail="Policy not found in the policy administration records. Register the policy before submitting a claim.",
         )
-        db.add(policy)
-        db.commit()
-        db.refresh(policy)
 
     # 2. Create Claim record
     claim_ref = f"CLM-2026-{uuid.uuid4().hex[:6].upper()}"
@@ -293,7 +279,7 @@ async def submit_claim(
     db.commit()
 
     # 4. Trigger asynchronous background AI fraud analysis
-    background_tasks.add_task(run_ai_claim_analysis, new_claim.id)
+    background_tasks.add_task(run_ai_claim_analysis, new_claim.id, current_user.organisation_id)
 
     log_audit_trail(
         db, current_user, action="CLAIM_SUBMITTED", target=f"Claim:{new_claim.claim_id}",
@@ -607,7 +593,7 @@ async def add_claim_note(
 async def rescore_claim(
     claim_id: str,
     db: Session = Depends(get_db),
-    current_user: User = Depends(get_current_active_user),
+    current_user: User = Depends(require_roles([RoleEnum.CLAIMS_MANAGER, RoleEnum.FRAUD_INVESTIGATOR, RoleEnum.SYSTEM_ADMIN])),
 ):
     claim = db.query(Claim).filter((Claim.claim_id == claim_id) | (Claim.id == claim_id)).first()
     if not claim:
@@ -631,25 +617,22 @@ async def list_fnol_notifications(
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_active_user),
 ):
-    """Returns recent First Notice of Loss notifications before full claim adjudication."""
-    claims = db.query(Claim).order_by(desc(Claim.created_at)).limit(10).all()
-    fnol_list = []
-    channels = ["Branch Walk-In", "Digital Portal", "Broker Advisory", "Contact Centre"]
-    
-    for idx, c in enumerate(claims):
-        fnol_list.append({
-            "fnol_reference": f"FNOL-2026-00{c.id:02d}",
-            "claim_id": c.claim_id,
-            "policy_number": c.policy.policy_number if c.policy else "POL-LIF-801294",
-            "claimant_name": c.customer.name if c.customer else "Simbarashe Mpofu",
-            "event_type": c.claim_type,
-            "incident_date": c.incident_date.strftime("%Y-%m-%d") if c.incident_date else "2026-05-10",
-            "notification_date": c.submission_date.strftime("%Y-%m-%d %H:%M") if c.submission_date else "2026-05-12 09:30",
-            "reporting_channel": channels[idx % len(channels)],
-            "estimated_amount": c.amount,
-            "initial_triage": "Fast-Track" if (c.assessment and c.assessment.risk_category == "Low") else ("SIU Review Priority" if (c.assessment and c.assessment.risk_category in ["High", "Critical"]) else "Standard Intake"),
-            "status": "Claim Created" if c.status in ["approved", "in_review", "flagged"] else "Pending Documentation",
-        })
+    """Returns persisted First Notice of Loss notifications (no invented fields)."""
+    notices = db.query(FirstNoticeOfLoss).order_by(desc(FirstNoticeOfLoss.recorded_at)).limit(50).all()
+    fnol_list = [{
+        "fnol_reference": n.fnol_reference,
+        "claim_id": n.claim_id,
+        "policy_number": n.policy_number,
+        "claimant_name": n.claimant_name,
+        "event_type": n.event_type,
+        "incident_date": n.incident_date.strftime("%Y-%m-%d") if n.incident_date else None,
+        "notification_date": n.recorded_at.strftime("%Y-%m-%d %H:%M") if n.recorded_at else None,
+        "reporting_channel": n.reporting_channel,
+        "estimated_amount": n.estimated_amount,
+        "initial_triage": n.triage_queue,
+        "status": n.status,
+        "policy_validated": bool(n.policy_validated),
+    } for n in notices]
 
     return {
         "total_fnol": len(fnol_list),
@@ -668,32 +651,64 @@ async def submit_fnol(
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_active_user),
 ):
-    """Registers First Notice of Loss, validates policy existence, and prepares claim routing."""
-    fnol_ref = f"FNOL-2026-{uuid.uuid4().hex[:5].upper()}"
-    
-    # Check policy
-    policy = db.query(Policy).filter(Policy.policy_number == policy_number).first()
+    """Persists a First Notice of Loss, validates the policy and records triage."""
+    fnol_ref = f"FNOL-{datetime.now(timezone.utc).year}-{uuid.uuid4().hex[:6].upper()}"
+    try:
+        incident = date.fromisoformat(incident_date)
+    except ValueError:
+        raise HTTPException(status_code=400, detail="incident_date must be a valid YYYY-MM-DD date.")
+    if estimated_amount <= 0:
+        raise HTTPException(status_code=400, detail="estimated_amount must be greater than zero.")
+    if not policy_number.strip() or not claimant_name.strip() or not event_type.strip():
+        raise HTTPException(status_code=400, detail="policy_number, claimant_name and event_type are required.")
+
+    policy = db.query(Policy).filter(Policy.policy_number == policy_number.strip()).first()
     policy_valid = bool(policy)
-    
-    # Determine initial triage queue
+    linked_claim = None
+    if policy:
+        linked_claim = db.query(Claim).filter(Claim.policy_id == policy.id).order_by(desc(Claim.created_at)).first()
+
     triage_queue = "Standard Verification"
     if estimated_amount > 50000:
         triage_queue = "High-Value Claims Review"
     elif not policy_valid:
         triage_queue = "Underwriting Exception Desk"
 
+    notice = FirstNoticeOfLoss(
+        fnol_reference=fnol_ref,
+        claim_id=linked_claim.claim_id if linked_claim else None,
+        policy_number=policy_number.strip(),
+        policy_validated=policy_valid,
+        claimant_name=claimant_name.strip(),
+        event_type=event_type.strip(),
+        incident_date=datetime.combine(incident, datetime.min.time()),
+        estimated_amount=estimated_amount,
+        reporting_channel=reporting_channel.strip() or "Unspecified",
+        initial_notes=initial_notes or "",
+        triage_queue=triage_queue,
+        status="intake_recorded",
+        recorded_by_id=current_user.id,
+        organisation_id=current_user.organisation_id,
+    )
+    db.add(notice)
+    db.commit()
+    db.refresh(notice)
+
     log_audit_trail(
         db, current_user, action="FNOL_REGISTERED", target=f"FNOL:{fnol_ref}",
-        detail={"policy": policy_number, "claimant": claimant_name, "amount": estimated_amount, "queue": triage_queue}
+        detail={"policy": policy_number, "claimant": claimant_name, "amount": estimated_amount,
+                "queue": triage_queue, "policy_validated": policy_valid}
     )
 
     return {
-        "message": "First Notice of Loss (FNOL) successfully logged and assigned to triage queue.",
+        "message": "First Notice of Loss recorded and assigned to a triage queue.",
         "fnol_reference": fnol_ref,
-        "policy_number": policy_number,
+        "claim_id": notice.claim_id,
+        "policy_number": notice.policy_number,
         "policy_status": "Active & Validated" if policy_valid else "Pending Underwriting Lookup",
         "triage_queue": triage_queue,
-        "notification_timestamp": datetime.now(timezone.utc).isoformat(),
-        "next_steps": "Submit formal death certificate or medical proof in Claims Management to trigger automated OCR and AI risk score.",
+        "notification_timestamp": notice.recorded_at.isoformat() if notice.recorded_at else None,
+        "persisted": True,
+        "next_steps": "Submit supporting documents in Claims Management to trigger OCR and AI risk assessment.",
     }
 

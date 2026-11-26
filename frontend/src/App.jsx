@@ -24,14 +24,15 @@ import ComplianceDashboard from './components/dashboards/ComplianceDashboard.jsx
 import FraudInvestigationDashboard from './components/dashboards/FraudInvestigationDashboard.jsx';
 import AdminDashboard from './components/dashboards/AdminDashboard.jsx';
 import OCRDocumentPage from './components/pages/OCRDocumentPage.jsx';
+import NexaLandingPage from './components/pages/NexaLandingPage.jsx';
 import NexaAssistant from './components/shared/NexaAssistant.jsx';
 import FraudNetworkGraph from './components/dashboards/FraudNetworkGraph.jsx';
 import ClaimTimeline from './components/dashboards/ClaimTimeline.jsx';
-import EvidenceManagement from './components/dashboards/EvidenceManagement.jsx';
 import HistoricalBehaviorPanel from './components/dashboards/HistoricalBehaviorPanel.jsx';
 import PredictiveAlerts from './components/dashboards/PredictiveAlerts.jsx';
 import ModelPerformanceDashboard from './components/dashboards/ModelPerformanceDashboard.jsx';
 import ZimIntelligencePanel from './components/dashboards/ZimIntelligencePanel.jsx';
+import SecurityCentre from './components/dashboards/SecurityCentre.jsx';
 
 // ─────────────────────────────────────────────
 // DEPARTMENTAL NAVIGATION (Backend-enforced RBAC mirrors this)
@@ -104,6 +105,7 @@ const ROLE_SIDEBAR = {
     { id: 'policy-verification', label: 'Policy Verification', icon: LockKeyhole, section: 'Compliance' },
     { id: 'compliance-alerts', label: 'Compliance Alerts', icon: ShieldCheck, section: 'Compliance' },
     { id: 'audit', label: 'Audit Trail', icon: ClipboardCheck, section: 'Compliance' },
+    { id: 'security-centre', label: 'Security Centre', icon: ShieldCheck, section: 'Compliance' },
     { id: 'regulatory-monitoring', label: 'Regulatory Monitoring', icon: Globe, section: 'Compliance' },
     { id: 'regulatory-reports', label: 'Compliance Reports', icon: FileText, section: 'Compliance' },
     { id: 'ai-assistant', label: 'AI Assistant', icon: Brain, section: 'Assistant & Account' },
@@ -121,6 +123,7 @@ const ROLE_SIDEBAR = {
     { id: 'ai-fraud-intelligence', label: 'AI Fraud Intelligence', icon: Brain, section: 'Executive' },
     { id: 'fraud-trends', label: 'Fraud Trends', icon: TrendingUp, section: 'Executive' },
     { id: 'management-reports', label: 'Executive Reports', icon: FileText, section: 'Executive' },
+    { id: 'security-centre', label: 'Security Centre', icon: ShieldCheck, section: 'Executive' },
     { id: 'notifications', label: 'Notifications', icon: Activity, section: 'Assistant & Account' },
     { id: 'ai-assistant', label: 'AI Assistant', icon: Brain, section: 'Assistant & Account' },
     { id: 'profile', label: 'My Profile', icon: Users, section: 'Account' },
@@ -139,6 +142,7 @@ const ROLE_SIDEBAR = {
     { id: 'risk-concentration', label: 'Risk Concentration', icon: TrendingUp, section: 'Risk Intelligence' },
     { id: 'model-performance', label: 'AI Model Performance', icon: Brain, section: 'Risk Intelligence' },
     { id: 'risk-reports', label: 'Risk Reports', icon: FileText, section: 'Risk Intelligence' },
+    { id: 'security-centre', label: 'Security Centre', icon: ShieldCheck, section: 'Risk Intelligence' },
     { id: 'notifications', label: 'Notifications', icon: Activity, section: 'Assistant & Account' },
     { id: 'ai-assistant', label: 'AI Assistant', icon: Brain, section: 'Assistant & Account' },
     { id: 'profile', label: 'My Profile', icon: Users, section: 'Account' },
@@ -162,6 +166,7 @@ const ROLE_SIDEBAR = {
     { id: 'api-monitoring', label: 'API Monitoring', icon: Link2, section: 'Administration' },
     { id: 'system-health', label: 'System Health', icon: HeartPulse, section: 'Administration' },
     { id: 'audit', label: 'Audit Logs', icon: ClipboardCheck, section: 'Administration' },
+    { id: 'security-centre', label: 'Security Centre', icon: ShieldCheck, section: 'Administration' },
     { id: 'system-configuration', label: 'System Settings', icon: Sliders, section: 'Administration' },
     { id: 'profile', label: 'My Profile', icon: Users, section: 'Account' },
   ],
@@ -170,23 +175,56 @@ const ROLE_SIDEBAR = {
 const getSidebar = (role) => ROLE_SIDEBAR[role] || ROLE_SIDEBAR.claims_officer;
 const firstVisibleTab = (sidebar) => sidebar && sidebar.length > 0 ? sidebar[0].id : 'overview';
 
+// A proxy misconfiguration usually returns index.html for API paths. Parsing
+// that as JSON produces a cryptic error, so surface an actionable message.
+const readApiJson = async (res) => {
+  const contentType = res.headers.get('content-type') || '';
+  if (!contentType.toLowerCase().includes('application/json')) {
+    throw new TypeError('The API path was not routed to the backend. Check the frontend proxy configuration.');
+  }
+  return res.json().catch(() => ({}));
+};
+
+// Demo profiles are only exposed in development or when a demonstration
+// deployment explicitly opts in with VITE_DEMO_MODE=true. Production builds
+// hide the credentials and the role switcher by default.
+const DEMO_MODE = import.meta.env.VITE_DEMO_MODE === 'true'
+  || (import.meta.env.VITE_DEMO_MODE !== 'false' && import.meta.env.DEV === true);
+
 export default function App() {
   const [token, setToken] = useState(sessionStorage.getItem('fide_token'));
   const [user, setUser] = useState(null);
+  // Public product landing page is the default unauthenticated view.
+  // Sign-in is one click away from the landing page header and hero.
+  const [showLanding, setShowLanding] = useState(() => !sessionStorage.getItem('fide_token'));
   const [authMode, setAuthMode] = useState('login'); // 'login' | 'register'
-  const [username, setUsername] = useState(localStorage.getItem('fide_saved_user') || 'claims.officer');
-  const [password, setPassword] = useState('OfficerPass123!');
+  const [username, setUsername] = useState(localStorage.getItem('fide_saved_user') || (DEMO_MODE ? 'claims.officer' : ''));
+  const [password, setPassword] = useState(DEMO_MODE ? 'OfficerPass123!' : '');
+  const [mfaCode, setMfaCode] = useState('');
+  const [mfaRequired, setMfaRequired] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
   const [rememberMe, setRememberMe] = useState(localStorage.getItem('fide_remember') === 'true');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
   const [successMsg, setSuccessMsg] = useState('');
+  const [workspaceNotice, setWorkspaceNotice] = useState('');
 
   // Forgot password state
   const [showForgotModal, setShowForgotModal] = useState(false);
   const [forgotEmail, setForgotEmail] = useState('');
   const [forgotMsg, setForgotMsg] = useState('');
+  const [forgotOk, setForgotOk] = useState(true);
   const [forgotLoading, setForgotLoading] = useState(false);
+
+  // Password-reset completion (link target: /reset-password?token=…)
+  const [resetToken, setResetToken] = useState(() => {
+    if (typeof window === 'undefined') return '';
+    return new URLSearchParams(window.location.search).get('token') || '';
+  });
+  const [newPassword, setNewPassword] = useState('');
+  const [confirmPassword, setConfirmPassword] = useState('');
+  const [resetMsg, setResetMsg] = useState('');
+  const [resetBusy, setResetBusy] = useState(false);
 
   // Registration state
   const [regFullName, setRegFullName] = useState('');
@@ -433,6 +471,7 @@ export default function App() {
       const formData = new URLSearchParams();
       formData.append('username', username.trim());
       formData.append('password', password);
+      if (mfaCode.trim()) formData.append('mfa_code', mfaCode.trim());
 
       const response = await fetch('/auth/token', {
         method: 'POST',
@@ -440,10 +479,13 @@ export default function App() {
         body: formData
       });
 
-      const data = await response.json();
+      const data = await readApiJson(response);
       if (!response.ok) {
-        throw new Error(data.detail || 'Invalid username or password');
+        const detail = data.detail || 'Invalid username or password';
+        setMfaRequired(String(detail).startsWith('MFA_REQUIRED'));
+        throw new Error(String(detail).replace(/^MFA_REQUIRED:\s*/, ''));
       }
+      setMfaRequired(false);
 
       if (rememberMe) {
         localStorage.setItem('fide_saved_user', username.trim());
@@ -456,8 +498,16 @@ export default function App() {
       sessionStorage.setItem('fide_token', data.access_token);
       setToken(data.access_token);
       setUser(data.user);
+      if (data.mfa_enrollment_required) {
+        setActiveTab('profile');
+        setWorkspaceNotice('MFA is required for this deployment. Set up your authenticator below to unlock the workspace.');
+      } else {
+        setWorkspaceNotice('');
+      }
     } catch (err) {
-      setError(err.message || 'Unable to connect to the server');
+      setError(err instanceof TypeError
+        ? 'Cannot reach the backend. Start the API on port 8010 or check the frontend proxy, then retry.'
+        : (err.message || 'Unable to sign in'));
     } finally {
       setLoading(false);
     }
@@ -470,6 +520,10 @@ export default function App() {
 
     if (regPassword !== regConfirmPassword) {
       setError('Passwords do not match. Please verify your password entry.');
+      return;
+    }
+    if (regPassword.length < 12) {
+      setError('Password must be at least 12 characters long.');
       return;
     }
     if (!regAgree) {
@@ -491,7 +545,7 @@ export default function App() {
         }),
       });
 
-      const data = await response.json();
+      const data = await readApiJson(response);
       if (!response.ok) {
         throw new Error(data.detail || 'Registration failed.');
       }
@@ -501,7 +555,9 @@ export default function App() {
       setPassword('');
       setAuthMode('login');
     } catch (err) {
-      setError(err.message || 'Unable to create account');
+      setError(err instanceof TypeError
+        ? 'Cannot reach the backend. Start the API on port 8010 or check the frontend proxy, then retry.'
+        : (err.message || 'Unable to create account'));
     } finally {
       setLoading(false);
     }
@@ -516,12 +572,48 @@ export default function App() {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ email: forgotEmail.trim() }),
       });
-      const data = await response.json();
-      setForgotMsg(data.message || 'Password reset link sent to your corporate email.');
+      const data = await readApiJson(response);
+      setForgotOk(response.ok);
+      setForgotMsg(response.ok
+        ? (data.message || 'If the address matches an account, a reset link has been sent.')
+        : (data.detail || 'Automated password reset is not available. Contact your system administrator.'));
     } catch (err) {
-      setForgotMsg('Password reset instructions dispatched to your corporate inbox.');
+      setForgotOk(false);
+      setForgotMsg(err instanceof TypeError
+        ? 'Cannot reach the backend. Start the API on port 8010 or check the frontend proxy, then retry.'
+        : 'Unable to contact the server. Contact your system administrator for a password reset.');
     } finally {
       setForgotLoading(false);
+    }
+  };
+
+  const handleResetPassword = async (e) => {
+    e.preventDefault();
+    setResetMsg('');
+    if (newPassword !== confirmPassword) {
+      setResetMsg('The two password entries do not match.');
+      return;
+    }
+    if (newPassword.length < 12) {
+      setResetMsg('Password must be at least 12 characters long.');
+      return;
+    }
+    setResetBusy(true);
+    try {
+      const res = await api.resetPassword(resetToken, newPassword);
+      const body = await res.json().catch(() => ({}));
+      if (!res.ok) throw new Error(body.detail || 'The password could not be reset.');
+      window.history.replaceState({}, '', window.location.pathname);
+      setResetToken('');
+      setNewPassword('');
+      setConfirmPassword('');
+      setShowLanding(false);
+      setAuthMode('login');
+      setSuccessMsg('Password updated. Sign in with your new password.');
+    } catch (err) {
+      setResetMsg(err.message || 'The password could not be reset. Request a new link.');
+    } finally {
+      setResetBusy(false);
     }
   };
 
@@ -530,6 +622,7 @@ export default function App() {
     setToken(null);
     setUser(null);
     setKpis(null);
+    setShowLanding(true);
   };
 
 
@@ -786,6 +879,49 @@ export default function App() {
   // VIEW: LOGIN SCREEN
   // ==========================================
   if (!user) {
+    if (resetToken) {
+      return (
+        <div className="login-page">
+          <div className="login-form-panel w-full max-w-xl mx-auto">
+            <div className="login-card">
+              <div className="mobile-logo"><ShieldCheck size={32} /><span>FIDELITY LIFE ASSURANCE</span></div>
+              <span className="welcome-label">PASSWORD RECOVERY</span>
+              <h2>Set a New Password</h2>
+              <p className="login-description">Enter a new password for your NEXA account. The reset link can only be used once.</p>
+              <form onSubmit={handleResetPassword} className="space-y-4 mt-5">
+                <div>
+                  <label>New Password (minimum 12 characters)</label>
+                  <input type="password" value={newPassword} onChange={e => setNewPassword(e.target.value)} required minLength={12} autoComplete="new-password" />
+                </div>
+                <div>
+                  <label>Confirm New Password</label>
+                  <input type="password" value={confirmPassword} onChange={e => setConfirmPassword(e.target.value)} required minLength={12} autoComplete="new-password" />
+                </div>
+                {resetMsg && (
+                  <div className={`p-3 rounded-xl text-xs font-bold border ${resetMsg.includes('updated') ? 'bg-emerald-50 border-emerald-200 text-emerald-800' : 'login-error'}`} role="status">
+                    {resetMsg}
+                  </div>
+                )}
+                <button type="submit" className="login-button" disabled={resetBusy}>
+                  {resetBusy ? 'Updating password…' : 'Update Password'}
+                </button>
+                <button type="button" onClick={() => { setResetToken(''); window.history.replaceState({}, '', window.location.pathname); }} className="w-full text-xs font-bold text-slate-500 hover:text-blue-900 hover:underline">
+                  Return to sign in
+                </button>
+              </form>
+            </div>
+          </div>
+        </div>
+      );
+    }
+    if (showLanding) {
+      return (
+        <NexaLandingPage
+          onLogin={() => setShowLanding(false)}
+          onRequestDemo={() => document.getElementById('contact')?.scrollIntoView({ behavior: 'smooth' })}
+        />
+      );
+    }
     return (
       <div className="login-page">
         <div className="login-brand-panel">
@@ -829,6 +965,14 @@ export default function App() {
               <ShieldCheck size={32} />
               <span>FIDELITY LIFE ASSURANCE</span>
             </div>
+
+            <button
+              type="button"
+              onClick={() => setShowLanding(true)}
+              className="mb-4 text-xs font-bold text-slate-500 hover:text-blue-900 hover:underline"
+            >
+              &larr; Back to NEXA product overview
+            </button>
 
             {/* Top Auth Mode Tabs */}
             <div className="flex border-b border-slate-200 mb-6">
@@ -911,6 +1055,22 @@ export default function App() {
                   >
                     {showPassword ? <EyeOff size={19} /> : <Eye size={19} />}
                   </button>
+                </div>
+
+                <div className="mb-3">
+                  <label className="block text-[11px] font-bold text-slate-500 mb-1">
+                    Authenticator code <span className="font-normal">({mfaRequired ? 'required for your account' : 'only if MFA is enrolled'})</span>
+                  </label>
+                  <input
+                    type="text"
+                    inputMode="numeric"
+                    maxLength={6}
+                    placeholder="6-digit code"
+                    value={mfaCode}
+                    onChange={e => setMfaCode(e.target.value.replace(/\D/g, ''))}
+                    autoComplete="one-time-code"
+                    className="w-full p-3 border border-slate-300 rounded-lg tracking-widest"
+                  />
                 </div>
 
                 {/* Remember Me and Forgot Password Row */}
@@ -998,19 +1158,10 @@ export default function App() {
                     />
                   </div>
                   <div>
-                    <label className="block text-xs font-bold text-slate-700 mb-1">Requested Role *</label>
-                    <select
-                      value={regRole}
-                      onChange={e => setRegRole(e.target.value)}
-                      className="w-full p-3 border border-slate-300 rounded-lg text-xs bg-white font-semibold"
-                    >
-                      <option value="claims_officer">Claims Officer</option>
-                      <option value="claims_manager">Claims Manager</option>
-                      <option value="fraud_investigator">Fraud Investigator</option>
-                      <option value="compliance_officer">Compliance Officer</option>
-                      <option value="management">Executive / CRO</option>
-                      <option value="system_admin">System Admin</option>
-                    </select>
+                    <label className="block text-xs font-bold text-slate-700 mb-1">Access level</label>
+                    <div className="w-full p-3 border border-slate-300 rounded-lg text-xs bg-slate-50 text-slate-600 font-semibold">
+                      Claims Officer
+                    </div>
                   </div>
                 </div>
 
@@ -1020,7 +1171,7 @@ export default function App() {
                     <input
                       type={showRegPassword ? 'text' : 'password'}
                       required
-                      placeholder="Minimum 6 characters"
+                      placeholder="Minimum 12 characters"
                       value={regPassword}
                       onChange={e => setRegPassword(e.target.value)}
                       autoComplete="new-password"
@@ -1082,9 +1233,9 @@ export default function App() {
               </form>
             )}
 
-            {/* 1-Click Fast Demo Credentials (For Examiners & Testing) */}
-            <div className="mt-6 pt-4 border-t border-slate-100">
-              <p className="text-xs font-bold text-slate-500 uppercase tracking-wider mb-2">1-Click Demo Profiles:</p>
+            {/* 1-Click Fast Demo Credentials — demonstration environments only */}
+            {DEMO_MODE && <div className="mt-6 pt-4 border-t border-slate-100">
+              <p className="text-xs font-bold text-amber-700 uppercase tracking-wider mb-2">Demonstration profiles — synthetic data only</p>
               <div className="grid grid-cols-2 gap-2 text-xs">
                 <button type="button" onClick={() => switchRole('claims.officer', 'OfficerPass123!')} className="p-2 border rounded-lg text-left hover:bg-slate-50 font-semibold text-slate-700">Claims Officer</button>
                 <button type="button" onClick={() => switchRole('investigator', 'Investigate123!')} className="p-2 border rounded-lg text-left hover:bg-slate-50 font-semibold text-slate-700">Fraud Investigator</button>
@@ -1093,17 +1244,17 @@ export default function App() {
                 <button type="button" onClick={() => switchRole('executive', 'Executive123!')} className="p-2 border rounded-lg text-left hover:bg-slate-50 font-semibold text-slate-700">Executive / CRO</button>
                 <button type="button" onClick={() => switchRole('admin', 'AdminPass123!')} className="p-2 border rounded-lg text-left hover:bg-slate-50 font-semibold text-slate-700">System Admin</button>
               </div>
-            </div>
+            </div>}
 
             <div className="secure-notice mt-5">
               <LockKeyhole size={14} className="text-emerald-600" />
-              <span>Protected by PBKDF2 Encryption & Zimbabwean Data Protection Act</span>
+              <span>Password-protected access with audited sign-in activity</span>
             </div>
 
             <div className="login-bottom">
-              &copy; 2026 Fidelity Life Assurance of Zimbabwe
+              &copy; 2026 NEXA Enterprise Insurance Fraud Intelligence Platform
               <br />
-              NEXA AI Claims Detection Platform
+              Designed for licensed insurance organisations
             </div>
           </div>
         </div>
@@ -1123,13 +1274,16 @@ export default function App() {
               </div>
 
               {forgotMsg ? (
-                <div className="p-4 bg-emerald-50 border border-emerald-200 rounded-xl text-xs text-emerald-800 space-y-2">
-                  <p className="font-bold flex items-center space-x-1.5"><CheckCircle2 size={16} className="text-emerald-600" /><span>Instructions Dispatched</span></p>
+                <div className={`p-4 rounded-xl text-xs space-y-2 border ${forgotOk ? 'bg-emerald-50 border-emerald-200 text-emerald-800' : 'bg-amber-50 border-amber-200 text-amber-900'}`}>
+                  <p className="font-bold flex items-center space-x-1.5">
+                    {forgotOk ? <CheckCircle2 size={16} className="text-emerald-600" /> : <AlertCircle size={16} />}
+                    <span>{forgotOk ? 'Reset Request Handled' : 'Reset Unavailable'}</span>
+                  </p>
                   <p>{forgotMsg}</p>
                   <button
                     type="button"
                     onClick={() => setShowForgotModal(false)}
-                    className="w-full mt-2 py-2 bg-emerald-600 text-white rounded-lg font-bold text-xs"
+                    className={`w-full mt-2 py-2 text-white rounded-lg font-bold text-xs ${forgotOk ? 'bg-emerald-600' : 'bg-slate-700'}`}
                   >
                     Return to Sign In
                   </button>
@@ -1198,11 +1352,17 @@ export default function App() {
           <div className="flex items-center space-x-4">
             <div className="hidden md:flex items-center space-x-2 text-xs bg-slate-800/80 px-3 py-1.5 rounded-full border border-slate-700 text-slate-300">
               <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse"></span>
-              <span>AI Engine: <strong className="text-amber-300">v1.2-ensemble-hybrid</strong></span>
+              <span>AI Engine: <strong className="text-amber-300">{governanceData?.active_model?.version || '—'}</strong></span>
             </div>
 
-            <div className="flex items-center space-x-2 bg-slate-800/90 border border-slate-700 rounded-xl px-3 py-1.5 text-xs">
-              <span className="text-slate-400">Role:</span>
+            {!DEMO_MODE && (
+              <div className="hidden sm:flex items-center space-x-2 bg-slate-800/90 border border-slate-700 rounded-xl px-3 py-1.5 text-xs">
+                <span className="text-slate-400">Role:</span>
+                <span className="text-white font-bold">{user?.role}</span>
+              </div>
+            )}
+            {DEMO_MODE && <div className="flex items-center space-x-2 bg-slate-800/90 border border-slate-700 rounded-xl px-3 py-1.5 text-xs">
+              <span className="text-slate-400">Demo role:</span>
               <select
                 value={user?.username || 'claims.officer'}
                 onChange={(e) => {
@@ -1225,7 +1385,7 @@ export default function App() {
                 <option value="executive" className="bg-slate-900">Executive / CRO</option>
                 <option value="admin" className="bg-slate-900">System Admin</option>
               </select>
-            </div>
+            </div>}
 
             <div className="flex items-center space-x-2 pl-3 border-l border-slate-700">
               <div className="w-9 h-9 rounded-xl bg-slate-800 border-2 border-amber-500 flex items-center justify-center font-bold text-xs text-amber-400">
@@ -1272,6 +1432,16 @@ export default function App() {
           maxWidth: desktopViewport ? `calc(100% - ${sidebarExpanded ? SIDEBAR_WIDTH_EXPANDED : SIDEBAR_WIDTH_COLLAPSED}px)` : undefined,
         }}
       >
+
+        {workspaceNotice && (
+          <div className="flex items-start justify-between gap-3 bg-amber-50 border border-amber-200 text-amber-900 rounded-xl px-4 py-3">
+            <div className="flex items-start gap-2 text-sm">
+              <ShieldCheck size={18} className="mt-0.5 shrink-0" />
+              <span>{workspaceNotice}</span>
+            </div>
+            <button onClick={() => setWorkspaceNotice('')} className="text-xs font-bold underline shrink-0">Dismiss</button>
+          </div>
+        )}
 
         {/* ========================================================= */}
         {/* TAB 1: EXECUTIVE OVERVIEW */}
@@ -1506,7 +1676,11 @@ export default function App() {
                     {fnolList.map((f, i) => (
                       <tr key={i} className="hover:bg-slate-50 transition">
                         <td className="text-nexaTable py-3 px-4 font-mono font-bold text-amber-700">{f.fnol_reference}</td>
-                        <td className="text-nexaTable py-3 px-4 font-mono font-bold text-blue-900 cursor-pointer hover:underline" onClick={() => { fetchClaimDetail(f.claim_id); setActiveTab('detail'); }}>{f.claim_id}</td>
+                        <td className="text-nexaTable py-3 px-4 font-mono font-bold text-blue-900">
+                          {f.claim_id
+                            ? <button type="button" className="cursor-pointer hover:underline" onClick={() => { fetchClaimDetail(f.claim_id); setActiveTab('detail'); }}>{f.claim_id}</button>
+                            : '—'}
+                        </td>
                         <td className="text-nexaTable py-3 px-4 font-mono text-slate-600">{f.policy_number}</td>
                         <td className="text-nexaTable py-3 px-4 font-bold text-slate-800">{f.claimant_name}</td>
                         <td className="text-nexaTable py-3 px-4">{f.event_type}</td>
@@ -1767,7 +1941,7 @@ export default function App() {
                     <span className="text-[10px] text-slate-400 font-bold uppercase tracking-wider">out of 100</span>
                   </div>
                   <p className="text-base font-extrabold text-slate-800 mt-4">{selectedClaim.assessment?.risk_category} Fraud Risk</p>
-                  <p className="text-xs text-slate-500 font-mono mt-1">Model: {selectedClaim.assessment?.model_version || 'v1.2-ensemble-hybrid'}</p>
+                  <p className="text-xs text-slate-500 font-mono mt-1">Model: {selectedClaim.assessment?.model_version || 'Unknown'}</p>
                 </div>
 
                 <div className="bg-white p-6 rounded-2xl border border-slate-200 shadow-sm space-y-3 text-xs">
@@ -1949,19 +2123,19 @@ export default function App() {
             <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
               <div className="bg-white p-5 rounded-2xl border border-slate-200 shadow-sm">
                 <span className="text-xs font-bold uppercase tracking-wider text-slate-500">Model Precision</span>
-                <p className="text-nexaFigure text-emerald-600 mt-2">94.6%</p>
+                <p className="text-nexaFigure text-emerald-600 mt-2">{governanceData?.metrics?.precision != null ? `${governanceData.metrics.precision}%` : '—'}</p>
               </div>
               <div className="bg-white p-5 rounded-2xl border border-slate-200 shadow-sm">
                 <span className="text-xs font-bold uppercase tracking-wider text-slate-500">Model Recall</span>
-                <p className="text-nexaFigure text-blue-600 mt-2">92.1%</p>
+                <p className="text-nexaFigure text-blue-600 mt-2">{governanceData?.metrics?.recall != null ? `${governanceData.metrics.recall}%` : '—'}</p>
               </div>
               <div className="bg-white p-5 rounded-2xl border border-slate-200 shadow-sm">
                 <span className="text-xs font-bold uppercase tracking-wider text-slate-500">F1 Score</span>
-                <p className="text-nexaFigure text-purple-600 mt-2">93.3%</p>
+                <p className="text-nexaFigure text-purple-600 mt-2">{governanceData?.metrics?.f1_score != null ? `${governanceData.metrics.f1_score}%` : '—'}</p>
               </div>
               <div className="bg-white p-5 rounded-2xl border border-slate-200 shadow-sm">
                 <span className="text-xs font-bold uppercase tracking-wider text-slate-500">False Positive Rate</span>
-                <p className="text-nexaFigure text-amber-600 mt-2">2.3%</p>
+                <p className="text-nexaFigure text-amber-600 mt-2">{governanceData?.metrics?.false_positive_rate != null ? `${governanceData.metrics.false_positive_rate}%` : '—'}</p>
               </div>
             </div>
           </div>
@@ -2105,7 +2279,11 @@ export default function App() {
         {activeTab === 'ocr-samples' && <OCRDocumentPage activeTab="ocr-samples" user={user} />}
         {activeTab === 'ocr-forensics' && <OCRDocumentPage activeTab="ocr-forensics" user={user} />}
         {activeTab === 'notifications' && <NotificationsPanel user={user} token={token} onCountChange={(n) => setNotificationCount(n)} />}
-        {activeTab === 'profile' && <ProfilePanel user={user} onExit={handleLogout} />}
+        {activeTab === 'profile' && <ProfilePanel user={user} onExit={handleLogout} onToken={(newToken) => {
+          sessionStorage.setItem('fide_token', newToken);
+          setToken(newToken);
+          setWorkspaceNotice('');
+        }} />}
         {activeTab === 'new-claim' && <NewClaimPanel user={user} />}
 
         {/* ========================================================= */}
@@ -2113,11 +2291,11 @@ export default function App() {
         {/* ========================================================= */}
         {activeTab === 'fraud-network' && <FraudNetworkGraph user={user} />}
         {activeTab === 'timeline' && <ClaimTimeline user={user} />}
-        {activeTab === 'evidence-management' && <EvidenceManagement user={user} />}
         {activeTab === 'historical' && <HistoricalBehaviorPanel user={user} />}
         {activeTab === 'predictive' && <PredictiveAlerts user={user} />}
         {activeTab === 'model-performance' && <ModelPerformanceDashboard user={user} />}
         {activeTab === 'zim' && <ZimIntelligencePanel user={user} />}
+        {activeTab === 'security-centre' && <SecurityCentre user={user} />}
 
         {/* ========================================================= */}
         {/* Extended master-prompt navigation (per-role functional views) */}
@@ -2584,7 +2762,86 @@ function NotificationsPanel({ user, token, onCountChange }) {
   );
 }
 
-function ProfilePanel({ user, onExit }) {
+function MfaEnrolmentPanel({ onToken }) {
+  const [enabled, setEnabled] = useState(null);
+  const [setup, setSetup] = useState(null);
+  const [code, setCode] = useState('');
+  const [password, setPassword] = useState('');
+  const [message, setMessage] = useState('');
+  const [busy, setBusy] = useState(false);
+
+  useEffect(() => {
+    api.mfaStatus()
+      .then(r => r.ok ? r.json() : null)
+      .then(d => { if (d) setEnabled(!!d.mfa_enabled); })
+      .catch(() => setEnabled(null));
+  }, []);
+
+  const run = async (action) => {
+    setBusy(true); setMessage('');
+    try {
+      await action();
+    } catch (err) {
+      setMessage(err.message || 'Unable to complete the MFA operation.');
+    } finally {
+      setBusy(false);
+    }
+  };
+
+  const begin = () => run(async () => {
+    const res = await api.mfaSetup();
+    if (!res.ok) throw new Error((await res.json().catch(() => ({}))).detail || 'Could not start enrolment.');
+    setSetup(await res.json());
+  });
+  const confirm = () => run(async () => {
+    const res = await api.mfaEnable(code);
+    const body = await res.json().catch(() => ({}));
+    if (!res.ok) throw new Error(body.detail || 'Invalid code.');
+    if (body.access_token && onToken) onToken(body.access_token);
+    setEnabled(true); setSetup(null); setCode('');
+    setMessage('MFA enabled. Your authenticator code will be required at the next sign-in.');
+  });
+  const disable = () => run(async () => {
+    const res = await api.mfaDisable({ code, password });
+    if (!res.ok) throw new Error((await res.json().catch(() => ({}))).detail || 'Could not disable MFA.');
+    setEnabled(false); setCode(''); setPassword('');
+    setMessage('MFA disabled for this account.');
+  });
+
+  return (
+    <div className="mt-5 border-t border-slate-100 pt-4">
+      <h2 className="text-xs font-extrabold uppercase tracking-wider text-slate-700">Multi-factor authentication</h2>
+      <p className="text-[12px] text-slate-500 mt-1">
+        TOTP authenticator app (Google Authenticator, Authy or compatible). Codes are verified server-side.
+      </p>
+      <div className="mt-3 flex items-center gap-3">
+        <span className={`px-2.5 py-1 rounded-full text-[11px] font-bold ${enabled ? 'bg-emerald-50 text-emerald-800' : 'bg-slate-100 text-slate-600'}`}>
+          {enabled === null ? 'Status unavailable' : enabled ? 'ENROLLED' : 'NOT ENROLLED'}
+        </span>
+        {enabled === false && <button disabled={busy} onClick={begin} className="px-3 py-1.5 text-xs font-bold bg-emerald-700 text-white rounded-lg disabled:opacity-50">Set up authenticator</button>}
+      </div>
+      {setup && (
+        <div className="mt-3 p-3 bg-slate-50 rounded-xl space-y-2">
+          <p className="text-[12px] text-slate-700">Add this secret to your authenticator app, then enter the current 6-digit code:</p>
+          <code className="block font-mono text-sm font-bold text-slate-900 break-all select-all">{setup.secret}</code>
+          <p className="text-[11px] text-slate-500">Issuer: {setup.issuer}</p>
+          <input value={code} onChange={e => setCode(e.target.value.replace(/\D/g, '').slice(0, 6))} placeholder="6-digit code" inputMode="numeric" className="w-40 p-2 border rounded-lg tracking-widest text-sm" />
+          <button disabled={busy || code.length !== 6} onClick={confirm} className="px-3 py-1.5 text-xs font-bold bg-emerald-700 text-white rounded-lg disabled:opacity-50">Verify &amp; enable</button>
+        </div>
+      )}
+      {enabled && (
+        <div className="mt-3 flex flex-wrap items-center gap-2">
+          <input value={code} onChange={e => setCode(e.target.value.replace(/\D/g, '').slice(0, 6))} placeholder="Current code" inputMode="numeric" className="w-36 p-2 border rounded-lg tracking-widest text-sm" />
+          <input type="password" value={password} onChange={e => setPassword(e.target.value)} placeholder="Password" className="w-40 p-2 border rounded-lg text-sm" />
+          <button disabled={busy || code.length !== 6 || !password} onClick={disable} className="px-3 py-1.5 text-xs font-bold bg-red-600 text-white rounded-lg disabled:opacity-50">Disable MFA</button>
+        </div>
+      )}
+      {message && <p className="mt-2 text-[12px] text-emerald-800">{message}</p>}
+    </div>
+  );
+}
+
+function ProfilePanel({ user, onExit, onToken }) {
   const stats = [
     ['Role', user?.role],
     ['Department', user?.department || 'Not assigned'],
@@ -2625,6 +2882,7 @@ function ProfilePanel({ user, onExit }) {
       <div className="mt-4 p-3 bg-slate-50 rounded-xl text-xs text-slate-500">
         This workspace contains only the data and actions your role is authorised to access. Backend-enforced RBAC applies to all endpoints.
       </div>
+      <MfaEnrolmentPanel onToken={onToken} />
     </div>
   );
 }

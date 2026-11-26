@@ -313,7 +313,12 @@ def _generate_enterprise_report_summary(db: Session, current_user: User, report_
         ]
 
     elif report_type == "EXECUTIVE_FINANCIAL_EXPOSURE_REPORT":
-        prevented = round(snap["total_financial_exposure"] * 0.1, 2) if snap["total_financial_exposure"] else 0.0
+        # Loss prevention is reported only from investigations with a confirmed
+        # fraud outcome. No percentage-of-exposure estimate is fabricated.
+        confirmed_amount = db.query(func.coalesce(func.sum(Claim.amount), 0.0)).join(
+            Investigation, Investigation.claim_id == Claim.id
+        ).filter(Investigation.status == "confirmed_fraud").scalar() or 0.0
+        prevented = round(float(confirmed_amount), 2)
         summary["statistical_findings"] = {
             "total_financial_exposure": total_exposure,
             "claims_flagged": snap["claims_flagged"],
@@ -324,8 +329,9 @@ def _generate_enterprise_report_summary(db: Session, current_user: User, report_
         summary["financial_analysis"] = {
             "total_financial_exposure": total_exposure,
             "top_exposure_products": [{"product": p["product_name"], "exposure": p["total_exposure"]} for p in products[:5]],
-            "estimated_losses_prevented": prevented,
-            "estimated_unmitigated_exposure": round(total_exposure - prevented, 2),
+            "confirmed_fraud_exposure": prevented,
+            "unreviewed_exposure": round(total_exposure - prevented, 2),
+            "basis_note": "Only claims with a confirmed_fraud investigation outcome are counted; no loss-prevention estimate is applied.",
         }
         summary["executive_summary"] = (
             f"Financial exposure report for {period_str()}: ${total_exposure:,.2f} total exposure with {snap['claims_flagged']} "

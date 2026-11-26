@@ -135,19 +135,32 @@ docker-compose up --build
 ```
 The API will be accessible at `http://localhost:8010` and Swagger at `http://localhost:8010/docs`.
 
+For any non-local deployment, copy `.env.example` to `.env` and set at minimum
+`ENVIRONMENT=production`, a unique `JWT_SECRET_KEY`, an explicit `CORS_ORIGINS`
+allow-list (never `*`), and PostgreSQL connection settings. Set `DEMO_MODE=true`
+and `VITE_DEMO_MODE=true` only for a controlled demonstration deployment; demo
+credentials are hidden otherwise.
+
 ---
 
 ## 6. Key REST API Endpoints
 
 | Method | Endpoint | Description | Access |
 |---|---|---|---|
-| `POST` | `/auth/token` | Obtain JWT access token | Public |
+| `POST` | `/auth/token` | Obtain JWT access token (authenticator code required when MFA is enrolled) | Public |
+| `POST` | `/auth/register` | Request a `claims_officer` account (configurable, never privileged) | Public when enabled |
+| `POST` | `/auth/forgot-password` / `/auth/reset-password` | SMTP-delivered single-use reset token and completion | Public when SMTP configured |
 | `GET` | `/auth/me` | Current user profile & role | Authenticated |
+| `GET` | `/auth/mfa/status` | MFA enrolment status and policy requirement | Authenticated |
+| `POST` | `/auth/mfa/setup` / `/auth/mfa/enable` / `/auth/mfa/disable` | TOTP authenticator enrolment and removal (policy-enforced when required) | Authenticated |
+| `POST` | `/enquiries/` | Record a public product enquiry with a reference | Public |
+| `GET` | `/security/overview` / `/security/events` | Real authentication/audit telemetry and honestly labelled control status | Compliance / Admin / Executive / CRO |
+| `POST` | `/claims/fnol`, `GET /claims/fnol/list` | Persist and list First Notices of Loss | Authenticated |
 | `POST` | `/claims/submit` | Submit claim with documents & trigger AI analysis | Claims Officer / Admin |
 | `GET` | `/claims/` | List claims with search, risk, and status filters | Authenticated |
 | `GET` | `/claims/{id}` | Detailed claim profile with OCR forensics & AI breakdown | Authenticated |
 | `PUT` | `/claims/{id}` | Update claim processing status | Claims Officer / Manager |
-| `POST` | `/claims/{id}/score` | Recalculate AI fraud risk score on demand | Authenticated |
+| `POST` | `/claims/{id}/score` | Recalculate AI fraud risk score on demand | Claims Manager / Investigator / Admin |
 | `GET` | `/fraud/assessments` | List all calculated fraud risk assessments | Authenticated |
 | `GET` | `/fraud/high-risk` | Priority queue of High & Critical risk claims | Authenticated |
 | `GET` | `/investigations/` | List all investigation cases | Authenticated |
@@ -191,25 +204,85 @@ Every claim receives a calibrated risk score between 0 and 100:
 
 ---
 
+## 7A. Enterprise Operational Controls
+
+### Tenant isolation (opt-in)
+Set `TENANT_ISOLATION_ENABLED=true` for multi-tenant deployments. The ORM layer
+then adds a `organisation_id` filter to every tenant-owned SELECT and stamps
+inserts with the organisation from the signed JWT. Requests without a valid
+organisation claim fail closed. Sign-in, registration, reset and public
+enquiries are the only unscoped paths, and they return no tenant data.
+Create the first tenant and administrator with `scripts/bootstrap_tenant.py`;
+self-registration requires `DEFAULT_ORGANISATION_ID`. In single-tenant mode
+the flag stays `false` so legacy databases keep working unchanged. Starlette
+background AI tasks explicitly re-bind the tenant captured from the request.
+
+### MFA, registration and password reset
+`MFA_REQUIRED=true` is **enforced**: un-enrolled accounts receive a 15-minute
+enrolment-only token that can reach `/auth/mfa/status|setup|enable|disable` but
+no business data. On successful enrolment the API returns a full token, which
+the UI stores automatically. Self-service registration can only create a
+`claims_officer` account. Password reset works when `PASSWORD_RESET_EMAIL_ENABLED`
+and SMTP settings are configured: a hashed, single-use token is emailed with a
+link to `/reset-password?token=…`; the frontend form completes the reset (the
+web server must route that path to the SPA entry point). When SMTP is not
+configured the API returns a configuration error rather than a false success. Email verification, token revocation and licence/payment flows
+are **not implemented** and are not claimed anywhere in the product.
+
+### Real data, FNOL and integrations
+First Notices of Loss are persisted in `first_notices_of_loss` and listed from
+that table; no names, dates or channels are invented. Policy/customer/claim
+adapters read the system-of-record tables, or an external API configured with
+`POLICY_SYSTEM_URL`; missing records return empty results. Claims submitted
+with an unknown policy are rejected with HTTP 404 instead of creating fake
+policies. Payment and identity-verification adapters report `NOT_CONFIGURED`.
+The public landing page records enquiries in the `enquiries` register with a
+reference and does not claim to send an email.
+
+### Versioned migrations and backup/restore
+`alembic/versions/0001_initial_schema.py` is a baseline revision; the runtime
+URL comes from `DATABASE_URL`. `scripts/backup_db.py` produces a checksummed
+SQLite (online backup) or PostgreSQL (`pg_dump`) file plus a JSON manifest;
+`scripts/verify_backup.py` verifies the checksum and integrity;
+`scripts/restore_db.py` refuses a production target without
+`--confirm-production`. Run a restore rehearsal on disposable data before
+relying on these scripts in production. `MIGRATIONS.md` records the historical
+schema evolution applied by the startup helper.
+
 ## 8. Verification & Test Results
 
-The platform has been validated through automated tests (`tests/test_system.py`):
+The full backend suite is run from the repository root with `python -m pytest -q`.
+Frontend tests and production build are run from `frontend` with `npm test` and
+`npm run build`.
 
 ```text
-tests/test_system.py::test_system_health PASSED
-tests/test_system.py::test_auth_login_success PASSED
-tests/test_system.py::test_auth_login_invalid PASSED
-tests/test_system.py::test_auth_me_profile PASSED
-tests/test_system.py::test_rbac_admin_route_restricted PASSED
-tests/test_system.py::test_rbac_admin_route_allowed PASSED
-tests/test_system.py::test_submit_claim_and_fetch PASSED
-tests/test_system.py::test_duplicate_claim_scoring PASSED
-tests/test_system.py::test_policy_inception_fraud_scoring PASSED
-tests/test_system.py::test_ocr_processing_and_hash PASSED
-tests/test_system.py::test_investigations_lifecycle PASSED
-tests/test_system.py::test_dashboard_overview PASSED
-======================= 144 passed, 1 skipped ======================
+Backend: 181 passed, 1 skipped (1 Starlette/httpx deprecation warning) — ephemeral SQLite test database
+Frontend tests: 9 passed (Vitest + jsdom)
+Frontend build: 1487 modules transformed; no chunk over 500 kB (largest JS chunk 395.38 kB)
 ```
+
+`tests/conftest.py` gives each test run a disposable SQLite database seeded
+with the documented demo users and baseline records; the working database in
+`data/frauddb.sqlite` is not modified by tests. `tests/test_security_hardening.py`
+covers registration hardening, password policy, TOTP round-trip/enrolment and
+MFA enforcement, Security Centre RBAC and honest status reporting, and production
+database guards. `tests/test_enterprise_operations.py` covers public enquiries,
+FNOL persistence, the SMTP reset flow (with a fake SMTP server), tenant
+filtering/isolation, Alembic baseline migration, backup/restore round-trip,
+production-restore protection, DOCX ingestion and non-synthesising adapters.
+`.github/workflows/ci.yml` runs both suites and the build on pushes and PRs.
+
+Important caveats, stated plainly:
+
+- OCR of scanned images requires a local Tesseract binary; it is **not**
+  installed in this development environment. Text/PDF/DOCX extraction is
+  covered; scanned-image OCR could not be verified here.
+- No PostgreSQL server was available locally. The connection code, production
+  guard, migrations and pg_dump/pg_restore scripts are implemented and unit
+  tested on SQLite; live PostgreSQL and disaster-recovery rehearsal remain
+  deployment-side responsibilities.
+- CI YAML was validated locally but the workflow has not been executed on a
+  hosted runner.
 
 ## 9. Implementation Status — Enterprise Upgrade (NEXA Master)
 
@@ -231,7 +304,20 @@ Status legend: `COMPLETED AND TESTED` | `IMPLEMENTED BUT NOT FULLY TESTED` | `PA
 | Phase 14 — Departmental frontend workspaces (FraudNetworkGraph, ClaimTimeline, EvidenceManagement, HistoricalBehaviorPanel, PredictiveAlerts, ModelPerformanceDashboard, ZimIntelligencePanel) | COMPLETED AND TESTED (vite build) |
 | Phase 12 — Regression testing and final validation | COMPLETED AND TESTED |
 | Phase 10 — Fraud network materialised node/edge tables (service computes dynamically) | PARTIALLY IMPLEMENTED (computed on demand) |
-| Phase 8 — extended forensic tests against real OCR services (tesseract) | IMPLEMENTED BUT NOT FULLY TESTED |
+| Phase 8 — extended forensic tests against real OCR services (tesseract) | IMPLEMENTED BUT NOT FULLY TESTED (Tesseract binary not present locally) |
+| Public NEXA product overview + secured login | COMPLETED AND TESTED (vite build) |
+| Security Centre (auth telemetry, audit events, database check, honest controls) | COMPLETED AND TESTED |
+| Self-service MFA enrolment (TOTP authenticator app, enforced at sign-in) | COMPLETED AND TESTED |
+| Privileged self-registration blocked; password policy enforced | COMPLETED AND TESTED |
+| Production safety guards (no known JWT secret, no wildcard CORS, no SQLite fallback) | IMPLEMENTED (configuration-level; deployment validation pending) |
+| Human-in-the-loop model governance — precision null until confirmed outcomes | COMPLETED AND TESTED |
+| Financial exposure report — confirmed-fraud amounts only (no 10% estimate) | IMPLEMENTED AND TESTED |
+| Tenant/organisation isolation (opt-in, ORM-enforced, fail-closed) | COMPLETED AND TESTED |
+| Versioned Alembic baseline migration, verified backup/restore scripts and CI | COMPLETED AND TESTED (SQLite; PostgreSQL rehearsal deployment-side) |
+| Password-reset email delivery via configured SMTP + frontend reset form | COMPLETED AND TESTED (with fake SMTP server) |
+| Email verification, JWT token revocation, licensing/payments | NOT IMPLEMENTED (not claimed by the product) |
+| Public enquiry register and persisted FNOL intake | COMPLETED AND TESTED |
+| PDF/DOCX knowledge ingestion (`pypdf`, `python-docx`) | IMPLEMENTED (DOCX extraction tested; PDF parser installed) |
 
 ### Honest-labelling notes (system requirements)
 
@@ -240,3 +326,5 @@ Status legend: `COMPLETED AND TESTED` | `IMPLEMENTED BUT NOT FULLY TESTED` | `PA
 - ZIM regulatory values in `backend/app/services/zim_config.py` are configurable platform defaults — insurers must verify against current legislation with legal counsel.
 - The assistant (`/chatbot/*`) is deterministic-from-real-records; the optional external LLM path (`CHATBOT_LLM_API_KEY`) stays off unless configured.
 - The legacy "network" page on the dashboard remains as-is; the new fraud network workspace uses live data.
+- Demo credentials and one-click role switching are visible only in development or when `DEMO_MODE=true` / `VITE_DEMO_MODE=true`; production builds hide them.
+- MFA is available per user via **My Profile → Multi-factor authentication**. With `MFA_REQUIRED=true`, un-enrolled accounts cannot reach business data until enrolment is complete; the enrolment-only token is short-lived and the UI upgrades it automatically. The Security Centre reports the effective policy.

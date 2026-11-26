@@ -63,6 +63,31 @@ New tables:
 New tables (Phase 11):
 - `predictive_alerts` (id, alert_type, severity, claim_id FK, customer_id FK, policy_id FK, description, risk_score, status, evidence_summary, resolution_note, generated_at, acknowledged_at, resolved_at)
 
+## Enterprise operations upgrade (2026-11-26)
+
+New tables:
+- `organisations` (id, name, slug unique, is_active, created_at) — tenant registry.
+- `first_notices_of_loss` (id, fnol_reference unique, claim_id, policy_number,
+  policy_validated, claimant_name, event_type, incident_date, estimated_amount,
+  reporting_channel, initial_notes, triage_queue, status, recorded_by_id,
+  organisation_id, recorded_at) — persisted FNOL intake.
+- `enquiries` (id, reference unique, organisation, email, interests, status,
+  created_at) — public product enquiries with a reference.
+
+Nullable columns added to existing tables by the startup helper:
+- `users`: `mfa_secret`, `mfa_enabled`, `password_reset_token_hash`,
+  `password_reset_expires_at`, `organisation_id`.
+- all tenant-owned tables: `organisation_id` (stamped from the signed JWT when
+  `TENANT_ISOLATION_ENABLED=true`).
+
+Versioned migrations:
+- `alembic/versions/0001_initial_schema.py` establishes a baseline from the
+  complete ORM metadata. `alembic/env.py` reads `DATABASE_URL` at runtime.
+  Future changes must be explicit revisions, not implicit startup columns.
+- Backup/restore: `scripts/backup_db.py`, `scripts/verify_backup.py`,
+  `scripts/restore_db.py`; restoration into production requires explicit
+  `--confirm-production`.
+
 ## Status of each migration
 
 - Applied automatically at startup (verified: `python -m uvicorn backend.app.main:app` + `init_db()`).

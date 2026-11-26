@@ -5,7 +5,8 @@ from sqlalchemy.orm import Session
 from datetime import datetime
 import uuid
 
-from ..services.db import get_db
+from ..services.db import get_db, SessionLocal
+from ..services import tenant as tenant_service
 from ..models.sqlalchemy_models import Claim, ClaimDocument, FraudAssessment, Notification, User, RoleEnum, Policy, Customer
 from ..dependencies import require_role, get_current_active_user
 from ..integrations.mock_services import PolicyService, CustomerService, ClaimsService
@@ -24,7 +25,12 @@ def save_uploaded_file(upload: UploadFile, claim_id: str) -> str:
         buffer.write(upload.file.read())
     return file_path
 
-async def background_process_claim(claim_id: int):
+async def background_process_claim(claim_id: int, organisation_id: int | None = None):
+    with tenant_service.bound_tenant(organisation_id):
+        await _background_process_claim(claim_id)
+
+
+async def _background_process_claim(claim_id: int):
     # Create a fresh DB session for the background task
     db = SessionLocal()
     # Load claim with related objects
@@ -71,47 +77,6 @@ async def background_process_claim(claim_id: int):
     db.commit()
     db.close()
 
-    # Load claim with related objects
-    claim = db.query(Claim).filter(Claim.id == claim_id).first()
-    if not claim:
-        return
-    # 1️⃣ OCR on each document
-    ocr_results = []
-    for doc in claim.documents:
-        result = process_document(doc.file_path)
-        ocr_results.append(result)
-    # 2️⃣ Gather features (very simplified for demo)
-    policy_info = PolicyService().get_policy(claim.policy.policy_number)
-    customer_info = CustomerService().get_customer(claim.customer.customer_id)
-    previous_claims = ClaimsService().list_previous_claims(claim.policy.policy_number)
-    features = {
-        "amount": claim.amount,
-        "policy_type": policy_info.get("policy_type"),
-        "customer_history_len": len(previous_claims),
-        "ocr_flags": [r.get("flags", []) for r in ocr_results],
-    }
-    # 3️⃣ Fraud assessment (placeholder model)
-    assessment = assess_claim_fraud(features)
-    # 4️⃣ Persist FraudAssessment
-    fraud = FraudAssessment(
-        claim_id=claim.id,
-        risk_score=assessment["risk_score"],
-        risk_category=assessment["risk_category"],
-        indicators=assessment["indicators"],
-        explanation=assessment["explanation"],
-        model_version=assessment["model_version"],
-    )
-    db.add(fraud)
-    # 5️⃣ Update claim status if high/critical
-    if assessment["risk_category"] in ["High", "Critical"]:
-        claim.status = "flagged"
-        # 6️⃣ Create notification for investigators
-        notification = Notification(
-            recipient_id=1,  # placeholder – in real env map to investigators group
-            message=f"Claim {claim.claim_id} flagged as {assessment['risk_category']} (score {assessment['risk_score']})",
-        )
-        db.add(notification)
-    db.commit()
 
 @router.post("/submit", summary="Submit a new insurance claim with supporting documents")
 async def submit_claim(
@@ -130,41 +95,11 @@ async def submit_claim(
         incident_dt = datetime.fromisoformat(claim_date)
     except ValueError:
         raise HTTPException(status_code=400, detail="Invalid incident date format")
-    # Retrieve related policy & customer via mock services
-    policy = PolicyService().get_policy(policy_number)
-    customer = CustomerService().get_customer(policy["customer_id"])
-    # Resolve or create Policy & Customer rows via mock services
-    policy_data = PolicyService().get_policy(policy_number)
-    # Ensure Policy exists in DB
-    policy_obj = db.query(Policy).filter(Policy.policy_number == policy_data["policy_number"]).first()
-    if not policy_obj:
-        policy_obj = Policy(
-            policy_number=policy_data["policy_number"],
-            policy_type=policy_data["policy_type"],
-            customer_id=None,  # temporarily, will assign after customer creation
-            effective_date=policy_data["effective_date"],
-            expiry_date=policy_data["expiry_date"],
-        )
-        db.add(policy_obj)
-        db.commit()
-        db.refresh(policy_obj)
-    # Ensure Customer exists in DB
-    customer_data = CustomerService().get_customer(policy_data["customer_id"])
-    customer_obj = db.query(Customer).filter(Customer.customer_id == customer_data["customer_id"]).first()
-    if not customer_obj:
-        customer_obj = Customer(
-            customer_id=customer_data["customer_id"],
-            name=customer_data["name"],
-            national_id=customer_data["national_id"],
-            date_of_birth=customer_data["date_of_birth"],
-        )
-        db.add(customer_obj)
-        db.commit()
-        db.refresh(customer_obj)
-    # Link policy to customer if not already set
-    if policy_obj.customer_id is None:
-        policy_obj.customer_id = customer_obj.id
-        db.commit()
+    # Resolve the policy from the system of record; never fabricate one.
+    policy_obj = db.query(Policy).filter(Policy.policy_number == policy_number.strip()).first()
+    if not policy_obj or not policy_obj.customer:
+        raise HTTPException(status_code=404, detail="Policy and policyholder must exist before a claim is submitted.")
+    customer_obj = policy_obj.customer
     # Create Claim record with proper foreign keys
     claim = Claim(
         claim_id=f"CLM{uuid.uuid4().hex[:10].upper()}",
@@ -189,7 +124,7 @@ async def submit_claim(
     db.commit()
     db.refresh(claim)
     # Kick off background processing
-    background_tasks.add_task(background_process_claim, claim.id, db)
+    background_tasks.add_task(background_process_claim, claim.id, current_user.organisation_id)
     return {"message": "Claim submitted", "claim_id": claim.claim_id}
 
 @router.get("/", summary="List all claims (admin/manager view)")

@@ -189,6 +189,7 @@ function RegulatoryReportsTab() {
   const [reports, setReports] = useState([]);
   const [loading, setLoading] = useState(true);
   const [excs, setExcs] = useState([]);
+  const [message, setMessage] = useState('');
   useEffect(() => {
     (async () => {
       setLoading(true);
@@ -206,10 +207,23 @@ function RegulatoryReportsTab() {
       <div className="flex items-center justify-between">
         <h3 className="text-sm font-extrabold text-slate-900 uppercase tracking-wider flex items-center space-x-2"><FileUp size={14} className="text-red-600" /><span>Regulatory Compliance Reports</span></h3>
         <button className="px-4 py-2 text-xs font-bold bg-red-600 text-white rounded-xl hover:bg-red-700 transition-colors disabled:opacity-50" disabled={loading} onClick={async () => {
-          const res = await api.generateComplianceReport();
-          setMessage(`Report #${res.id} generated.`);
+          setLoading(true);
+          setMessage('');
+          try {
+            const res = await api.generateComplianceReport();
+            if (!res.ok) throw new Error(`Request failed (${res.status})`);
+            const created = await res.json();
+            const refreshed = await api.listComplianceReports();
+            if (refreshed.ok) setReports(await refreshed.json());
+            setMessage(`Report #${created.id} generated and recorded.`);
+          } catch (err) {
+            setMessage(`Could not generate report: ${err.message || 'unknown error'}`);
+          } finally {
+            setLoading(false);
+          }
         }}>Generate Report</button>
       </div>
+      {message && <div className="px-4 py-2 text-xs font-bold rounded-lg bg-slate-100 text-slate-700">{message}</div>}
       <SectionCard icon={ShieldCheck} title="Compliance Exceptions — Policy & Regulatory Exceptions">
         <div className="divide-y divide-slate-100">
           {excs.length === 0 && <div className="py-8 text-center text-slate-400 text-xs">No compliance exceptions. All claims are within regulatory thresholds.</div>}
@@ -218,7 +232,7 @@ function RegulatoryReportsTab() {
               <span className={`px-2 py-0.5 rounded-full text-[10px] font-bold uppercase ${x.exception_type === 'FRAUD_RISK_EXCEPTION' ? 'bg-red-100 text-red-700' : 'bg-amber-100 text-amber-700'}`}>{x.exception_type}</span>
               <span className="font-mono font-bold text-slate-800">{x.claim_id}</span>
               <span className="text-slate-700">{x.customer_name}</span>
-              <span className="font-mono text-red-600 font-bold text-sm">{fmtCurrency(x.risk_score != null ? x.risk_score : 0)}</span>
+              <span className="font-mono text-red-600 font-bold text-sm" title="AI risk score (0–100), not a currency amount">Risk {x.risk_score ?? '—'}</span>
               <span className="text-[10px] bg-slate-100 px-2 py-0.5 rounded-full font-bold text-slate-700">{x.investigation_status}</span>
               <span className="ml-auto text-xs text-slate-500">{x.claim_status}</span>
             </div>

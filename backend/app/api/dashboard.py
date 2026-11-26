@@ -106,47 +106,38 @@ async def get_network_graph(
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_active_user),
 ) -> Dict[str, Any]:
-    """Provides explainable graph relationships across claims, policyholders, beneficiaries, and shared contacts."""
-    claims = db.query(Claim).all()
-    
+    """Provides explainable graph relationships across claims, policyholders, beneficiaries, and shared contacts from real database records."""
+    from ..services.fraud_network import build_fraud_network, get_network_insights
+
+    network = build_fraud_network(db)
+    insights = get_network_insights(db)
+    raw_nodes = network.get("nodes", [])
+    raw_edges = network.get("edges", [])
+
     nodes = [
-        {"id": "node-cust-1", "label": "Simbarashe Mpofu", "type": "policyholder", "risk": "Critical", "detail": "National ID: 63-289412-A-18"},
-        {"id": "node-cust-2", "label": "Chipo Ndlovu", "type": "policyholder", "risk": "Medium", "detail": "National ID: 08-119420-X-42"},
-        {"id": "node-cust-3", "label": "Nomsa Sibanda", "type": "policyholder", "risk": "High", "detail": "National ID: 63-490218-D-88"},
-        {"id": "node-cust-4", "label": "Kudakwashe Gumbo", "type": "policyholder", "risk": "Low", "detail": "National ID: 44-590123-K-15"},
-        {"id": "node-pol-1", "label": "POL-LIF-801294", "type": "policy", "risk": "Critical", "detail": "Individual Life ($50k)"},
-        {"id": "node-pol-2", "label": "POL-FUN-302199", "type": "policy", "risk": "High", "detail": "Funeral Cash Plan ($10k)"},
-        {"id": "node-pol-3", "label": "POL-GRP-554102", "type": "policy", "risk": "Low", "detail": "Group Life Policy"},
-        {"id": "node-clm-1", "label": "CLM-2026-9002", "type": "claim", "risk": "Critical", "detail": "Amount: $45,000 (Duplicate Flag)"},
-        {"id": "node-clm-2", "label": "CLM-2026-9003", "type": "claim", "risk": "High", "detail": "Amount: $18,500 (Early Inception)"},
-        {"id": "node-clm-3", "label": "CLM-2026-9005", "type": "claim", "risk": "High", "detail": "Amount: $30,000 (Beneficiary Flip)"},
-        {"id": "node-ben-1", "label": "Blessing Mutasa", "type": "beneficiary", "risk": "Critical", "detail": "Linked to 3 unrelated policies"},
-        {"id": "node-phone-1", "label": "+263 77 289 4120", "type": "contact", "risk": "High", "detail": "Shared contact number across 2 claimants"},
-        {"id": "node-bank-1", "label": "Stanbic 914000-ZW", "type": "account", "risk": "Critical", "detail": "Same disbursement account"},
-    ]
-
-    links = [
-        {"source": "node-cust-1", "target": "node-pol-1", "relation": "OWNS_POLICY", "severity": "normal"},
-        {"source": "node-pol-1", "target": "node-clm-1", "relation": "CLAIM_FILED", "severity": "critical"},
-        {"source": "node-cust-1", "target": "node-phone-1", "relation": "USES_PHONE", "severity": "warning"},
-        {"source": "node-cust-3", "target": "node-phone-1", "relation": "SHARED_PHONE_LINK", "severity": "critical"},
-        {"source": "node-cust-3", "target": "node-pol-2", "relation": "OWNS_POLICY", "severity": "normal"},
-        {"source": "node-pol-2", "target": "node-clm-2", "relation": "CLAIM_FILED", "severity": "warning"},
-        {"source": "node-clm-1", "target": "node-ben-1", "relation": "BENEFICIARY_CLAIMANT", "severity": "critical"},
-        {"source": "node-clm-3", "target": "node-ben-1", "relation": "SHARED_BENEFICIARY_SPIKE", "severity": "critical"},
-        {"source": "node-clm-1", "target": "node-bank-1", "relation": "PAYOUT_DESTINATION", "severity": "critical"},
-        {"source": "node-clm-3", "target": "node-bank-1", "relation": "PAYOUT_DESTINATION", "severity": "critical"},
-    ]
-
-    clusters = [
         {
-            "cluster_name": "Syndicate Pattern Alpha (Harare Central)",
-            "risk_level": "Critical",
-            "entities_involved": ["Simbarashe Mpofu", "Nomsa Sibanda", "Blessing Mutasa", "Stanbic 914000-ZW"],
-            "rationale": "Common disbursement account and shared mobile contact detected across disparate life and funeral claims within 45 days.",
-            "recommended_action": "Freeze electronic payouts pending field verification of deceased records at Registrar General.",
+            "id": n["id"],
+            "label": n.get("name") or n.get("entity_key") or n["id"],
+            "type": n.get("entity_type", "entity"),
+            "risk": "Critical" if (n.get("risk_score", 0) >= 80) else ("High" if n.get("risk_score", 0) >= 60 else ("Medium" if n.get("risk_score", 0) >= 30 else "Low")),
+            "detail": f"{n.get('entity_type', '').title()} · Key: {n.get('entity_key', '')} · Edges: {n.get('total_edges', 0)}",
+            "is_suspicious": bool(n.get("is_suspicious")),
+            "risk_score": n.get("risk_score", 0),
         }
+        for n in raw_nodes
     ]
+    links = [
+        {
+            "source": e.get("node_a_id") or e.get("source"),
+            "target": e.get("node_b_id") or e.get("target"),
+            "relation": e.get("relationship_type", "RELATED"),
+            "severity": "critical" if e.get("is_suspicious") else "normal",
+            "evidence": e.get("evidence", ""),
+        }
+        for e in raw_edges
+    ]
+    clusters = insights.get("clusters", [])
+    critical_links = sum(1 for l in links if l["severity"] == "critical")
 
     return {
         "nodes": nodes,
@@ -156,74 +147,58 @@ async def get_network_graph(
             "total_nodes": len(nodes),
             "total_links": len(links),
             "collusion_clusters_identified": len(clusters),
-            "critical_link_count": 5,
-        }
+            "critical_link_count": critical_links,
+        },
     }
+
 
 @router.get("/model-governance", summary="Get model performance metrics, drift indicators, and model registry")
 async def get_model_governance(
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_active_user),
 ) -> Dict[str, Any]:
-    """Returns AI model governance metrics, validation scores, and offline retraining history."""
-    total_claims = db.query(Claim).count()
+    """Returns AI model governance metrics computed from real database assessments and investigation outcomes."""
+    from ..core.config import settings
+    from ..services.model_performance import compute_model_performance_metrics, get_model_performance_history
+
+    perf = compute_model_performance_metrics(db)
+    history = get_model_performance_history(db, limit=10)
     total_analysed = db.query(FraudAssessment).count()
-    
+    metrics = perf.get("metrics", {})
+
+    def _pct(value):
+        """model_performance returns ratios; the governance API exposes percentages."""
+        return round(value * 100, 2) if value is not None else None
+
     return {
         "active_model": {
             "name": "NEXA Hybrid Ensemble Engine",
-            "version": "v1.2-ensemble-hybrid",
-            "status": "Production Active",
-            "approval_date": "2026-10-15",
-            "approved_by": "Dr. Tinashe Dube (Chief Risk Officer)",
-            "algorithm": "Heuristic Rules + Anomaly Isolation + Text & Forensic Fingerprint",
+            "version": settings.MODEL_VERSION,
+            "status": "Active",
+            "algorithm": "Heuristic Rules + Statistical Isolation + Forensic Fingerprint",
+            "validation_note": (
+                "Precision/recall are calculated only from investigations with confirmed outcomes; "
+                "null means insufficient reviewed data, not perfect performance."
+            ),
         },
         "metrics": {
-            "precision": 94.6,
-            "recall": 92.1,
-            "f1_score": 93.3,
-            "false_positive_rate": 2.3,
-            "investigation_conversion": 81.4,
+            "precision": _pct(metrics.get("precision")),
+            "recall": _pct(metrics.get("recall")),
+            "f1_score": _pct(metrics.get("f1_score")),
+            "false_positive_rate": _pct(metrics.get("false_positive_rate")),
             "claims_processed": total_analysed,
-            "average_latency_ms": 32,
+            "evaluated_investigations": metrics.get("total_confirmed_fraud_cases", 0) + metrics.get("false_positives", 0),
         },
         "drift_indicators": {
-            "feature_drift_status": "STABLE",
-            "population_stability_index": 0.042,
-            "input_distribution_shift": "Normal (Within +/- 2.5% variance)",
-            "last_drift_check": datetime.now(timezone.utc).isoformat(),
+            "feature_drift_status": "NOT_EVALUATED",
+            "last_drift_check": None,
         },
         "confusion_matrix": {
-            "true_positives": 186,
-            "false_positives": 9,
-            "true_negatives": 1240,
-            "false_negatives": 16,
+            "true_positives": metrics.get("true_positives", 0),
+            "false_positives": metrics.get("false_positives", 0),
+            "true_negatives": metrics.get("true_negatives", 0),
+            "false_negatives": metrics.get("false_negatives", 0),
         },
-        "model_registry": [
-            {
-                "version": "v1.2-ensemble-hybrid",
-                "deployed_date": "2026-10-15",
-                "status": "CURRENT PRODUCTION",
-                "precision": "94.6%",
-                "recall": "92.1%",
-                "notes": "Added Zimbabwean death certificate date cross-validation and SHA-256 duplicate fingerprinting."
-            },
-            {
-                "version": "v1.1-random-forest",
-                "deployed_date": "2026-06-01",
-                "status": "ARCHIVED",
-                "precision": "89.2%",
-                "recall": "86.5%",
-                "notes": "Supervised tree classifier on synthetic historical portfolio."
-            },
-            {
-                "version": "v1.0-rules-baseline",
-                "deployed_date": "2026-01-10",
-                "status": "LEGACY",
-                "precision": "81.0%",
-                "recall": "78.4%",
-                "notes": "Standard threshold rules for inception days and amount limits."
-            }
-        ]
+        "model_registry": history,
     }
 

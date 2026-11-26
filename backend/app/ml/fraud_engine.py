@@ -346,7 +346,109 @@ class FraudDetectionEngine:
                     explanations.append("Low readability or missing legible text on uploaded supporting document; this alone does not establish fraud.")
 
         # ---------------------------------------------------------
-        # 7. STATISTICAL ISOLATION COMPONENT (Phase 2 upgrade)
+        # 7. BEHAVIOURAL & PREDICTIVE ENHANCEMENTS (Phase 2 upgrade)
+        # ---------------------------------------------------------
+        # Payment velocity: repeated payment account references across
+        # claims in the customer's history indicate payment-pattern abuse.
+        acct_refs = [str(r).strip() for r in (claim_data.get("payment_account_refs") or []) if str(r).strip()]
+        if historical_claims:
+            hist_accts = {
+                str(r).strip()
+                for hc in historical_claims
+                for r in (hc.get("payment_account_refs") or [])
+                if str(r).strip()
+            }
+            reused = [a for a in set(acct_refs) if a in hist_accts]
+            if reused:
+                indicators.append({
+                    "code": "REPEATED_PAYMENT_ACCOUNT_REF",
+                    "severity": "HIGH",
+                    "weight": 18.0,
+                    "detail": f"Payment account reference(s) reused from earlier claim(s): {', '.join(sorted(reused))[:80]}.",
+                })
+                rule_score += 18.0
+                explanations.append(f"Payment account reference reused across {len(reused)} prior claim(s) — repeated-account fraud pattern.")
+
+        # Beneficiary consistency: benign when the beneficiary matches the
+        # customer; an unsolicited mismatch with verified identity is a signal.
+        beneficiary_name = str(claim_data.get("beneficiary_name") or "").strip()
+        cust_name = str(customer_data.get("name") or "").strip()
+        if beneficiary_name and cust_name and beneficiary_name.lower() != cust_name.lower():
+            cust_id_verified = bool(str(customer_data.get("national_id") or "").strip() and len(str(customer_data.get("national_id")).strip()) >= 5)
+            if cust_id_verified:
+                indicators.append({
+                    "code": "BENEFICIARY_NAME_MISMATCH",
+                    "severity": "MEDIUM",
+                    "weight": 12.0,
+                    "detail": f"Beneficiary name ({beneficiary_name}) differs from verified customer name ({cust_name}).",
+                })
+                rule_score += 12.0
+                explanations.append("Beneficiary name differs from the verified customer name.")
+
+        # Beneficiary National ID consistency (when both sides have data).
+        BEN_NIN = str(claim_data.get("beneficiary_nin") or "").strip()
+        CUST_NIN = str(customer_data.get("national_id") or "").strip()
+        if BEN_NIN and CUST_NIN and BEN_NIN != CUST_NIN and len(CUST_NIN) >= 5:
+            indicators.append({
+                "code": "BENEFICIARY_IDENTITY_MISMATCH",
+                "severity": "HIGH",
+                "weight": 22.0,
+                "detail": "Beneficiary National ID differs from the verified customer National ID — potential identity substitution.",
+            })
+            rule_score += 22.0
+            explanations.append("Beneficiary identity number differs from the verified customer identity number.")
+            recommended_actions.append("Verify beneficiary identity through the customer master file and legal custody documentation.")
+
+        # Phone/email reuse across the customer's historical claims.
+        def _norm(v: Any) -> str:
+            s = str(v or "").strip().lower()
+            digits = "".join(ch for ch in s if ch.isdigit())
+            return digits if len(digits) >= 8 else s
+
+        claim_phone = _norm(claim_data.get("phone_number"))
+        claim_email = _norm(claim_data.get("email_address") or customer_data.get("email_address"))
+        if historical_claims and (claim_phone or claim_email):
+            hist_phones, hist_emails = set(), set()
+            for hc in historical_claims:
+                hp = _norm(hc.get("phone_number"))
+                he = _norm(hc.get("email_address"))
+                if hp: hist_phones.add(hp)
+                if he: hist_emails.add(he)
+            reused = []
+            if claim_phone and claim_phone in hist_phones:
+                reused.append(("phone", claim_phone))
+            if claim_email and claim_email in hist_emails:
+                reused.append(("email", claim_email))
+            if reused:
+                kinds = ", ".join(k for k, _ in reused)
+                indicators.append({
+                    "code": "REUSED_CONTACT_INFORMATION",
+                    "severity": "HIGH",
+                    "weight": 15.0,
+                    "detail": f"Contact information ({kinds}) reused from earlier claim(s).",
+                })
+                rule_score += 15.0
+                explanations.append(f"Contact information reused across earlier claims ({kinds}).")
+
+        # Historical investigation outcome awareness (Phase 2 upgrade).
+        if historical_claims:
+            prior_confirmed = sum(
+                1 for hc in historical_claims
+                if str((hc.get("investigation_outcome") or hc.get("status") or "")).lower() in ("confirmed_fraud", "fraud_confirmed", "escalated")
+            )
+            if prior_confirmed >= 1:
+                indicators.append({
+                    "code": "PRIOR_CONFIRMED_FRAUD_ON_POLICY",
+                    "severity": "HIGH",
+                    "weight": 20.0,
+                    "detail": f"{prior_confirmed} earlier claim(s) linked to this policy were confirmed as fraud during investigation.",
+                })
+                rule_score += 20.0
+                explanations.append(f"Prior confirmed fraud investigations ({prior_confirmed}) on related claims raise suspicion.")
+                recommended_actions.append("Escalate immediately — review the full investigation trail on earlier claims.")
+
+        # ---------------------------------------------------------
+        # 8. STATISTICAL ISOLATION COMPONENT (Phase 2 upgrade)
         # ---------------------------------------------------------
         # Unsupervised anomaly scoring (approximates Isolation Forest
         # principles; documented limitations in StatisticalIsolationScorer).
@@ -441,6 +543,26 @@ class FraudDetectionEngine:
             if past_amount == claim_amount and claim_amount > 5000:
                 if incident_dt and past_incident and (incident_dt - past_incident).days == 0:
                     return True, f"Exact duplicate amount (${claim_amount:,.2f}) and incident date ({incident_dt.date()}) matches historical claim {past.get('claim_id')}."
+
+        # Fuzzy match (Phase 2 upgrade): same policy + near-identical amount
+        # + same incident date window, or repeated beneficiary names on the
+        # same policy with materially similar amounts.
+        for past in historical_claims:
+            if past.get("claim_id") == current_claim_id:
+                continue
+            past_amount = float(past.get("amount", 0.0))
+            past_policy = past.get("policy_number")
+            past_incident = self._parse_date(past.get("incident_date"))
+            past_beneficiary = str(past.get("beneficiary_name") or "").strip().lower()
+            current_beneficiary = str(current_claim.get("beneficiary_name") or "").strip().lower()
+
+            if past_policy == current_policy and past_amount > 0 and claim_amount > 0:
+                ratio = max(past_amount, claim_amount) / max(min(past_amount, claim_amount), 1.0)
+                if ratio <= 1.15 and incident_dt and past_incident and abs((incident_dt - past_incident).days) <= 7:
+                    return True, f"Near-duplicate: similar amount (${past_amount:,.2f} vs ${claim_amount:,.2f}) and incident date within 7 days on policy {past_policy} — past claim {past.get('claim_id')}."
+            if past_beneficiary and current_beneficiary and past_beneficiary == current_beneficiary and past_amount and claim_amount:
+                if abs(past_amount - claim_amount) < 5000 and past.get("policy_number") == current_policy:
+                    return True, f"Repeated beneficiary with similar claim amount on policy {current_policy} — possible re-submission."
 
         return False, ""
 

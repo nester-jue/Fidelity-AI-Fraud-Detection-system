@@ -853,8 +853,8 @@ function FnolTab() {
     event_type: '',
     incident_date: '',
     estimated_amount: '',
-    channel: 'phone',
-    description: '',
+    reporting_channel: 'Contact Centre',
+    initial_notes: '',
   });
   const [submitting, setSubmitting] = useState(false);
   const [fnolSuccess, setFnolSuccess] = useState(null);
@@ -867,7 +867,7 @@ function FnolTab() {
       const res = await api.listFnol();
       if (!res.ok) throw new Error(`Server error: ${res.status}`);
       const json = await res.json();
-      setFnols(Array.isArray(json) ? json : json.fnols || json.items || []);
+      setFnols(Array.isArray(json) ? json : json.fnol_intakes || json.fnols || json.items || []);
     } catch (e) {
       setError(e.message);
     } finally {
@@ -905,6 +905,9 @@ function FnolTab() {
 
   const triageBadge = (triage) => {
     const map = {
+      'high-value claims review': 'bg-red-100 text-red-700 border-red-200',
+      'underwriting exception desk': 'bg-amber-100 text-amber-800 border-amber-200',
+      'standard verification': 'bg-green-100 text-green-700 border-green-200',
       immediate: 'bg-red-100 text-red-700 border-red-200',
       routine: 'bg-green-100 text-green-700 border-green-200',
       standard: 'bg-blue-100 text-blue-700 border-blue-200',
@@ -961,17 +964,16 @@ function FnolTab() {
               </div>
               <div>
                 <label className={labelCls}>Notification Channel</label>
-                <select name="channel" value={fnolForm.channel} onChange={handleFnolChange} className={inputCls}>
-                  <option value="phone">Phone</option>
-                  <option value="email">Email</option>
-                  <option value="portal">Portal</option>
-                  <option value="branch">Branch</option>
-                  <option value="agent">Agent</option>
+                <select name="reporting_channel" value={fnolForm.reporting_channel} onChange={handleFnolChange} className={inputCls}>
+                  <option value="Contact Centre">Contact Centre</option>
+                  <option value="Digital Portal">Digital Portal</option>
+                  <option value="Branch Walk-In">Branch Walk-In</option>
+                  <option value="Broker Advisory">Broker Advisory</option>
                 </select>
               </div>
               <div className="sm:col-span-2">
                 <label className={labelCls}>Additional Notes</label>
-                <textarea name="description" rows={3} placeholder="Any additional information…" value={fnolForm.description} onChange={handleFnolChange} className={`${inputCls} resize-none`} />
+                <textarea name="initial_notes" rows={3} placeholder="Any additional information…" value={fnolForm.initial_notes} onChange={handleFnolChange} className={`${inputCls} resize-none`} />
               </div>
             </div>
             <div className="flex justify-end gap-3 pt-2 border-t border-slate-100">
@@ -1044,9 +1046,9 @@ function FnolTab() {
                       <Td>{f.claimant_name || '—'}</Td>
                       <Td className="capitalize">{f.event_type || '—'}</Td>
                       <Td>{fmtDate(f.incident_date)}</Td>
-                      <Td className="capitalize">{f.channel || '—'}</Td>
+                      <Td>{f.reporting_channel || '—'}</Td>
                       <Td className="font-semibold">{fmtCurrency(f.estimated_amount)}</Td>
-                      <Td>{triageBadge(f.triage_category || f.triage)}</Td>
+                      <Td>{triageBadge(f.initial_triage || f.triage_category || f.triage)}</Td>
                       <Td>{statusBadge(f.status)}</Td>
                     </tr>
                   ))}

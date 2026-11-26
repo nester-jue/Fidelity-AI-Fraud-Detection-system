@@ -8,6 +8,12 @@ logger = logging.getLogger("fraud_db")
 
 def get_database_url() -> str:
     if settings.DATABASE_URL:
+        if (settings.ENVIRONMENT.lower() == "production"
+                and settings.DATABASE_URL.lower().startswith("sqlite")):
+            raise RuntimeError(
+                "SQLite is not permitted as a production database. "
+                "Configure DATABASE_URL with a PostgreSQL connection string."
+            )
         return settings.DATABASE_URL
     # Default to PostgreSQL
     pg_url = (
@@ -35,6 +41,9 @@ try:
     else:
         engine = create_engine(db_url, echo=False, connect_args={"check_same_thread": False})
 except Exception as e:
+    if settings.ENVIRONMENT.lower() == "production":
+        logger.critical(f"Production PostgreSQL connection failed ({e}). Refusing silent SQLite fallback.")
+        raise RuntimeError(f"Production database connection failed: {e}") from e
     # Ensure local data directory exists
     base_data = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", "..", "..", "data"))
     os.makedirs(base_data, exist_ok=True)
@@ -103,3 +112,5 @@ def _migrate_schema():
             logger.warning("Schema migration applied; added columns: %s", ", ".join(added))
     except Exception as e:
         logger.error(f"Schema migration failed: {e}")
+        if settings.ENVIRONMENT.lower() == "production":
+            raise RuntimeError(f"Production schema migration failed: {e}") from e

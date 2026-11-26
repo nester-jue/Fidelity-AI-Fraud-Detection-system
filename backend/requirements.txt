@@ -6,10 +6,15 @@ psycopg[binary]
 python-multipart
 pydantic
 python-dotenv
+alembic
 passlib[bcrypt]
 PyJWT
 scikit-learn
 pandas
 numpy
-# Optional OCR libraries (install later if needed)
-# tesseract-ocr (system package) and pytesseract
+# Knowledge base document ingestion
+pypdf
+python-docx
+# Image OCR requires the Tesseract system binary plus pytesseract; the API
+# reports OCR status honestly when the binary is unavailable.
+# pytesseract

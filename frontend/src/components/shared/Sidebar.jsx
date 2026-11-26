@@ -149,7 +149,7 @@ export default function Sidebar({ user, sidebar, activeTab, onTab, expanded, onT
           </div>
           <div className="min-w-0">
             <span className="block font-extrabold text-sm tracking-wide text-white leading-none">NEXA</span>
-            <span className="block text-[10px] text-amber-300 font-semibold tracking-wider uppercase leading-none mt-0.5">Fraud Intelligence</span>
+            <span className="block text-[10px] text-amber-300 font-semibold tracking-wider uppercase leading-none mt-0.5">Enterprise Fraud Intelligence</span>
           </div>
         </div>
       ) : (

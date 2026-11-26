@@ -9,6 +9,7 @@ export default function ModelPerformanceDashboard({ user }) {
   const [requests, setRequests] = useState([]);
   const [newVersion, setNewVersion] = useState('');
   const [datasetVersion, setDatasetVersion] = useState('');
+  const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState('');
 
   const load = useCallback(async () => {
@@ -81,7 +82,7 @@ export default function ModelPerformanceDashboard({ user }) {
                 <div className="flex items-center"><span className="w-24 text-sm text-slate-600">High</span><div className="flex-1 bg-orange-100 rounded-full h-3"><div className="bg-orange-500 h-3 rounded-full" style={{ width: `${data.risk_distribution.high ? (data.risk_distribution.high / Math.max(1, data.claims_assessed)) * 100 : 0}%` }} /></div><span className="w-10 text-center text-sm font-black">{data.risk_distribution.high}</span></div>
                 <div className="flex items-center"><span className="w-24 text-sm text-slate-600">Critical</span><div className="flex-1 bg-red-100 rounded-full h-3"><div className="bg-red-500 h-3 rounded-full" style={{ width: `${data.risk_distribution.critical ? (data.risk_distribution.critical / Math.max(1, data.claims_assessed)) * 100 : 0}%` }} /></div><span className="w-10 text-center text-sm font-black">{data.risk_distribution.critical}</span></div>
               </div>
-              <p className="text-[10px] text-amber-700 mt-3">Model risk categories are informational indicators for review; they never establish fraud. Data quality: {metrics.total ? `${data.data_quality.assessments_with_explanation || 0}/${metrics.total} assessments have explanations` : '—'}</p>
+              <p className="text-[10px] text-amber-700 mt-3">Model risk categories are informational indicators for review; they never establish fraud. Data quality: {metrics.total ? `${data.data_quality?.assessments_with_explanation || 0}/${metrics.total} assessments have explanations` : '—'}</p>
             </div>
           </div>
 
@@ -110,10 +111,17 @@ export default function ModelPerformanceDashboard({ user }) {
               <input value={newVersion} onChange={e => setNewVersion(e.target.value)} placeholder="new model version, e.g. v2.0-test" className="px-3 py-2 text-sm border border-slate-200 rounded-md w-1/3" />
               <input value={datasetVersion} onChange={e => setDatasetVersion(e.target.value)} placeholder="dataset version, e.g. ds-2026-01" className="px-3 py-2 text-sm border border-slate-200 rounded-md w-1/3" />
               <button
-                disabled={!newVersion.trim() || !datasetVersion.trim() || scanning}
+                disabled={!newVersion.trim() || !datasetVersion.trim() || submitting}
                 onClick={async () => {
-                  await api.openRetrainingRequest({ new_model_version: newVersion, dataset_version: datasetVersion, notes: 'entered from NEXA Learning Centre' });
-                  setNewVersion(''); setDatasetVersion(''); await load();
+                  setSubmitting(true);
+                  try {
+                    await api.openRetrainingRequest({ new_model_version: newVersion, dataset_version: datasetVersion, notes: 'entered from NEXA Learning Centre' });
+                    setNewVersion(''); setDatasetVersion(''); await load();
+                  } catch (err) {
+                    setError(err.message || 'Could not submit the retraining request.');
+                  } finally {
+                    setSubmitting(false);
+                  }
                 }}
                 className="px-4 py-2 text-sm font-bold bg-[#0F2744] text-white rounded-md disabled:opacity-40"
               >Request Retrain</button>
@@ -142,7 +150,7 @@ export default function ModelPerformanceDashboard({ user }) {
             <p className="text-[10px] text-slate-400 mt-2">Retraining deploys only after explicit admin approval. Unverified fraud allegations are never used for retraining automatically.</p>
           </div>
           <div className="text-[10px] text-slate-400 bg-amber-50 border border-amber-200 rounded-xl p-3">
-            {data.data_quality?.assessments_missing_model_version != null && `${data.data_quality.assessments_missing_model_version} assessments lack model version attribution. `}Data retention: evidence 5 years, audit 10 years, assessments 365 days.
+            {data?.data_quality?.assessments_missing_model_version != null && `${data.data_quality.assessments_missing_model_version} assessments lack model version attribution. `}Data retention: evidence 5 years, audit 10 years, assessments 365 days.
           </div>
         </>
       )}

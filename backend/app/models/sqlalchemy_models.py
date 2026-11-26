@@ -14,10 +14,27 @@ class RoleEnum(str, enum.Enum):
     FRAUD_INVESTIGATOR = "fraud_investigator"
     COMPLIANCE_OFFICER = "compliance_officer"
     MANAGEMENT = "management"
+    CHIEF_RISK_OFFICER = "chief_risk_officer"
+
+class Organisation(Base):
+    """A tenant of the platform (insurer, broker or regulated entity).
+
+    Tenant isolation is enforced in the data-access layer (see
+    app/services/tenant.py): every tenant-scoped ORM query is filtered and
+    every new tenant-scoped row is stamped with the request's organisation.
+    """
+    __tablename__ = "organisations"
+    id = Column(Integer, primary_key=True, index=True)
+    name = Column(String, nullable=False, unique=True)
+    slug = Column(String, nullable=False, unique=True, index=True)
+    is_active = Column(Boolean, default=True)
+    created_at = Column(DateTime, default=utc_now)
+
 
 class User(Base):
     __tablename__ = "users"
     id = Column(Integer, primary_key=True, index=True)
+    organisation_id = Column(Integer, ForeignKey("organisations.id"), nullable=True, index=True)
     username = Column(String, unique=True, index=True, nullable=False)
     full_name = Column(String, nullable=True)
     email = Column(String, unique=True, index=True, nullable=False)
@@ -25,12 +42,21 @@ class User(Base):
     is_active = Column(Boolean, default=True)
     role = Column(Enum(RoleEnum), nullable=False, default=RoleEnum.CLAIMS_OFFICER)
     department = Column(String, nullable=True)  # e.g. "Claims", "Executive", "Compliance", "Investigations", "IT"
+    # Authenticator-app MFA (TOTP). Secrets are stored only after the user
+    # enrols and are never returned by profile endpoints after enrolment.
+    mfa_secret = Column(String, nullable=True)
+    mfa_enabled = Column(Boolean, nullable=True, default=False)
+    # Password reset tokens are stored only as SHA-256 hashes and are valid
+    # for a short, configurable window. No token is ever returned by an API.
+    password_reset_token_hash = Column(String, nullable=True, index=True)
+    password_reset_expires_at = Column(DateTime, nullable=True)
     created_at = Column(DateTime, default=utc_now)
     updated_at = Column(DateTime, default=utc_now, onupdate=utc_now)
 
 class Customer(Base):
     __tablename__ = "customers"
     id = Column(Integer, primary_key=True, index=True)
+    organisation_id = Column(Integer, ForeignKey("organisations.id"), nullable=True, index=True)
     customer_id = Column(String, unique=True, index=True, nullable=False)
     name = Column(String, nullable=False)
     national_id = Column(String, nullable=True)
@@ -43,6 +69,7 @@ class Customer(Base):
 class Policy(Base):
     __tablename__ = "policies"
     id = Column(Integer, primary_key=True, index=True)
+    organisation_id = Column(Integer, ForeignKey("organisations.id"), nullable=True, index=True)
     policy_number = Column(String, unique=True, index=True, nullable=False)
     policy_type = Column(String, nullable=False)
     customer_id = Column(Integer, ForeignKey("customers.id"), nullable=False)
@@ -56,6 +83,7 @@ class Policy(Base):
 class Claim(Base):
     __tablename__ = "claims"
     id = Column(Integer, primary_key=True, index=True)
+    organisation_id = Column(Integer, ForeignKey("organisations.id"), nullable=True, index=True)
     claim_id = Column(String, unique=True, index=True, nullable=False)
     policy_id = Column(Integer, ForeignKey("policies.id"), nullable=False)
     customer_id = Column(Integer, ForeignKey("customers.id"), nullable=False)
@@ -94,6 +122,7 @@ class ClaimBeneficiaryChange(Base):
     """
     __tablename__ = "claim_beneficiary_changes"
     id = Column(Integer, primary_key=True, index=True)
+    organisation_id = Column(Integer, ForeignKey("organisations.id"), nullable=True, index=True)
     claim_id = Column(Integer, ForeignKey("claims.id"), nullable=False, index=True)
     changed_by_id = Column(Integer, ForeignKey("users.id"), nullable=False)
     beneficiary_name = Column(String, nullable=True)
@@ -108,6 +137,7 @@ class ClaimTimelineEvent(Base):
     """One chronological event in a claim's reconstructed lifecycle timeline (Phase 6)."""
     __tablename__ = "claim_timeline_events"
     id = Column(Integer, primary_key=True, index=True)
+    organisation_id = Column(Integer, ForeignKey("organisations.id"), nullable=True, index=True)
     claim_id = Column(Integer, ForeignKey("claims.id"), nullable=False, index=True)
     event_type = Column(String, nullable=False)  # e.g. POLICY_ACTIVATED, INCIDENT_OCCURRED, BENEFICIARY_CHANGED
     event_description = Column(Text, nullable=True)
@@ -127,6 +157,7 @@ class EvidenceRecord(Base):
     """
     __tablename__ = "evidence_records"
     id = Column(Integer, primary_key=True, index=True)
+    organisation_id = Column(Integer, ForeignKey("organisations.id"), nullable=True, index=True)
     investigation_id = Column(Integer, ForeignKey("investigations.id"), nullable=True, index=True)
     claim_id = Column(Integer, ForeignKey("claims.id"), nullable=True, index=True)
     document_id = Column(Integer, ForeignKey("ocr_documents.id"), nullable=True)  # linked OCR document (if any)
@@ -154,7 +185,8 @@ class FraudNetworkNode(Base):
     view of connected entities with aggregate attributes.
     """
     __tablename__ = "fraud_network_nodes"
-    id = Column(String, primary_key=True, index=True)  # e.g. CUST-123, POL-XYZ, CLAIM-abc, BENEF-{nin}, OCRDOC-1
+    id = Column(String, primary_key=True, index=True)
+    organisation_id = Column(Integer, ForeignKey("organisations.id"), nullable=True, index=True)  # e.g. CUST-123, POL-XYZ, CLAIM-abc, BENEF-{nin}, OCRDOC-1
     entity_type = Column(String, nullable=False)  # customer | policy | claim | document | beneficiary | payment_ref
     entity_key = Column(String, nullable=False)  # natural key used to link (national_id, claim_id, hash, ...)
     name = Column(String, nullable=True)
@@ -174,6 +206,7 @@ class FraudNetworkEdge(Base):
     """A relationship between two network nodes with strength and supporting evidence (Phase 3)."""
     __tablename__ = "fraud_network_edges"
     id = Column(Integer, primary_key=True, index=True)
+    organisation_id = Column(Integer, ForeignKey("organisations.id"), nullable=True, index=True)
     node_a_id = Column(String, ForeignKey("fraud_network_nodes.id"), nullable=False, index=True)
     node_b_id = Column(String, ForeignKey("fraud_network_nodes.id"), nullable=False, index=True)
     relationship_type = Column(String, nullable=False)  # SHARED_IDENTITY, SAME_BENEFICIARY, REUSED_DOCUMENT, etc.
@@ -191,6 +224,7 @@ class PredictiveAlert(Base):
     """Proactive fraud risk alerts from the predictive monitoring engine (Phase 11)."""
     __tablename__ = "predictive_alerts"
     id = Column(Integer, primary_key=True, index=True)
+    organisation_id = Column(Integer, ForeignKey("organisations.id"), nullable=True, index=True)
     alert_type = Column(String, nullable=False)  # e.g. SUSPICIOUS_PATTERN, UNUSUAL_AMOUNT, CLUSTER_EMERGING
     severity = Column(String, nullable=False)  # INFO | WARNING | HIGH | CRITICAL
     claim_id = Column(Integer, ForeignKey("claims.id"), nullable=True)
@@ -217,6 +251,7 @@ class ModelRetrainingRequest(Base):
     """
     __tablename__ = "model_retraining_requests"
     id = Column(Integer, primary_key=True, index=True)
+    organisation_id = Column(Integer, ForeignKey("organisations.id"), nullable=True, index=True)
     requested_by_id = Column(Integer, ForeignKey("users.id"), nullable=False)
     new_model_version = Column(String, nullable=False)
     base_model_version = Column(String, nullable=True)
@@ -236,6 +271,7 @@ class ModelRetrainingRequest(Base):
 class ClaimDocument(Base):
     __tablename__ = "claim_documents"
     id = Column(Integer, primary_key=True, index=True)
+    organisation_id = Column(Integer, ForeignKey("organisations.id"), nullable=True, index=True)
     claim_id = Column(Integer, ForeignKey("claims.id"), nullable=False)
     filename = Column(String, nullable=False)
     file_path = Column(String, nullable=False)
@@ -248,6 +284,7 @@ class ClaimDocument(Base):
 class FraudAssessment(Base):
     __tablename__ = "fraud_assessments"
     id = Column(Integer, primary_key=True, index=True)
+    organisation_id = Column(Integer, ForeignKey("organisations.id"), nullable=True, index=True)
     claim_id = Column(Integer, ForeignKey("claims.id"), unique=True, nullable=False)
     risk_score = Column(Float, nullable=False)
     risk_category = Column(String, nullable=False)
@@ -264,6 +301,7 @@ class FraudAssessment(Base):
 class Investigation(Base):
     __tablename__ = "investigations"
     id = Column(Integer, primary_key=True, index=True)
+    organisation_id = Column(Integer, ForeignKey("organisations.id"), nullable=True, index=True)
     claim_id = Column(Integer, ForeignKey("claims.id"), nullable=False)
     investigator_id = Column(Integer, ForeignKey("users.id"), nullable=False)
     status = Column(String, default="open")
@@ -280,6 +318,7 @@ class ClaimNote(Base):
     """Internal notes attached to a claim by the Claims Management workspace."""
     __tablename__ = "claim_notes"
     id = Column(Integer, primary_key=True, index=True)
+    organisation_id = Column(Integer, ForeignKey("organisations.id"), nullable=True, index=True)
     claim_id = Column(Integer, ForeignKey("claims.id"), nullable=False)
     user_id = Column(Integer, ForeignKey("users.id"), nullable=False)
     note = Column(Text, nullable=True)
@@ -292,6 +331,7 @@ class InvestigationNote(Base):
     """Timestamped notes recorded by Fraud Investors during an investigation."""
     __tablename__ = "investigation_notes"
     id = Column(Integer, primary_key=True, index=True)
+    organisation_id = Column(Integer, ForeignKey("organisations.id"), nullable=True, index=True)
     investigation_id = Column(Integer, ForeignKey("investigations.id"), nullable=False)
     user_id = Column(Integer, ForeignKey("users.id"), nullable=False)
     note = Column(Text, nullable=True)
@@ -304,6 +344,7 @@ class ComplianceReport(Base):
     """Generated compliance and regulatory monitoring reports (Compliance Officer workspace)."""
     __tablename__ = "compliance_reports"
     id = Column(Integer, primary_key=True, index=True)
+    organisation_id = Column(Integer, ForeignKey("organisations.id"), nullable=True, index=True)
     generated_by_id = Column(Integer, ForeignKey("users.id"), nullable=False)
     report_type = Column(String, nullable=False)  # e.g. FRAUD_COMPLIANCE_REVIEW, AUDIT_EXCEPTIONS
     title = Column(String, nullable=False)
@@ -318,6 +359,7 @@ class ManagementReport(Base):
     """Downloadable executive management summaries (Management Workspace)."""
     __tablename__ = "management_reports"
     id = Column(Integer, primary_key=True, index=True)
+    organisation_id = Column(Integer, ForeignKey("organisations.id"), nullable=True, index=True)
     generated_by_id = Column(Integer, ForeignKey("users.id"), nullable=False)
     report_type = Column(String, nullable=True)  # e.g. EXECUTIVE_KPI_SNAPSHOT, FRAUD_TREND_REVIEW
     title = Column(String, nullable=True)
@@ -330,6 +372,7 @@ class ManagementReport(Base):
 class AuditLog(Base):
     __tablename__ = "audit_logs"
     id = Column(Integer, primary_key=True, index=True)
+    organisation_id = Column(Integer, ForeignKey("organisations.id"), nullable=True, index=True)
     user_id = Column(Integer, ForeignKey("users.id"), nullable=True)
     action = Column(String, nullable=False)
     target = Column(String, nullable=True)
@@ -340,6 +383,7 @@ class AuditLog(Base):
 class Notification(Base):
     __tablename__ = "notifications"
     id = Column(Integer, primary_key=True, index=True)
+    organisation_id = Column(Integer, ForeignKey("organisations.id"), nullable=True, index=True)
     recipient_id = Column(Integer, ForeignKey("users.id"), nullable=False)
     message = Column(Text, nullable=False)
     read = Column(Boolean, default=False)
@@ -349,6 +393,7 @@ class Notification(Base):
 class ModelPerformance(Base):
     __tablename__ = "model_performance"
     id = Column(Integer, primary_key=True, index=True)
+    organisation_id = Column(Integer, ForeignKey("organisations.id"), nullable=True, index=True)
     model_name = Column(String, nullable=False)
     version = Column(String, nullable=False)
     precision = Column(Float, nullable=True)
@@ -361,6 +406,7 @@ class OCRDocument(Base):
     """Tracks every document uploaded for OCR processing, including extraction results."""
     __tablename__ = "ocr_documents"
     id = Column(Integer, primary_key=True, index=True)
+    organisation_id = Column(Integer, ForeignKey("organisations.id"), nullable=True, index=True)
     claim_id = Column(Integer, ForeignKey("claims.id"), nullable=True)  # Linked claim (if any)
     uploaded_by_id = Column(Integer, ForeignKey("users.id"), nullable=False)
     filename = Column(String, nullable=False)
@@ -410,6 +456,7 @@ class OCRCorrection(Base):
     """Audit trail for manual corrections made to OCR-extracted fields."""
     __tablename__ = "ocr_corrections"
     id = Column(Integer, primary_key=True, index=True)
+    organisation_id = Column(Integer, ForeignKey("organisations.id"), nullable=True, index=True)
     document_id = Column(Integer, ForeignKey("ocr_documents.id"), nullable=False)
     corrected_by_id = Column(Integer, ForeignKey("users.id"), nullable=False)
     field_name = Column(String, nullable=False)
@@ -430,6 +477,7 @@ class ChatMessage(Base):
     """
     __tablename__ = "chat_messages"
     id = Column(Integer, primary_key=True, index=True)
+    organisation_id = Column(Integer, ForeignKey("organisations.id"), nullable=True, index=True)
     user_id = Column(Integer, ForeignKey("users.id"), nullable=False)
     role = Column(String, nullable=True)
     direction = Column(String, nullable=False)  # 'user' | 'assistant'
@@ -449,6 +497,7 @@ class KnowledgeDocument(Base):
     """
     __tablename__ = "knowledge_documents"
     id = Column(Integer, primary_key=True, index=True)
+    organisation_id = Column(Integer, ForeignKey("organisations.id"), nullable=True, index=True)
     title = Column(String, nullable=False, index=True)
     department = Column(String, nullable=False, index=True)  # e.g. 'claims_officer', 'shared'
     source = Column(String, nullable=False)  # e.g. 'package', 'manual_upload', 'ocr_extraction'
@@ -464,9 +513,54 @@ class KnowledgeChunk(Base):
     """One searchable segment of a KnowledgeDocument with its embedding vector."""
     __tablename__ = "knowledge_chunks"
     id = Column(Integer, primary_key=True, index=True)
+    organisation_id = Column(Integer, ForeignKey("organisations.id"), nullable=True, index=True)
     document_id = Column(Integer, ForeignKey("knowledge_documents.id"), nullable=False, index=True)
     chunk_index = Column(Integer, nullable=False, default=0)
     text = Column(Text, nullable=False)
     embedding = Column(JSON, nullable=False)  # hashed embedding vector (list[float])
     created_at = Column(DateTime, default=utc_now)
     document = relationship("KnowledgeDocument", back_populates="chunks")
+
+
+class FirstNoticeOfLoss(Base):
+    """A persisted First Notice of Loss notification (pre-claim intake).
+
+    Replaces the previous FNOL endpoint that generated an unstored reference
+    and a list endpoint that invented names, dates and reporting channels.
+    """
+    __tablename__ = "first_notices_of_loss"
+    id = Column(Integer, primary_key=True, index=True)
+    organisation_id = Column(Integer, ForeignKey("organisations.id"), nullable=True, index=True)
+    fnol_reference = Column(String, unique=True, nullable=False, index=True)
+    claim_id = Column(String, nullable=True, index=True)  # linked formal claim, once created
+    policy_number = Column(String, nullable=False, index=True)
+    policy_validated = Column(Boolean, default=False)
+    claimant_name = Column(String, nullable=False)
+    event_type = Column(String, nullable=False)
+    incident_date = Column(DateTime, nullable=False)
+    estimated_amount = Column(Float, nullable=False)
+    reporting_channel = Column(String, nullable=False)
+    initial_notes = Column(Text, nullable=True)
+    triage_queue = Column(String, nullable=False)
+    status = Column(String, default="intake_recorded")
+    recorded_by_id = Column(Integer, ForeignKey("users.id"), nullable=False)
+    recorded_at = Column(DateTime, default=utc_now)
+    recorded_by = relationship("User")
+
+
+class Enquiry(Base):
+    """A public product enquiry captured from the NEXA landing page."""
+    __tablename__ = "enquiries"
+    id = Column(Integer, primary_key=True, index=True)
+    reference = Column(String, unique=True, nullable=False, index=True)
+    organisation = Column(String, nullable=False)
+    email = Column(String, nullable=False, index=True)
+    interests = Column(Text, nullable=True)
+    status = Column(String, default="received")
+    created_at = Column(DateTime, default=utc_now)
+
+
+# Register the tenant isolation listeners as soon as the mapped classes exist.
+# They are inert unless TENANT_ISOLATION_ENABLED is set.
+from ..services.tenant import install as _install_tenant_isolation  # noqa: E402
+_install_tenant_isolation()

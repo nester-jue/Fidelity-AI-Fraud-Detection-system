@@ -3,9 +3,10 @@ from pydantic import BaseModel, Field
 
 class Settings(BaseModel):
     # App config
-    APP_NAME: str = "NEXA AI Fraud Detection System"
-    APP_VERSION: str = "1.0.0"
-    ORGANIZATION: str = "Fidelity Life Assurance Company"
+    APP_NAME: str = "NEXA – Enterprise Insurance Fraud Intelligence Platform"
+    APP_VERSION: str = "2.0.0"
+    ENVIRONMENT: str = Field(default_factory=lambda: os.getenv("ENVIRONMENT", "development"))
+    ORGANIZATION: str = Field(default_factory=lambda: os.getenv("ORGANIZATION", "NEXA Enterprise Insurance"))
     API_V1_PREFIX: str = "/api/v1"
     PORT: int = Field(default_factory=lambda: int(os.getenv("PORT", "8010")))
     HOST: str = Field(default_factory=lambda: os.getenv("HOST", "0.0.0.0"))
@@ -23,6 +24,34 @@ class Settings(BaseModel):
     JWT_SECRET_KEY: str = Field(default_factory=lambda: os.getenv("JWT_SECRET_KEY", "fidelity-life-nexa-fraud-detection-secret-2026"))
     JWT_ALGORITHM: str = "HS256"
     ACCESS_TOKEN_EXPIRE_MINUTES: int = 480  # 8 hours
+
+    # Commercial access controls. Defaults are deliberately conservative:
+    # public registration and demo accounts are development aids, not
+    # production defaults. Set the corresponding environment variables
+    # explicitly in a controlled demonstration environment.
+    DEMO_MODE: bool = Field(default_factory=lambda: os.getenv("DEMO_MODE", "false").lower() == "true")
+    ALLOW_PUBLIC_REGISTRATION: bool = Field(default_factory=lambda: os.getenv("ALLOW_PUBLIC_REGISTRATION", "true").lower() == "true")
+    MFA_REQUIRED: bool = Field(default_factory=lambda: os.getenv("MFA_REQUIRED", "false").lower() == "true")
+    PASSWORD_MIN_LENGTH: int = Field(default_factory=lambda: int(os.getenv("PASSWORD_MIN_LENGTH", "12")))
+    PASSWORD_RESET_EMAIL_ENABLED: bool = Field(default_factory=lambda: os.getenv("PASSWORD_RESET_EMAIL_ENABLED", "false").lower() == "true")
+    # Deliver reset links through an SMTP relay. Delivery is only attempted when
+    # both the flag and SMTP_HOST are configured; otherwise the API says so.
+    SMTP_HOST: str = Field(default_factory=lambda: os.getenv("SMTP_HOST", ""))
+    SMTP_PORT: int = Field(default_factory=lambda: int(os.getenv("SMTP_PORT", "587")))
+    SMTP_USER: str = Field(default_factory=lambda: os.getenv("SMTP_USER", ""))
+    SMTP_PASSWORD: str = Field(default_factory=lambda: os.getenv("SMTP_PASSWORD", ""))
+    SMTP_USE_TLS: bool = Field(default_factory=lambda: os.getenv("SMTP_USE_TLS", "true").lower() == "true")
+    PASSWORD_RESET_FROM_EMAIL: str = Field(default_factory=lambda: os.getenv("PASSWORD_RESET_FROM_EMAIL", "no-reply@nexa.local"))
+    PASSWORD_RESET_TOKEN_MINUTES: int = Field(default_factory=lambda: int(os.getenv("PASSWORD_RESET_TOKEN_MINUTES", "30")))
+    FRONTEND_RESET_URL: str = Field(default_factory=lambda: os.getenv("FRONTEND_RESET_URL", ""))
+    # Multi-tenant isolation. Disabled preserves the existing single-tenant
+    # deployment; when enabled, every ORM query and insert is tenant-scoped.
+    TENANT_ISOLATION_ENABLED: bool = Field(default_factory=lambda: os.getenv("TENANT_ISOLATION_ENABLED", "false").lower() == "true")
+    DEFAULT_ORGANISATION_ID: int | None = Field(default_factory=lambda: (
+        int(os.getenv("DEFAULT_ORGANISATION_ID")) if os.getenv("DEFAULT_ORGANISATION_ID") else None
+    ))
+    BACKUP_VERIFICATION_CONFIGURED: bool = Field(default_factory=lambda: os.getenv("BACKUP_VERIFICATION_CONFIGURED", "false").lower() == "true")
+    BACKUP_LAST_VERIFIED_AT: str = Field(default_factory=lambda: os.getenv("BACKUP_LAST_VERIFIED_AT", ""))
     
     # Document storage & OCR
     DOCUMENTS_DIR: str = Field(default_factory=lambda: os.getenv("DOCUMENTS_DIR", os.path.abspath(os.path.join(os.path.dirname(__file__), "..", "..", "..", "data", "documents"))))
@@ -30,7 +59,9 @@ class Settings(BaseModel):
     TESSERACT_CMD: str = Field(default_factory=lambda: os.getenv("TESSERACT_CMD", "tesseract"))
     
     # Model configuration
-    MODEL_VERSION: str = "v1.0-fidelity-rf-iso"
+    # Single source of truth for the active engine version. Keep in sync with
+    # FraudDetectionEngine.MODEL_VERSION; override per deployment if needed.
+    MODEL_VERSION: str = Field(default_factory=lambda: os.getenv("MODEL_VERSION", "v1.2-ensemble-hybrid"))
     MODEL_DIR: str = Field(default_factory=lambda: os.getenv("MODEL_DIR", os.path.abspath(os.path.join(os.path.dirname(__file__), "..", "..", "..", "ml", "models"))))
 
     # Fraud risk classification thresholds (configurable)
@@ -78,12 +109,29 @@ class Settings(BaseModel):
     )
 
     # CORS
-    CORS_ORIGINS: list[str] = [
-        "http://localhost:5174",
-        "http://127.0.0.1:5174",
-        "http://localhost:8010",
-        "http://127.0.0.1:8010",
-        "*"
-    ]
+    CORS_ORIGINS: list[str] = Field(default_factory=lambda: (
+        [o.strip() for o in os.getenv("CORS_ORIGINS", "").split(",") if o.strip()]
+        if os.getenv("CORS_ORIGINS") else
+        [
+            "http://localhost:5174",
+            "http://127.0.0.1:5174",
+            "http://localhost:8010",
+            "http://127.0.0.1:8010",
+            "*",
+        ]
+    ))
 
 settings = Settings()
+
+# Production safety guards — fail closed rather than running with a known
+# signing key or a wildcard CORS policy. Development/demo defaults are
+# unchanged so existing local workflows keep working.
+if settings.ENVIRONMENT.lower() == "production":
+    if settings.JWT_SECRET_KEY == "fidelity-life-nexa-fraud-detection-secret-2026":
+        raise RuntimeError(
+            "JWT_SECRET_KEY must be set to a unique secret before starting NEXA in production."
+        )
+    if "*" in settings.CORS_ORIGINS:
+        settings.CORS_ORIGINS = [o for o in settings.CORS_ORIGINS if o != "*"]
+    if settings.ALLOW_PUBLIC_REGISTRATION and os.getenv("ALLOW_PUBLIC_REGISTRATION") is None:
+        settings.ALLOW_PUBLIC_REGISTRATION = False
