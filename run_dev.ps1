@@ -7,15 +7,27 @@ Write-Host "==================================================================" 
 $env:PYTHONPATH = "."
 
 # 1. Initialize DB and Seed Demo Data
-Write-Host "[1/3] Initializing Database & Populating Demonstration Data..." -ForegroundColor Green
+Write-Host "[1/4] Initializing Database & Populating Demonstration Data..." -ForegroundColor Green
 python data\seed_db.py
 
 # 2. Run Automated Verification Tests
-Write-Host "`n[2/3] Running Automated Quality Assurance Test Suite..." -ForegroundColor Green
+Write-Host "`n[2/4] Running Automated Quality Assurance Test Suite..." -ForegroundColor Green
 pytest tests\test_system.py -q
 
-# 3. Start Servers
-Write-Host "`n[3/3] Service Endpoints:" -ForegroundColor Green
+# 3. Build the frontend from source so a fresh checkout works without a
+#    committed, quickly stale dist directory.
+Write-Host "`n[3/4] Building Frontend Bundle..." -ForegroundColor Green
+Push-Location frontend
+try {
+  if (-not (Test-Path node_modules)) { npm install }
+  npm run build
+  if ($LASTEXITCODE -ne 0) { throw "Frontend build failed." }
+} finally {
+  Pop-Location
+}
+
+# 4. Start Servers
+Write-Host "`n[4/4] Service Endpoints:" -ForegroundColor Green
 Write-Host "  • Frontend Dashboard UI: http://localhost:5174" -ForegroundColor Yellow
 Write-Host "  • Backend Service UI:    http://localhost:8010" -ForegroundColor Yellow
 Write-Host "  • OpenAPI Swagger Specs: http://localhost:8010/docs" -ForegroundColor Yellow

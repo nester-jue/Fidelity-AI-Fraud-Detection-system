@@ -185,11 +185,14 @@ const readApiJson = async (res) => {
   return res.json().catch(() => ({}));
 };
 
-// Demo profiles are only exposed in development or when a demonstration
-// deployment explicitly opts in with VITE_DEMO_MODE=true. Production builds
-// hide the credentials and the role switcher by default.
+// Demo profiles are exposed for local development/localhost builds, or when a
+// controlled demonstration deployment explicitly opts in with
+// VITE_DEMO_MODE=true. Hosted production builds hide them by default; setting
+// VITE_DEMO_MODE=false hides them everywhere.
+const localDemoHost = typeof window !== 'undefined'
+  && ['localhost', '127.0.0.1', '::1'].includes(window.location.hostname);
 const DEMO_MODE = import.meta.env.VITE_DEMO_MODE === 'true'
-  || (import.meta.env.VITE_DEMO_MODE !== 'false' && import.meta.env.DEV === true);
+  || (import.meta.env.VITE_DEMO_MODE !== 'false' && (import.meta.env.DEV === true || localDemoHost));
 
 export default function App() {
   const [token, setToken] = useState(sessionStorage.getItem('fide_token'));

@@ -82,8 +82,8 @@ The database comes pre-seeded with accounts for all operational roles:
    - Initializes database tables
    - Seeds realistic demonstration claims, policies, and users
    - Executes the automated test suite (`pytest`)
-   - Starts the Frontend Dashboard on `http://localhost:5174`
-   - Starts the Backend API on `http://localhost:8010`
+   - Installs frontend dependencies if needed and builds the React bundle
+   - Starts the Backend API on `http://localhost:8010`, waits for `/health`, then starts the Frontend Dashboard on `http://localhost:5174`
 
 3. Open your browser:
    - **Interactive Frontend Dashboard**: [http://localhost:5174](http://localhost:5174)
@@ -112,13 +112,21 @@ The database comes pre-seeded with accounts for all operational roles:
    pytest tests/test_system.py -v
    ```
 
-4. **Start the Backend API Server (Port 8010)**:
+4. **Install and Build the Frontend** (required on a fresh checkout):
+   ```powershell
+   cd frontend
+   npm install
+   npm run build
+   cd ..
+   ```
+
+5. **Start the Backend API Server (Port 8010)**:
    ```powershell
    $env:PYTHONPATH="."
    python -m uvicorn backend.app.main:app --host 0.0.0.0 --port 8010 --reload
    ```
 
-5. **Start the Frontend Dashboard (Port 5174)**:
+6. **Start the Frontend Dashboard (Port 5174)**:
    ```powershell
    node frontend/server.js
    # or with npm/vite:
@@ -137,9 +145,12 @@ The API will be accessible at `http://localhost:8010` and Swagger at `http://loc
 
 For any non-local deployment, copy `.env.example` to `.env` and set at minimum
 `ENVIRONMENT=production`, a unique `JWT_SECRET_KEY`, an explicit `CORS_ORIGINS`
-allow-list (never `*`), and PostgreSQL connection settings. Set `DEMO_MODE=true`
-and `VITE_DEMO_MODE=true` only for a controlled demonstration deployment; demo
-credentials are hidden otherwise.
+allow-list (never `*`), and PostgreSQL connection settings. The one-click demo
+role selector is visible automatically when the UI is opened on `localhost`,
+`127.0.0.1` or `[::1]`, so the local walkthrough can switch access levels. For
+a hosted demonstration deployment set `DEMO_MODE=true` and
+`VITE_DEMO_MODE=true`; set `VITE_DEMO_MODE=false` to hide demo credentials
+everywhere, including local builds.
 
 ---
 
@@ -258,7 +269,7 @@ Frontend tests and production build are run from `frontend` with `npm test` and
 ```text
 Backend: 181 passed, 1 skipped (1 Starlette/httpx deprecation warning) — ephemeral SQLite test database
 Frontend tests: 9 passed (Vitest + jsdom)
-Frontend build: 1487 modules transformed; no chunk over 500 kB (largest JS chunk 395.38 kB)
+Frontend build: 1487 modules transformed; no chunk over 500 kB (largest JS chunk 398.53 kB)
 ```
 
 `tests/conftest.py` gives each test run a disposable SQLite database seeded
@@ -326,5 +337,5 @@ Status legend: `COMPLETED AND TESTED` | `IMPLEMENTED BUT NOT FULLY TESTED` | `PA
 - ZIM regulatory values in `backend/app/services/zim_config.py` are configurable platform defaults — insurers must verify against current legislation with legal counsel.
 - The assistant (`/chatbot/*`) is deterministic-from-real-records; the optional external LLM path (`CHATBOT_LLM_API_KEY`) stays off unless configured.
 - The legacy "network" page on the dashboard remains as-is; the new fraud network workspace uses live data.
-- Demo credentials and one-click role switching are visible only in development or when `DEMO_MODE=true` / `VITE_DEMO_MODE=true`; production builds hide them.
+- Demo credentials and one-click role switching are visible on local hosts by default, or in production only when `DEMO_MODE=true` / `VITE_DEMO_MODE=true`; set `VITE_DEMO_MODE=false` to hide them everywhere.
 - MFA is available per user via **My Profile → Multi-factor authentication**. With `MFA_REQUIRED=true`, un-enrolled accounts cannot reach business data until enrolment is complete; the enrolment-only token is short-lived and the UI upgrades it automatically. The Security Centre reports the effective policy.
