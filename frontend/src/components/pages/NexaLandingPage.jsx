@@ -79,24 +79,24 @@ export default function NexaLandingPage({ onLogin, onRequestDemo }) {
   return (
     <div className="min-h-screen bg-white font-sans text-slate-800">
       {/* Navigation */}
-      <header className="sticky top-0 z-40 bg-[#0A192F] border-b border-slate-700 shadow-md">
+      <header className="sticky top-0 z-40 bg-white border-b border-[#EEEEEE] shadow-sm">
         <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between gap-4">
-          <a href="#top" className="flex items-center gap-3 text-white no-underline" aria-label="NEXA home">
+          <a href="#top" className="flex items-center gap-3 text-[#222222] no-underline" aria-label="Fidelity Life NEXA home">
             <img src={LOGO} alt="NEXA shield logo" className="h-10 w-10" />
             <span>
-              <span className="block text-lg font-extrabold tracking-widest leading-none">NEXA</span>
-              <span className="block text-[10px] uppercase tracking-[0.18em] text-amber-300 mt-1">Fraud Intelligence</span>
+              <span className="block text-lg font-extrabold tracking-widest leading-none">FIDELITY LIFE</span>
+              <span className="block text-[10px] uppercase tracking-[0.18em] text-[#8B0000] mt-1">NEXA Fraud Intelligence</span>
             </span>
           </a>
-          <nav className="hidden lg:flex items-center gap-6 text-[13px] font-semibold text-slate-200" aria-label="Primary navigation">
-            <a className="hover:text-amber-300" href="#capabilities">Capabilities</a>
-            <a className="hover:text-amber-300" href="#intelligence">AI &amp; Forensics</a>
-            <a className="hover:text-amber-300" href="#security">Security</a>
-            <a className="hover:text-amber-300" href="#industries">Industries</a>
-            <a className="hover:text-amber-300" href="#editions">Editions</a>
-            <a className="hover:text-amber-300" href="#contact">Contact</a>
+          <nav className="hidden lg:flex items-center gap-6 text-[13px] font-semibold text-[#222222]" aria-label="Primary navigation">
+            <a className="border-b-2 border-[#C8102E] pb-0.5 text-[#8B0000]" href="#capabilities">Capabilities</a>
+            <a className="hover:text-[#C8102E]" href="#intelligence">AI &amp; Forensics</a>
+            <a className="hover:text-[#C8102E]" href="#security">Security</a>
+            <a className="hover:text-[#C8102E]" href="#industries">Industries</a>
+            <a className="hover:text-[#C8102E]" href="#editions">Editions</a>
+            <a className="hover:text-[#C8102E]" href="#contact">Contact</a>
           </nav>
-          <button onClick={onLogin} className="nexa-button inline-flex items-center gap-2 rounded-lg bg-amber-400 px-4 py-2.5 text-[#0A192F] font-extrabold hover:bg-amber-300 transition">
+          <button onClick={onLogin} className="nexa-button inline-flex items-center gap-2 rounded-md bg-[#C8102E] px-4 py-2.5 text-white font-extrabold hover:bg-[#8B0000] transition">
             <LockKeyhole size={16} /> Secure Login
           </button>
         </div>
@@ -104,7 +104,7 @@ export default function NexaLandingPage({ onLogin, onRequestDemo }) {
 
       <main id="top">
         {/* Hero */}
-        <section className="bg-gradient-to-b from-[#F7F9FC] to-white border-b border-slate-200">
+        <section className="bg-[#FCEBED] border-b border-[#EEEEEE]">
           <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 py-12 lg:py-20 grid gap-10 lg:grid-cols-2 lg:items-center">
             <div>
               <p className="text-[11px] font-black uppercase tracking-[0.22em] text-amber-700 mb-4">Enterprise Insurance Risk Technology</p>
@@ -115,7 +115,7 @@ export default function NexaLandingPage({ onLogin, onRequestDemo }) {
                 An AI-powered fraud detection, forensic document verification, claims investigation and enterprise risk intelligence platform. NEXA helps insurers surface suspicious claims earlier, support investigators with explainable evidence and give executives a reliable view of claims exposure.
               </p>
               <div className="mt-7 flex flex-wrap gap-3">
-                <button onClick={onRequestDemo} className="nexa-button inline-flex items-center gap-2 rounded-lg bg-[#0F2744] px-5 py-3 text-white font-bold hover:bg-[#1B3A57] transition">
+                <button onClick={onRequestDemo} className="nexa-button inline-flex items-center gap-2 rounded-lg bg-[#C8102E] px-5 py-3 text-white font-bold hover:bg-[#8B0000] transition">
                   Request a demonstration <ArrowRight size={17} />
                 </button>
                 <button onClick={onLogin} className="nexa-button inline-flex items-center gap-2 rounded-lg border border-slate-300 bg-white px-5 py-3 font-bold text-slate-800 hover:bg-slate-50 transition">
@@ -151,7 +151,7 @@ export default function NexaLandingPage({ onLogin, onRequestDemo }) {
         </section>
 
         {/* AI and forensics */}
-        <section id="intelligence" className="border-y border-slate-200 bg-[#F7F9FC]">
+        <section id="intelligence" className="border-y border-slate-200 bg-[#FCEBED]">
           <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 py-14 lg:py-20 grid gap-10 lg:grid-cols-2">
             <div>
               <SectionHeading eyebrow="Explainable AI" title="Intelligence investigators can examine and challenge" text="The platform evaluates claim amounts, frequency, policy inception, claim history, document consistency and beneficiary information. Each alert explains which indicators contributed, what evidence supports the assessment and which action is recommended. A risk score is a lead for a trained investigator — never a finding of fraud." />
@@ -166,7 +166,7 @@ export default function NexaLandingPage({ onLogin, onRequestDemo }) {
               <p className="mt-2 text-[14px] text-slate-600">Authorised users upload a document and receive an analysis report covering extraction, classification, extracted fields, inconsistencies, duplicate fingerprints and cross-document checks. Investigators review every finding.</p>
               <ol className="mt-5 space-y-3">
                 {['Validate and store the uploaded file', 'Extract text with OCR and identify document type', 'Compare extracted fields against the claim record', 'Record forensic observations and generate a report', 'Investigator reviews and records a verified finding'].map((s, i) => (
-                  <li key={s} className="flex gap-3 text-[14px] text-slate-700"><span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-[#0F2744] text-[12px] font-bold text-white">{i + 1}</span>{s}</li>
+                  <li key={s} className="flex gap-3 text-[14px] text-slate-700"><span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-[#C8102E] text-[12px] font-bold text-white">{i + 1}</span>{s}</li>
                 ))}
               </ol>
               <p className="mt-5 text-[12px] text-slate-500">Supported document types include death certificates, identification documents, medical reports, claim forms, policy documents, beneficiary forms and payment records.</p>
@@ -200,7 +200,7 @@ export default function NexaLandingPage({ onLogin, onRequestDemo }) {
         </section>
 
         {/* Industries */}
-        <section id="industries" className="border-y border-slate-200 bg-[#F7F9FC] py-14 lg:py-16">
+        <section id="industries" className="border-y border-slate-200 bg-[#FCEBED] py-14 lg:py-16">
           <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
             <SectionHeading eyebrow="Industry applications" title="Built around insurance and claims operations" />
             <div className="mt-7 flex flex-wrap gap-3">
@@ -230,21 +230,21 @@ export default function NexaLandingPage({ onLogin, onRequestDemo }) {
         </section>
 
         {/* Contact */}
-        <section id="contact" className="bg-[#0A192F] text-slate-100">
+        <section id="contact" className="bg-white border-t border-[#EEEEEE] text-[#222222]">
           <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 py-14 lg:py-20 grid gap-10 lg:grid-cols-2">
             <div>
-              <p className="text-[11px] font-black uppercase tracking-[0.22em] text-amber-300 mb-2">Contact and demonstration</p>
-              <h2 className="nexa-suite-heading text-white">See NEXA with your own claims workflow</h2>
-              <p className="mt-4 text-[15px] leading-relaxed text-slate-300">We demonstrate the platform using clearly identified synthetic insurance data: claim registration, document upload, OCR extraction, AI risk assessment, investigation assignment, evidence collection, outcomes and executive reporting. No production customer records are used.</p>
-              <div className="mt-6 space-y-2 text-[14px] text-slate-300">
-                <p className="flex items-center gap-2"><Mail size={16} className="text-amber-300" /> Enquiries are recorded in the NEXA enquiry register with a reference</p>
-                <p className="flex items-center gap-2"><Phone size={16} className="text-amber-300" /> Contact arrangements are agreed directly with the deployment team</p>
-                <p className="flex items-center gap-2"><MapPin size={16} className="text-amber-300" /> Deployment and support by agreement</p>
+              <p className="text-[11px] font-black uppercase tracking-[0.22em] text-[#C8102E] mb-2">Contact and demonstration</p>
+              <h2 className="nexa-suite-heading text-[#222222]">See NEXA with your own claims workflow</h2>
+              <p className="mt-4 text-[15px] leading-relaxed text-[#222222]">We demonstrate the platform using clearly identified synthetic insurance data: claim registration, document upload, OCR extraction, AI risk assessment, investigation assignment, evidence collection, outcomes and executive reporting. No production customer records are used.</p>
+              <div className="mt-6 space-y-2 text-[14px] text-[#222222]">
+                <p className="flex items-center gap-2"><Mail size={16} className="text-[#C8102E]" /> Enquiries are recorded in the NEXA enquiry register with a reference</p>
+                <p className="flex items-center gap-2"><Phone size={16} className="text-[#C8102E]" /> Contact arrangements are agreed directly with the deployment team</p>
+                <p className="flex items-center gap-2"><MapPin size={16} className="text-[#C8102E]" /> Deployment and support by agreement</p>
               </div>
             </div>
-            <div className="rounded-xl bg-white p-6 text-slate-800 shadow-lg">
-              <h3 className="nexa-suite-section text-slate-900">Request a product demonstration</h3>
-              <p className="mt-2 text-[13px] text-slate-600">Submitting stores your enquiry in the NEXA enquiry register and returns a reference. No email is claimed to be sent, and no licence or payment is created.</p>
+            <div className="rounded-lg bg-white p-6 text-[#222222] border border-[#EEEEEE] shadow-sm">
+              <h3 className="nexa-suite-section text-[#222222]">Request a product demonstration</h3>
+              <p className="mt-2 text-[13px] text-[#222222]">Submitting stores your enquiry in the NEXA enquiry register and returns a reference. No email is claimed to be sent, and no licence or payment is created.</p>
               <div className="mt-5 grid gap-3 sm:grid-cols-2">
                 <label className="text-[13px] font-bold text-slate-700">Organisation<input value={enquiry.organisation} onChange={e => setEnquiry({ ...enquiry, organisation: e.target.value })} className="mt-1 w-full rounded-lg border border-slate-300 p-3 text-[14px]" placeholder="Insurance company name" id="demo-org" /></label>
                 <label className="text-[13px] font-bold text-slate-700">Work email<input type="email" value={enquiry.email} onChange={e => setEnquiry({ ...enquiry, email: e.target.value })} className="mt-1 w-full rounded-lg border border-slate-300 p-3 text-[14px]" placeholder="name@organisation.com" id="demo-email" /></label>
@@ -253,22 +253,22 @@ export default function NexaLandingPage({ onLogin, onRequestDemo }) {
               <button
                 onClick={submitEnquiry}
                 disabled={enquiryBusy}
-                className="mt-5 w-full rounded-lg bg-[#0F2744] py-3 text-[15px] font-bold text-white hover:bg-[#1B3A57] disabled:opacity-60"
+                className="mt-5 w-full rounded-lg bg-[#C8102E] py-3 text-[15px] font-bold text-white hover:bg-[#8B0000] disabled:opacity-60"
               >
                 {enquiryBusy ? 'Recording enquiry…' : 'Submit enquiry'} <ArrowRight size={16} className="inline" />
               </button>
-              {enquiryStatus && <p className="mt-3 text-[13px] font-semibold text-emerald-800" role="status">{enquiryStatus}</p>}
-              <p className="mt-3 text-[12px] text-slate-500">Existing customers should use <button onClick={onLogin} className="font-bold text-blue-900 underline">Secure Login</button> instead.</p>
+              {enquiryStatus && <p className="mt-3 text-[13px] font-semibold text-[#8B0000]" role="status">{enquiryStatus}</p>}
+              <p className="mt-3 text-[12px] text-[#222222]">Existing customers should use <button onClick={onLogin} className="font-bold text-[#C8102E] underline">Secure Login</button> instead.</p>
             </div>
           </div>
         </section>
       </main>
 
-      <footer className="bg-[#071526] text-slate-400 py-8">
+      <footer className="bg-white border-t border-[#EEEEEE] text-[#222222] py-8">
         <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
           <div className="flex items-center gap-3">
             <img src={LOGO} alt="" aria-hidden="true" className="h-9 w-9" />
-            <p className="text-[13px]"><strong className="text-slate-100">NEXA</strong> — Enterprise Insurance Fraud Intelligence Platform</p>
+            <p className="text-[13px]"><strong className="text-[#222222]">FIDELITY LIFE | NEXA</strong> — Enterprise Fraud Intelligence Platform</p>
           </div>
           <p className="text-[12px]">Illustrative visuals. Product capabilities and availability are subject to agreed deployment scope. No regulatory certification is claimed.</p>
         </div>

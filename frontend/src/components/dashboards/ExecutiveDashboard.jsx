@@ -35,7 +35,7 @@ const fmtYmd = (v) => (v ? v.slice(0, 10) : '—');
 // Design system
 // ─────────────────────────────────────────────
 
-function KpiCard({ icon: Icon, title, value, trend, colorCls = 'border-t-blue-600', topColor = '#0F2744' }) {
+function KpiCard({ icon: Icon, title, value, trend, colorCls = 'border-t-blue-600', topColor = '#C8102E' }) {
   return (
     <div className={`bg-white border border-slate-200 rounded-2xl p-5 border-t-4 min-w-0 min-h-[140px] ${colorCls}`}>
       <div className="flex items-start justify-between">
@@ -135,15 +135,15 @@ function MonthlyTrendsChart({ trends }) {
   const linePoints = data.map((d, i) => `${padL + i * slot + slot / 2},${scale(d.exposure_amount, maxLine)}`).join(' ');
   return (
     <svg viewBox={`0 0 ${W} ${H}`} className="w-full h-[300px]" role="img" aria-label="Monthly fraud trends">
-      {data.map((d, i) => d.submitted > 0 && <rect key={`sub-${i}`} x={padL + i * slot + gap + barW + gap} y={scale(d.submitted, maxBars)} width={barW} height={bottom - scale(d.submitted, maxBars)} fill="#3B82F6" rx="2" />)}
-      {data.map((d, i) => d.suspected > 0 && <rect key={`sus-${i}`} x={padL + i * slot + gap} y={scale(d.suspected, maxBars)} width={barW} height={bottom - scale(d.suspected, maxBars)} fill="#F59E0B" rx="2" />)}
-      {data.map((d, i) => d.confirmed > 0 && <rect key={`con-${i}`} x={padL + i * slot + 2 * gap + 2 * barW} y={scale(d.confirmed, maxBars)} width={barW} height={bottom - scale(d.confirmed, maxBars)} fill="#EF4444" rx="2" />)}
-      <polyline points={linePoints} fill="none" stroke="#0F2744" strokeWidth="2.5" strokeDasharray="7 5" />
-      {data.map((d, i) => <text key={`t-${i}`} x={padL + i * slot + slot / 2} y={bottom + 13} fontSize="7" fill="#64748B" textAnchor="middle">{d.period}</text>)}
-      <line x1={padL} y1={bottom} x2={W - padR} y2={bottom} stroke="#E2E8F0" />
-      <line x1={padL} y1={padT} x2={padL} y2={bottom} stroke="#E2E8F0" />
-      <text x={14} y={padT - 2} fontSize="7" fontWeight="bold" fill="#64748B">Suspected (amber) &bull; Confirmed (red) vs Exposure in USD (dashed blue)</text>
-      <text x={W - padR} y={padT - 2} fontSize="7" textAnchor="end" fill="#64748B">Exposure: ${maxLine >= 1000000 ? `${(maxLine / 1000000).toFixed(1)}M` : num(maxLine)}</text>
+      {data.map((d, i) => d.submitted > 0 && <rect key={`sub-${i}`} x={padL + i * slot + gap + barW + gap} y={scale(d.submitted, maxBars)} width={barW} height={bottom - scale(d.submitted, maxBars)} fill="#C8102E" rx="2" />)}
+      {data.map((d, i) => d.suspected > 0 && <rect key={`sus-${i}`} x={padL + i * slot + gap} y={scale(d.suspected, maxBars)} width={barW} height={bottom - scale(d.suspected, maxBars)} fill="#FCEBED" stroke="#C8102E" strokeWidth="1" rx="2" />)}
+      {data.map((d, i) => d.confirmed > 0 && <rect key={`con-${i}`} x={padL + i * slot + 2 * gap + 2 * barW} y={scale(d.confirmed, maxBars)} width={barW} height={bottom - scale(d.confirmed, maxBars)} fill="#8B0000" rx="2" />)}
+      <polyline points={linePoints} fill="none" stroke="#222222" strokeWidth="2.5" strokeDasharray="7 5" />
+      {data.map((d, i) => <text key={`t-${i}`} x={padL + i * slot + slot / 2} y={bottom + 13} fontSize="7" fill="#222222" textAnchor="middle">{d.period}</text>)}
+      <line x1={padL} y1={bottom} x2={W - padR} y2={bottom} stroke="#EEEEEE" />
+      <line x1={padL} y1={padT} x2={padL} y2={bottom} stroke="#EEEEEE" />
+      <text x={14} y={padT - 2} fontSize="7" fontWeight="bold" fill="#222222">Suspected (light) &bull; Confirmed (dark) vs Exposure USD (dashed)</text>
+      <text x={W - padR} y={padT - 2} fontSize="7" textAnchor="end" fill="#222222">Exposure: ${maxLine >= 1000000 ? `${(maxLine / 1000000).toFixed(1)}M` : num(maxLine)}</text>
     </svg>
   );
 }
@@ -163,21 +163,21 @@ function YoYExposureChart({ rows }) {
     <svg viewBox={`0 0 ${W} ${H}`} className="w-full h-[300px]" role="img" aria-label="Year-over-year financial exposure">
       {data.map((r, i) => (
         <g key={r.year}>
-          <rect x={pos(i) - barW / 2} y={scale(r.exposure_amount)} width={barW} height={bottom - scale(r.exposure_amount)} fill="#2563EB" rx="3" />
-          <text x={pos(i)} y={bottom + 13} fontSize="8" fill="#64748B" textAnchor="middle">{r.year}</text>
-          <text x={pos(i)} y={scale(r.exposure_amount) - 9} fontSize="8" fontWeight="bold" fill="#0F2744" textAnchor="middle">${r.exposure_amount.toLocaleString('en-US')}</text>
+          <rect x={pos(i) - barW / 2} y={scale(r.exposure_amount)} width={barW} height={bottom - scale(r.exposure_amount)} fill="#8B0000" rx="3" />
+          <text x={pos(i)} y={bottom + 13} fontSize="8" fill="#222222" textAnchor="middle">{r.year}</text>
+          <text x={pos(i)} y={scale(r.exposure_amount) - 9} fontSize="8" fontWeight="bold" fill="#C8102E" textAnchor="middle">${r.exposure_amount.toLocaleString('en-US')}</text>
           {r.year_over_year_growth_pct != null && (
             <text x={pos(i)} y={scale(r.exposure_amount) + 18} fontSize="8" fontWeight="bold"
-              fill={r.year_over_year_growth_pct > 0 ? '#10B981' : r.year_over_year_growth_pct < 0 ? '#EF4444' : '#64748B'}
+              fill={r.year_over_year_growth_pct > 0 ? '#C8102E' : r.year_over_year_growth_pct < 0 ? '#8B0000' : '#222222'}
               textAnchor="middle">
               {r.year_over_year_growth_pct > 0 ? '+' : ''}{r.year_over_year_growth_pct}%
             </text>
           )}
         </g>
       ))}
-      <line x1={padL} y1={bottom} x2={W - padR} y2={bottom} stroke="#E2E8F0" />
-      <line x1={padL} y1={padT} x2={padL} y2={bottom} stroke="#E2E8F0" />
-      <text x={14} y={padT - 2} fontSize="7" fontWeight="bold" fill="#64748B">Annual Financial Exposure (+/- year-over-year growth)</text>
+      <line x1={padL} y1={bottom} x2={W - padR} y2={bottom} stroke="#EEEEEE" />
+      <line x1={padL} y1={padT} x2={padL} y2={bottom} stroke="#EEEEEE" />
+      <text x={14} y={padT - 2} fontSize="7" fontWeight="bold" fill="#222222">Annual Financial Exposure (+/- year-over-year growth)</text>
     </svg>
   );
 }
@@ -193,16 +193,16 @@ function ProductAnalysisChart({ rows }) {
   const widthOf = (v) => ((v || 0) / max) * (W - padL - padR);
   return (
     <svg viewBox={`0 0 ${W + padL} ${H}`} className="w-full h-auto" role="img" aria-label="Insurance product fraud analysis">
-      <text x={14} y={22} fontSize="8" fontWeight="bold" fill="#64748B">Product Fraud Analysis — suspected claims by product</text>
+      <text x={14} y={22} fontSize="8" fontWeight="bold" fill="#222222">Product Fraud Analysis — suspected claims by product</text>
       {data.map((r, i) => (
         <g key={r.product_name} transform={`translate(${padL}, 0)`}>
-          <text x={0} y={barY(i) + 15} fontSize="8" fill="#475569">{(r.product_name || '—').slice(0, 26)}</text>
-          <rect x={88} y={barY(i)} width={widthOf(r.suspected_risk)} height={barH} fill="#F59E0B" rx="3" />
-          <text x={88 + widthOf(r.suspected_risk) + 6} y={barY(i) + 14} fontSize="8" fill="#0F2744">{num(r.suspected_risk)}</text>
-          <text x={400} y={barY(i) + 15} fontSize="7" fill="#64748B">${r.total_exposure?.toLocaleString('en-US')} · {fmtPct(r.suspected_share_pct, '0%')} suspected</text>
+          <text x={0} y={barY(i) + 15} fontSize="8" fill="#222222">{(r.product_name || '—').slice(0, 26)}</text>
+          <rect x={88} y={barY(i)} width={widthOf(r.suspected_risk)} height={barH} fill="#C8102E" rx="3" />
+          <text x={88 + widthOf(r.suspected_risk) + 6} y={barY(i) + 14} fontSize="8" fill="#C8102E">{num(r.suspected_risk)}</text>
+          <text x={400} y={barY(i) + 15} fontSize="7" fill="#222222">${r.total_exposure?.toLocaleString('en-US')} · {fmtPct(r.suspected_share_pct, '0%')} suspected</text>
         </g>
       ))}
-      {data.length === 0 && <text x={14} y={60} fontSize="9" fill="#94A3B8">No product data available.</text>}
+      {data.length === 0 && <text x={14} y={60} fontSize="9" fill="#222222">No product data available.</text>}
     </svg>
   );
 }
@@ -227,10 +227,15 @@ function riskDistPct(items, total) {
 
 function RiskDistributionChart({ riskDist }) {
   const data = riskDist || [];
-  const map = { Critical: { color: '#EF4444', label: 'CRITICAL', icon: AlertTriangle }, High: { color: '#F97316', label: 'HIGH', icon: AlertTriangle }, Medium: { color: '#F59E0B', label: 'MEDIUM', icon: ShieldCheck }, Low: { color: '#10B981', label: 'LOW', icon: ShieldCheck } };
+  const map = {
+    Critical: { color: '#8B0000', textColor: '#8B0000', label: 'CRITICAL', icon: AlertTriangle },
+    High: { color: '#C8102E', textColor: '#C8102E', label: 'HIGH', icon: AlertTriangle },
+    Medium: { color: '#FCEBED', textColor: '#8B0000', label: 'MEDIUM', icon: ShieldCheck },
+    Low: { color: '#EEEEEE', textColor: '#222222', label: 'LOW', icon: ShieldCheck },
+  };
   const rawItems = Object.entries(map).map(([k, v]) => {
     const row = data.find(d => (d.name || '').startsWith(k));
-    return { ...v, key: k, label: row?.name?.split('(')[0]?.trim() || v.label, count: row?.count || 0, color: row?.color || v.color };
+    return { ...v, key: k, label: row?.name?.split('(')[0]?.trim() || v.label, count: row?.count || 0, color: v.color };
   });
   const total = rawItems.reduce((a, it) => a + (it.count || 0), 0);
   const items = riskDistPct(rawItems, total);
@@ -269,7 +274,7 @@ function RiskDistributionChart({ riskDist }) {
             className="bg-white rounded-xl border border-slate-200 p-3 shadow-sm min-w-0"
             title={`${it.label} — ${num(it.count)} claims (${it.pct}% of total)`}
           >
-            <p className="text-[10px] font-bold uppercase tracking-wide break-words" style={{ color: it.color }}>{it.label}</p>
+            <p className="text-[10px] font-bold uppercase tracking-wide break-words" style={{ color: it.textColor || it.color }}>{it.label}</p>
             <p className="text-lg font-extrabold text-slate-900 mt-1 leading-tight break-words">{num(it.count)} <span className="text-sm font-normal text-slate-500">claims</span></p>
             <p className="text-sm font-semibold text-slate-600 mt-0.5 break-words">{it.pct}% of total</p>
           </div>
@@ -312,7 +317,7 @@ function ClaimDetailModal({ claimId, onClose, onEscalate, onUpdate }) {
   useEffect(() => { load(); }, [load]);
 
   if (!detail) return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50">
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/20">
       <div className="bg-white rounded-3xl p-6"><Loader2 className="w-8 h-8 animate-spin text-blue-500" /></div>
     </div>
   );
@@ -332,7 +337,7 @@ function ClaimDetailModal({ claimId, onClose, onEscalate, onUpdate }) {
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm">
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/20 backdrop-blur-sm">
       <div className="bg-white rounded-3xl w-full max-w-3xl max-h-[85vh] overflow-y-auto shadow-2xl border border-slate-200">
         <div className="sticky top-0 bg-white border-b border-slate-100 px-6 py-4 flex justify-between items-center">
           <h3 className="text-lg font-extrabold text-slate-900">Claim {detail.claim_id}</h3>
@@ -396,7 +401,7 @@ function ClaimDetailModal({ claimId, onClose, onEscalate, onUpdate }) {
                 className="flex-1 px-3 py-2 border border-slate-200 rounded-lg text-xs"
                 onKeyDown={e => e.key === 'Enter' && doUpdate()}
               />
-              <button onClick={doUpdate} disabled={updating} className="px-3 py-2 bg-[#0F2744] text-white rounded-lg text-xs font-bold">Save Update</button>
+              <button onClick={doUpdate} disabled={updating} className="px-3 py-2 bg-[#C8102E] text-white rounded-lg text-xs font-bold">Save Update</button>
             </div>
           </div>
         </div>
@@ -1127,7 +1132,7 @@ export default function ExecutiveDashboard({ activeTab }) {
             { id: 'management-reports', label: 'Executive Reports', icon: FileText },
           ].map(t => (
             <button key={t.id} onClick={() => setTab(t.id)}
-              className={`shrink-0 px-4 py-2 text-xs font-bold rounded-xl transition-colors flex items-center gap-1.5 ${tab === t.id ? 'bg-[#0F2744] text-white' : 'bg-white text-slate-600 hover:bg-slate-50 border border-slate-200'}`}>
+              className={`shrink-0 px-4 py-2 text-xs font-bold rounded-xl transition-colors flex items-center gap-1.5 ${tab === t.id ? 'bg-[#C8102E] text-white' : 'bg-white text-[#8B0000] hover:bg-[#FCEBED] border border-[#C8102E]'}`}>
               <t.icon size={13} className={tab === t.id ? '' : 'opacity-50'} /> {t.label}
             </button>
           ))}

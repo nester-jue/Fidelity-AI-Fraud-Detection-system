@@ -60,17 +60,21 @@ function statusBadge(status) {
 }
 
 function riskBadge(risk) {
+  // Fidelity risk presentation (text label always rendered; colour never alone):
+  //  high/critical = dark red + white; medium = light red + dark red;
+  //  low = white + dark text + red indicator; pending = neutral white.
   const map = {
-    critical: 'bg-red-100 text-red-700 border-red-300',
-    high: 'bg-orange-100 text-orange-700 border-orange-300',
-    medium: 'bg-amber-100 text-amber-700 border-amber-300',
-    low: 'bg-green-100 text-green-700 border-green-300',
-    pending: 'bg-slate-100 text-slate-500 border-slate-200',
+    critical: 'bg-[#8B0000] text-white border-[#8B0000]',
+    high: 'bg-[#8B0000] text-white border-[#8B0000]',
+    medium: 'bg-[#FCEBED] text-[#8B0000] border-[#C8102E]',
+    low: 'bg-white text-[#222222] border-[#EEEEEE]',
+    pending: 'bg-white text-[#222222] border-[#EEEEEE]',
   };
   const key = (risk || 'pending').toLowerCase();
-  const cls = map[key] || 'bg-slate-100 text-slate-500 border-slate-200';
+  const cls = map[key] || 'bg-white text-[#222222] border-[#EEEEEE]';
   return (
     <span className={`inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-semibold uppercase tracking-wide border ${cls}`}>
+      {key === 'low' && <span className="inline-block w-1.5 h-1.5 rounded-full bg-[#C8102E] mr-1" aria-hidden="true" />}
       {risk || 'Pending'}
     </span>
   );
@@ -185,7 +189,7 @@ function Td({ children, className = '' }) {
 
 function Modal({ title, onClose, children, wide = false }) {
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm p-4">
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/20 backdrop-blur-sm p-4">
       <div className={`bg-white rounded-2xl shadow-2xl border border-slate-200 flex flex-col max-h-[90vh] ${wide ? 'w-full max-w-4xl' : 'w-full max-w-2xl'}`}>
         <div className="flex items-center justify-between px-6 py-4 border-b border-slate-200 flex-shrink-0">
           <h2 className="text-sm font-extrabold uppercase tracking-wider text-slate-800">{title}</h2>
@@ -1174,7 +1178,7 @@ function AiAssessmentTab() {
       </div>
 
       {/* Explanation Banner */}
-      <div className="flex items-start gap-3 p-4 bg-gradient-to-r from-blue-50 to-indigo-50 border border-blue-100 rounded-2xl">
+      <div className="flex items-start gap-3 p-4 border border-blue-100 rounded-2xl">
         <Zap className="w-5 h-5 text-blue-500 flex-shrink-0 mt-0.5" />
         <div>
           <p className="text-xs font-bold text-blue-800">How AI Assessment Works</p>
@@ -1284,7 +1288,7 @@ function ProfileTab({ user }) {
 
       <SectionCard>
         {/* Avatar header */}
-        <div className="p-6 flex items-center gap-4 border-b border-slate-200 bg-gradient-to-r from-blue-50 to-indigo-50">
+        <div className="p-6 flex items-center gap-4 border-b border-slate-200">
           <div className="w-16 h-16 rounded-2xl bg-blue-600 flex items-center justify-center text-white text-xl font-extrabold shadow-md flex-shrink-0">
             {initials}
           </div>

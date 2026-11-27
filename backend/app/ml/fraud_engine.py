@@ -11,6 +11,25 @@ from .supervised import score_claim as supervised_score
 logger = logging.getLogger("fraud_engine")
 
 
+def _safe_float(value: Any, default: float = 0.0) -> float:
+    """Finite float or default; never raises on missing/invalid input."""
+    try:
+        result = float(value)
+    except (TypeError, ValueError):
+        return default
+    if not math.isfinite(result):
+        return default
+    return result
+
+
+def _safe_str(value: Any, default: str = "") -> str:
+    """Non-empty stripped string or default; never raises."""
+    if value is None:
+        return default
+    text = str(value).strip()
+    return text if text else default
+
+
 class StatisticalIsolationScorer:
     """Statistical outlier scorer approximating Isolation Forest principles.
 
@@ -158,12 +177,18 @@ class FraudDetectionEngine:
         explanations: List[str] = []
         recommended_actions: List[str] = []
 
-        claim_amount = float(claim_data.get("amount", 0.0))
-        claim_type = str(claim_data.get("claim_type", "Death")).strip().capitalize()
+        # Hardened missing-input handling: missing/invalid values never crash
+        # scoring; claim_amount_usd is accepted as an alias for amount.
+        claim_amount = _safe_float(
+            claim_data.get("amount", claim_data.get("claim_amount_usd")), 0.0
+        )
+        claim_type = _safe_str(claim_data.get("claim_type"), "Death").capitalize() or "Death"
         incident_dt = self._parse_date(claim_data.get("incident_date"))
         submission_dt = self._parse_date(claim_data.get("submission_date")) or datetime.now(timezone.utc)
         effective_dt = self._parse_date(policy_data.get("effective_date"))
-        coverage_amount = float(policy_data.get("coverage_amount", 100000.0))
+        coverage_amount = _safe_float(policy_data.get("coverage_amount"), 100000.0)
+        if coverage_amount <= 0:
+            coverage_amount = 100000.0
 
         # ---------------------------------------------------------
         # 1. DUPLICATE CLAIM DETECTION (Exact & Fuzzy)
@@ -236,7 +261,7 @@ class FraudDetectionEngine:
 
         # Anomaly against historic baseline
         if historical_claims:
-            amounts = [float(c.get("amount", 0)) for c in historical_claims if float(c.get("amount", 0)) > 0]
+            amounts = [_safe_float(c.get("amount"), 0.0) for c in historical_claims if _safe_float(c.get("amount"), 0.0) > 0]
             if amounts:
                 avg_amt = sum(amounts) / len(amounts)
                 if claim_amount > avg_amt * 2.5 and claim_amount > 20000:
@@ -580,7 +605,7 @@ class FraudDetectionEngine:
             if past.get("claim_id") == current_claim_id:
                 continue
 
-            past_amount = float(past.get("amount", 0.0))
+            past_amount = _safe_float(past.get("amount"), 0.0)
             past_policy = past.get("policy_number")
             past_incident = self._parse_date(past.get("incident_date"))
 
@@ -600,7 +625,7 @@ class FraudDetectionEngine:
         for past in historical_claims:
             if past.get("claim_id") == current_claim_id:
                 continue
-            past_amount = float(past.get("amount", 0.0))
+            past_amount = _safe_float(past.get("amount"), 0.0)
             past_policy = past.get("policy_number")
             past_incident = self._parse_date(past.get("incident_date"))
             past_beneficiary = str(past.get("beneficiary_name") or "").strip().lower()

@@ -34,7 +34,7 @@ export default function ModelPerformanceDashboard({ user }) {
   return (
     <div className="space-y-6">
       <div className="bg-white rounded-2xl border border-slate-200 p-6 shadow-sm">
-        <h1 className="text-2xl font-extrabold text-[#0F2744] flex items-center gap-3"><BarChart3 size={22} className="text-amber-500" /> AI Model Performance Dashboard</h1>
+        <h1 className="text-2xl font-extrabold text-[#C8102E] flex items-center gap-3"><BarChart3 size={22} className="text-amber-500" /> AI Model Performance Dashboard</h1>
         <p className="text-xs text-slate-500 font-medium mt-1">Fraud detection metrics from validated records — metrics use confirmed investigations as labelled signal.</p>
       </div>
 
@@ -43,7 +43,7 @@ export default function ModelPerformanceDashboard({ user }) {
       {data && (
         <>
           <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
-            <div className="bg-white rounded-2xl border border-slate-200 p-5 border-t-4 border-t-[#0F2744]">
+            <div className="bg-white rounded-2xl border border-slate-200 p-5 border-t-4 border-t-[#C8102E]">
               <p className="text-[11px] font-bold uppercase tracking-wider text-slate-500">Claims assessed</p>
               <p className="text-3xl font-black mt-2">{data.claims_assessed}</p>
             </div>
@@ -123,7 +123,7 @@ export default function ModelPerformanceDashboard({ user }) {
                     setSubmitting(false);
                   }
                 }}
-                className="px-4 py-2 text-sm font-bold bg-[#0F2744] text-white rounded-md disabled:opacity-40"
+                className="px-4 py-2 text-sm font-bold bg-[#C8102E] text-white rounded-md disabled:opacity-40"
               >Request Retrain</button>
             </div>
             <table className="w-full text-left text-sm">

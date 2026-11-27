@@ -378,7 +378,7 @@ export default function AdminDashboard({ activeTab }) {
         </div>
         <div className="flex gap-2">
           {NAV.map(t => (
-            <button key={t.id} onClick={() => setTab(t.id)} className={`px-4 py-2 text-xs font-bold rounded-xl transition-colors ${tab === t.id ? 'bg-[#0F2744] text-white' : 'bg-white text-slate-600 hover:bg-slate-50 border border-slate-200'}`}>{t.label}</button>
+            <button key={t.id} onClick={() => setTab(t.id)} className={`px-4 py-2 text-xs font-bold rounded-xl transition-colors ${tab === t.id ? 'bg-[#C8102E] text-white' : 'bg-white text-[#8B0000] hover:bg-[#FCEBED] border border-[#C8102E]'}`}>{t.label}</button>
           ))}
         </div>
       </div>

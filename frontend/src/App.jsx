@@ -270,7 +270,7 @@ export default function App() {
     try { window.localStorage.setItem('nexa_sidebar_expanded', String(n)); } catch { /* ignore */ }
     return n;
   });
-  const toggleMobile = () => setMobileOpen(p => !p);
+  const toggleMobile = (next) => setMobileOpen(typeof next === 'boolean' ? next : p => !p);
 
   // Desktop viewport gate: the fixed left rail only renders on md+
   // (Tailwind `md` = min-width: 768px). Below that the sidebar is hidden and
@@ -865,14 +865,19 @@ export default function App() {
 
   const getRiskBadge = (category, score) => {
     const cat = (category || '').toLowerCase();
-    let color = 'bg-slate-100 text-slate-800 border-slate-200';
-    if (cat === 'critical') color = 'bg-red-50 text-red-800 border-red-300 font-black';
-    else if (cat === 'high') color = 'bg-orange-50 text-orange-800 border-orange-300 font-extrabold';
-    else if (cat === 'medium') color = 'bg-amber-50 text-amber-800 border-amber-300 font-bold';
-    else if (cat === 'low') color = 'bg-emerald-50 text-emerald-800 border-emerald-300 font-bold';
+    // Fidelity risk language: high = dark red/white, medium = light red/dark
+    // red, low = white/dark with a red indicator. The textual label is always
+    // rendered, so colour is never the only carrier of meaning.
+    let color = 'bg-white text-[#222222] border-[#EEEEEE]';
+    if (cat === 'critical' || cat === 'high') color = 'bg-[#8B0000] text-white border-[#8B0000] font-black';
+    else if (cat === 'medium') color = 'bg-[#FCEBED] text-[#8B0000] border-[#FCEBED] font-bold';
+    else if (cat === 'low') color = 'bg-white text-[#222222] border-[#EEEEEE] font-semibold';
 
     return (
-      <span className={`inline-flex items-center px-2.5 py-1 rounded-full text-xs border ${color}`}>
+      <span className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs border ${color}`}>
+        {(cat === 'critical' || cat === 'high' || cat === 'medium' || cat === 'low') && (
+          <span className="w-1.5 h-1.5 rounded-full bg-[#C8102E]" aria-hidden="true" />
+        )}
         {score !== undefined && score !== null ? `${score} • ` : ''}{category || 'Unassessed'}
       </span>
     );
@@ -1264,7 +1269,7 @@ export default function App() {
 
         {/* Modal: Forgot Password */}
         {showForgotModal && (
-          <div className="fixed inset-0 z-50 bg-black/60 backdrop-blur-sm flex items-center justify-center p-4">
+          <div className="fixed inset-0 z-50 bg-black/20 backdrop-blur-sm flex items-center justify-center p-4">
             <div className="bg-white rounded-3xl max-w-md w-full p-6 sm:p-8 shadow-2xl border border-slate-200 space-y-4">
               <div className="flex justify-between items-center border-b border-slate-100 pb-3">
                 <div>
@@ -1286,7 +1291,7 @@ export default function App() {
                   <button
                     type="button"
                     onClick={() => setShowForgotModal(false)}
-                    className={`w-full mt-2 py-2 text-white rounded-lg font-bold text-xs ${forgotOk ? 'bg-emerald-600' : 'bg-slate-700'}`}
+                    className={`w-full mt-2 py-2 rounded-md font-bold text-xs ${forgotOk ? 'bg-[#C8102E] text-white' : 'bg-white text-[#C8102E] border border-[#C8102E]'}`}
                   >
                     Return to Sign In
                   </button>
@@ -1316,7 +1321,7 @@ export default function App() {
                     <button
                       type="submit"
                       disabled={forgotLoading}
-                      className="px-4 py-2 bg-[#0F2744] text-white rounded-xl font-bold"
+                      className="px-4 py-2 bg-[#C8102E] text-white rounded-xl font-bold"
                     >
                       {forgotLoading ? 'Dispatching...' : 'Send Reset Link'}
                     </button>
@@ -1334,38 +1339,45 @@ export default function App() {
   // ==========================================
   // VIEW: MAIN ENTERPRISE DASHBOARD
   // ==========================================
+  const currentSidebar = getSidebar(user?.role || 'claims_officer');
+  const activeNavLabel = currentSidebar.find((t) => t.id === activeTab)?.label || 'Workspace';
+
   return (
-    <div className="min-h-screen bg-slate-100 flex flex-col font-sans">
-      {/* Top Header */}
-      <header className="bg-[#0A192F] text-white border-b border-slate-700/80 sticky top-0 z-50 shadow-md">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-20 flex items-center justify-between">
-          <div className="flex items-center space-x-3.5">
-            <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-amber-500 to-amber-600 flex items-center justify-center font-black text-slate-950 text-2xl shadow-md">
-              <ShieldCheck size={28} />
+    <div className="min-h-screen bg-white flex flex-col font-sans">
+      {/* Top Header — white corporate navigation with red accents */}
+      <header className="bg-white text-[#222222] border-b border-[#EEEEEE] sticky top-0 z-50 shadow-sm">
+        <div className="mx-auto max-w-7xl pl-16 pr-4 sm:pl-6 sm:pr-6 lg:px-8 h-20 flex items-center justify-between gap-4">
+          <div className="flex items-center gap-3.5 min-w-0">
+            <div className="w-11 h-11 rounded-md bg-[#C8102E] flex items-center justify-center text-white shadow-sm shrink-0">
+              <ShieldCheck size={26} />
             </div>
-            <div>
-              <div className="flex items-center space-x-2">
-                <span className="font-extrabold tracking-wider text-lg text-white">FIDELITY LIFE</span>
-                <span className="text-[10px] px-2 py-0.5 rounded-full bg-amber-500 text-slate-950 font-black tracking-widest uppercase">ASSURANCE</span>
+            <div className="min-w-0">
+              <div className="flex items-center gap-2">
+                <span className="font-extrabold tracking-wide text-lg text-[#222222] truncate">FIDELITY LIFE</span>
+                <span className="hidden sm:inline text-[10px] px-2 py-0.5 rounded-sm bg-[#FCEBED] border border-[#EEEEEE] text-[#8B0000] font-black tracking-widest uppercase">ASSURANCE</span>
               </div>
-              <p className="text-xs text-slate-300 font-semibold tracking-wide">NEXA AI Fraud Detection & Enterprise Claims Suite</p>
+              <p className="text-xs text-[#222222] font-semibold tracking-wide truncate">NEXA AI Fraud Detection & Enterprise Claims Suite</p>
+            </div>
+            <div className="hidden lg:flex items-center gap-2 pl-4 ml-2 border-l border-[#EEEEEE] shrink-0">
+              <span className="w-1 h-5 rounded-full bg-[#C8102E]" aria-hidden="true" />
+              <span className="text-xs font-bold text-[#222222] max-w-[180px] truncate" title={activeNavLabel}>{activeNavLabel}</span>
             </div>
           </div>
 
-          <div className="flex items-center space-x-4">
-            <div className="hidden md:flex items-center space-x-2 text-xs bg-slate-800/80 px-3 py-1.5 rounded-full border border-slate-700 text-slate-300">
-              <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse"></span>
-              <span>AI Engine: <strong className="text-amber-300">{governanceData?.active_model?.version || '—'}</strong></span>
+          <div className="flex items-center gap-3 sm:gap-4 shrink-0">
+            <div className="hidden xl:flex items-center gap-2 text-xs px-3 py-1.5 rounded-full bg-[#FCEBED] border border-[#EEEEEE] text-[#8B0000]">
+              <span className="w-2 h-2 rounded-full bg-[#C8102E]" aria-hidden="true" />
+              <span>AI Engine: <strong>{governanceData?.active_model?.version || '—'}</strong></span>
             </div>
 
             {!DEMO_MODE && (
-              <div className="hidden sm:flex items-center space-x-2 bg-slate-800/90 border border-slate-700 rounded-xl px-3 py-1.5 text-xs">
-                <span className="text-slate-400">Role:</span>
-                <span className="text-white font-bold">{user?.role}</span>
+              <div className="hidden sm:flex items-center gap-2 bg-[#FCEBED] border border-[#EEEEEE] rounded-md px-3 py-1.5 text-xs text-[#8B0000]">
+                <span className="text-[#222222]">Role:</span>
+                <span className="font-bold">{user?.role}</span>
               </div>
             )}
-            {DEMO_MODE && <div className="flex items-center space-x-2 bg-slate-800/90 border border-slate-700 rounded-xl px-3 py-1.5 text-xs">
-              <span className="text-slate-400">Demo role:</span>
+            {DEMO_MODE && <div className="hidden sm:flex items-center gap-2 bg-[#FCEBED] border border-[#EEEEEE] rounded-md px-3 py-1.5 text-xs text-[#8B0000]">
+              <span className="text-[#222222]">Demo role:</span>
               <select
                 value={user?.username || 'claims.officer'}
                 onChange={(e) => {
@@ -1379,49 +1391,66 @@ export default function App() {
                   };
                   switchRole(e.target.value, passMap[e.target.value] || 'AdminPass123!');
                 }}
-                className="bg-transparent text-white font-bold focus:outline-none cursor-pointer"
+                className="bg-white text-[#8B0000] font-bold focus:outline-none cursor-pointer"
               >
-                <option value="claims.officer" className="bg-slate-900">Claims Officer</option>
-                <option value="claims.manager" className="bg-slate-900">Claims Manager</option>
-                <option value="investigator" className="bg-slate-900">Fraud Investigator</option>
-                <option value="compliance" className="bg-slate-900">Compliance Officer</option>
-                <option value="executive" className="bg-slate-900">Executive / CRO</option>
-                <option value="admin" className="bg-slate-900">System Admin</option>
+                <option value="claims.officer" className="bg-white text-[#222222]">Claims Officer</option>
+                <option value="claims.manager" className="bg-white text-[#222222]">Claims Manager</option>
+                <option value="investigator" className="bg-white text-[#222222]">Fraud Investigator</option>
+                <option value="compliance" className="bg-white text-[#222222]">Compliance Officer</option>
+                <option value="executive" className="bg-white text-[#222222]">Executive / CRO</option>
+                <option value="admin" className="bg-white text-[#222222]">System Admin</option>
               </select>
             </div>}
 
-            <div className="flex items-center space-x-2 pl-3 border-l border-slate-700">
-              <div className="w-9 h-9 rounded-xl bg-slate-800 border-2 border-amber-500 flex items-center justify-center font-bold text-xs text-amber-400">
+            {currentSidebar.some(t => t.id === 'notifications') && (
+              <button
+                type="button"
+                onClick={() => setActiveTab('notifications')}
+                className="relative p-2 rounded-md text-[#C8102E] border border-[#EEEEEE] hover:bg-[#FCEBED] transition"
+                title={`Notifications${notificationCount ? ` (${notificationCount} unread)` : ''}`}
+                aria-label={`Notifications${notificationCount ? `, ${notificationCount} unread` : ''}`}
+              >
+                <Bell size={18} />
+                {notificationCount > 0 && (
+                  <span className="absolute -top-1.5 -right-1.5 min-w-[16px] h-4 px-1 rounded-full bg-[#C8102E] text-white text-[9px] font-bold flex items-center justify-center">
+                    {notificationCount > 9 ? '9+' : notificationCount}
+                  </span>
+                )}
+              </button>
+            )}
+
+            <div className="flex items-center gap-2 pl-3 border-l border-[#EEEEEE]">
+              <div className="w-9 h-9 rounded-md bg-[#FCEBED] border border-[#EEEEEE] flex items-center justify-center font-bold text-xs text-[#8B0000] shrink-0">
                 {(user.full_name || user.username).slice(0, 2).toUpperCase()}
               </div>
               <div className="hidden lg:block text-left">
-                <p className="text-xs font-bold text-white leading-tight">{user.full_name || user.username}</p>
-                <p className="text-[10px] text-amber-400 font-semibold">{user.role}</p>
+                <p className="text-xs font-bold text-[#222222] leading-tight max-w-[140px] truncate">{user.full_name || user.username}</p>
+                <p className="text-[10px] text-[#8B0000] font-semibold">{(user.role || '').replace(/_/g, ' ')}</p>
               </div>
             </div>
 
             <button
               onClick={handleLogout}
-              className="p-2 text-slate-300 hover:text-white hover:bg-slate-800 rounded-xl transition"
+              className="p-2 text-[#222222] hover:text-[#8B0000] hover:bg-[#FCEBED] rounded-md transition"
               title="Sign Out"
             >
               <LogOut size={18} />
             </button>
           </div>
         </div>
-
-        {/* Fixed collapsible LEFT sidebar — role-based, backend-enforced */}
-        <Sidebar
-          user={user}
-          sidebar={getSidebar(user?.role || 'claims_officer')}
-          activeTab={activeTab}
-          onTab={setActiveTab}
-          expanded={sidebarExpanded}
-          onToggle={toggleSidebar}
-          mobileOpen={mobileOpen}
-          onMobileClose={toggleMobile}
-        />
       </header>
+
+      {/* Fixed collapsible LEFT sidebar — role-based, backend-enforced */}
+      <Sidebar
+        user={user}
+        sidebar={currentSidebar}
+        activeTab={activeTab}
+        onTab={setActiveTab}
+        expanded={sidebarExpanded}
+        onToggle={toggleSidebar}
+        mobileOpen={mobileOpen}
+        onMobileClose={toggleMobile}
+      />
 
       {/* Main Container — shifts right with the collapsible sidebar. The
           max-width is capped at calc(100% - sidebarWidth) so the content never
@@ -1437,7 +1466,7 @@ export default function App() {
       >
 
         {workspaceNotice && (
-          <div className="flex items-start justify-between gap-3 bg-amber-50 border border-amber-200 text-amber-900 rounded-xl px-4 py-3">
+          <div className="flex items-start justify-between gap-3 bg-[#FCEBED] border border-[#EEEEEE] text-[#8B0000] rounded-md px-4 py-3">
             <div className="flex items-start gap-2 text-sm">
               <ShieldCheck size={18} className="mt-0.5 shrink-0" />
               <span>{workspaceNotice}</span>
@@ -1452,7 +1481,7 @@ export default function App() {
         {activeTab === 'overview' && (
           <div className="space-y-8">
             {/* Commanding Hero Banner */}
-            <div className="relative overflow-hidden bg-gradient-to-r from-white via-slate-50 to-amber-50/50 rounded-3xl p-6 sm:p-8 border border-slate-200 shadow-md">
+            <div className="relative overflow-hidden rounded-3xl p-6 sm:p-8 border border-slate-200 shadow-md">
               <div className="relative flex flex-col lg:flex-row lg:items-center justify-between gap-6">
                 <div>
                   <div className="inline-flex items-center space-x-2 px-3 py-1 rounded-full bg-blue-900/10 border border-blue-900/20 text-blue-900 text-xs font-black tracking-widest uppercase mb-3">
@@ -1463,7 +1492,7 @@ export default function App() {
                     Executive Claims & Fraud Intelligence Suite
                   </h1>
                   <div className="mt-3 flex items-center space-x-2">
-                    <div className="h-1.5 w-20 bg-gradient-to-r from-amber-500 to-amber-400 rounded-full"></div>
+                    <div className="h-1.5 w-20 rounded-full"></div>
                     <div className="h-1.5 w-6 bg-blue-900 rounded-full"></div>
                     <div className="h-1.5 w-2 bg-slate-300 rounded-full"></div>
                   </div>
@@ -1474,14 +1503,14 @@ export default function App() {
                 <div className="flex flex-wrap items-center gap-3">
                   <button
                     onClick={() => setShowFnolModal(true)}
-                    className="px-4 py-2.5 rounded-xl bg-amber-500 hover:bg-amber-600 text-slate-950 text-xs sm:text-sm font-black shadow-md transition flex items-center space-x-2"
+                    className="px-4 py-2.5 rounded-xl bg-[#C8102E] hover:bg-[#8B0000] text-white text-xs sm:text-sm font-black shadow-md transition flex items-center space-x-2"
                   >
                     <Plus size={16} />
                     <span>Intake FNOL Notice</span>
                   </button>
                   <button
                     onClick={() => setShowClaimModal(true)}
-                    className="px-4 py-2.5 rounded-xl bg-[#0F2744] hover:bg-[#1B3A57] text-white text-xs sm:text-sm font-bold shadow-md transition flex items-center space-x-2"
+                    className="px-4 py-2.5 rounded-xl bg-[#C8102E] hover:bg-[#8B0000] text-white text-xs sm:text-sm font-bold shadow-md transition flex items-center space-x-2"
                   >
                     <Plus size={16} />
                     <span>Submit Formal Claim</span>
@@ -1499,7 +1528,7 @@ export default function App() {
 
             {/* KPI Cards */}
             <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-              <div className="bg-white p-5 rounded-2xl border border-slate-200 shadow-sm border-t-4 border-t-[#0F2744]">
+              <div className="bg-white p-5 rounded-2xl border border-slate-200 shadow-sm border-t-4 border-t-[#C8102E]">
                 <span className="text-[11px] font-bold uppercase tracking-wider text-slate-500">Total Claims</span>
                 <p className="nexa-suite-card mt-2">{kpis?.total_claims_received ?? '—'}</p>
                 <div className="text-[11px] text-emerald-600 font-bold mt-2 flex items-center space-x-1">
@@ -1522,7 +1551,7 @@ export default function App() {
                 <div className="text-[11px] text-red-700 font-extrabold mt-2 uppercase">Payment Hold</div>
               </div>
 
-              <div className="bg-white p-5 rounded-2xl border border-amber-200 shadow-sm border-t-4 border-t-amber-500 bg-gradient-to-br from-white to-amber-50/40">
+              <div className="bg-white p-5 rounded-2xl border border-amber-200 shadow-sm border-t-4 border-t-amber-500">
                 <span className="text-[11px] font-bold uppercase tracking-wider text-amber-800">Losses Prevented</span>
                 <p className="text-nexaDisplay font-black text-slate-950 mt-2">
                   ${kpis ? Number(kpis.prevented_fraud_losses_usd).toLocaleString() : '0'}
@@ -1607,7 +1636,7 @@ export default function App() {
                             <td className="py-2.5 px-3">{getRiskBadge(c.risk_category, c.risk_score)}</td>
                             <td className="py-2.5 px-3 text-slate-600 truncate max-w-xs">{c.top_indicator}</td>
                             <td className="py-2.5 px-3 text-right">
-                              <button className="px-2.5 py-1 rounded bg-[#0F2744] text-white text-[11px] font-bold hover:bg-[#1B3A57]">Inspect</button>
+                              <button className="px-2.5 py-1 rounded bg-[#C8102E] text-white text-[11px] font-bold hover:bg-[#8B0000]">Inspect</button>
                             </td>
                           </tr>
                         ))
@@ -1625,7 +1654,7 @@ export default function App() {
         {/* ========================================================= */}
         {activeTab === 'fnol' && (
           <div className="space-y-8">
-            <div className="relative overflow-hidden bg-gradient-to-r from-white via-slate-50 to-amber-50/50 rounded-3xl p-6 sm:p-8 border border-slate-200 shadow-md">
+            <div className="relative overflow-hidden rounded-3xl p-6 sm:p-8 border border-slate-200 shadow-md">
               <div className="relative flex flex-col lg:flex-row lg:items-center justify-between gap-6">
                 <div>
                   <div className="inline-flex items-center space-x-2 px-3 py-1 rounded-full bg-amber-500/10 border border-amber-500/30 text-amber-800 text-xs font-black tracking-widest uppercase mb-3">
@@ -1636,7 +1665,7 @@ export default function App() {
                     First Notice of Loss (FNOL) Intake & Triage
                   </h1>
                   <div className="mt-3 flex items-center space-x-2">
-                    <div className="h-1.5 w-20 bg-gradient-to-r from-amber-500 to-amber-400 rounded-full"></div>
+                    <div className="h-1.5 w-20 rounded-full"></div>
                     <div className="h-1.5 w-6 bg-blue-900 rounded-full"></div>
                     <div className="h-1.5 w-2 bg-slate-300 rounded-full"></div>
                   </div>
@@ -1646,7 +1675,7 @@ export default function App() {
                 </div>
                 <button
                   onClick={() => setShowFnolModal(true)}
-                  className="px-5 py-2.5 rounded-xl bg-amber-500 hover:bg-amber-600 text-slate-950 text-xs sm:text-sm font-black shadow-md transition flex items-center space-x-2"
+                  className="px-5 py-2.5 rounded-xl bg-[#C8102E] hover:bg-[#8B0000] text-white text-xs sm:text-sm font-black shadow-md transition flex items-center space-x-2"
                 >
                   <Plus size={16} />
                   <span>Log New Loss Notice</span>
@@ -1710,7 +1739,7 @@ export default function App() {
         {/* ========================================================= */}
         {['claims', 'assigned-claims'].includes(activeTab) && (
           <div className="space-y-8">
-            <div className="relative overflow-hidden bg-gradient-to-r from-white via-slate-50 to-blue-50/40 rounded-3xl p-6 sm:p-8 border border-slate-200 shadow-md">
+            <div className="relative overflow-hidden rounded-3xl p-6 sm:p-8 border border-slate-200 shadow-md">
               <div className="relative flex flex-col lg:flex-row lg:items-center justify-between gap-6">
                 <div>
                   <div className="inline-flex items-center space-x-2 px-3 py-1 rounded-full bg-blue-900/10 border border-blue-900/20 text-blue-900 text-xs font-black tracking-widest uppercase mb-3">
@@ -1721,7 +1750,7 @@ export default function App() {
                     Claims Processing & Comprehensive Risk Register
                   </h1>
                   <div className="mt-3 flex items-center space-x-2">
-                    <div className="h-1.5 w-20 bg-gradient-to-r from-amber-500 to-amber-400 rounded-full"></div>
+                    <div className="h-1.5 w-20 rounded-full"></div>
                     <div className="h-1.5 w-6 bg-blue-900 rounded-full"></div>
                     <div className="h-1.5 w-2 bg-slate-300 rounded-full"></div>
                   </div>
@@ -1731,7 +1760,7 @@ export default function App() {
                 </div>
                 <button
                   onClick={() => setShowClaimModal(true)}
-                  className="px-5 py-2.5 rounded-xl bg-[#0F2744] hover:bg-[#1B3A57] text-white text-xs sm:text-sm font-bold shadow-md transition flex items-center space-x-2"
+                  className="px-5 py-2.5 rounded-xl bg-[#C8102E] hover:bg-[#8B0000] text-white text-xs sm:text-sm font-bold shadow-md transition flex items-center space-x-2"
                 >
                   <Plus size={16} />
                   <span>Submit Formal Claim</span>
@@ -1816,7 +1845,7 @@ export default function App() {
                         <td className="text-nexaTable py-3 px-4 text-right">
                           <button
                             onClick={(e) => { e.stopPropagation(); fetchClaimDetail(c.claim_id); setActiveTab('detail'); }}
-                            className="px-3 py-1 rounded-xl bg-[#0F2744] text-white text-[11px] font-bold hover:bg-[#1B3A57] shadow-sm"
+                            className="px-3 py-1 rounded-xl bg-[#C8102E] text-white text-[11px] font-bold hover:bg-[#8B0000] shadow-sm"
                           >
                             Review AI
                           </button>
@@ -1872,7 +1901,7 @@ export default function App() {
                     });
                     setShowInvModal(true);
                   }}
-                  className="px-4 py-2 rounded-xl bg-[#0F2744] text-white text-xs font-bold hover:bg-[#1B3A57] flex items-center space-x-2 shadow-md"
+                  className="px-4 py-2 rounded-xl bg-[#C8102E] text-white text-xs font-bold hover:bg-[#8B0000] flex items-center space-x-2 shadow-md"
                 >
                   <ShieldCheck size={16} className="text-amber-400" />
                   <span>Manage Investigation</span>
@@ -1926,7 +1955,7 @@ export default function App() {
                       disabled={notesLoading}
                     />
                     <button onClick={addClaimNote} disabled={notesLoading || !newClaimNote.trim()}
-                      className="px-3.5 py-2 bg-[#0F2744] text-white rounded-xl hover:bg-[#1B3A57] font-bold text-xs transition-colors disabled:opacity-50">
+                      className="px-3.5 py-2 bg-[#C8102E] text-white rounded-xl hover:bg-[#8B0000] font-bold text-xs transition-colors disabled:opacity-50">
                       <Plus size={13} />
                     </button>
                   </div>
@@ -1979,7 +2008,7 @@ export default function App() {
                       <div key={idx} className="p-3.5 rounded-xl border border-slate-200 bg-slate-50 flex items-start justify-between">
                         <div>
                           <div className="flex items-center space-x-2">
-                            <span className="px-2 py-0.5 text-[10px] font-bold rounded bg-red-600 text-white">{ind.severity}</span>
+                            <span className="px-2 py-0.5 text-[10px] font-bold rounded bg-[#8B0000] text-white">{ind.severity}</span>
                             <strong className="text-xs text-slate-800">{ind.code}</strong>
                           </div>
                           <p className="text-xs text-slate-600 mt-1">{ind.detail}</p>
@@ -2017,7 +2046,7 @@ export default function App() {
         {/* ========================================================= */}
         {activeTab === 'investigations' && (
           <div className="space-y-8">
-            <div className="relative overflow-hidden bg-gradient-to-r from-white via-slate-50 to-red-50/40 rounded-3xl p-6 sm:p-8 border border-slate-200 shadow-md">
+            <div className="relative overflow-hidden rounded-3xl p-6 sm:p-8 border border-slate-200 shadow-md">
               <div className="relative flex flex-col lg:flex-row lg:items-center justify-between gap-6">
                 <div>
                   <div className="inline-flex items-center space-x-2 px-3 py-1 rounded-full bg-red-500/10 border border-red-500/30 text-red-800 text-xs font-black tracking-widest uppercase mb-3">
@@ -2028,7 +2057,7 @@ export default function App() {
                     Fraud Investigation Case Management Workspace
                   </h1>
                   <div className="mt-3 flex items-center space-x-2">
-                    <div className="h-1.5 w-20 bg-gradient-to-r from-red-600 to-amber-500 rounded-full"></div>
+                    <div className="h-1.5 w-20 rounded-full"></div>
                     <div className="h-1.5 w-6 bg-blue-900 rounded-full"></div>
                     <div className="h-1.5 w-2 bg-slate-300 rounded-full"></div>
                   </div>
@@ -2077,7 +2106,7 @@ export default function App() {
                               });
                               setShowInvModal(true);
                             }}
-                            className="px-3 py-1 rounded-xl bg-slate-800 text-white text-[11px] font-bold hover:bg-slate-700 shadow-sm"
+                            className="px-3 py-1 rounded-md bg-[#C8102E] text-white text-[11px] font-bold hover:bg-[#8B0000] shadow-sm"
                           >
                             Update Case
                           </button>
@@ -2101,7 +2130,7 @@ export default function App() {
         {/* ========================================================= */}
         {activeTab === 'governance' && (
           <div className="space-y-8">
-            <div className="relative overflow-hidden bg-gradient-to-r from-white via-slate-50 to-emerald-50/40 rounded-3xl p-6 sm:p-8 border border-slate-200 shadow-md">
+            <div className="relative overflow-hidden rounded-3xl p-6 sm:p-8 border border-slate-200 shadow-md">
               <div className="relative flex flex-col lg:flex-row lg:items-center justify-between gap-6">
                 <div>
                   <div className="inline-flex items-center space-x-2 px-3 py-1 rounded-full bg-emerald-500/10 border border-emerald-500/30 text-emerald-800 text-xs font-black tracking-widest uppercase mb-3">
@@ -2112,7 +2141,7 @@ export default function App() {
                     AI Model Governance & False-Positive Monitoring
                   </h1>
                   <div className="mt-3 flex items-center space-x-2">
-                    <div className="h-1.5 w-20 bg-gradient-to-r from-emerald-500 to-teal-600 rounded-full"></div>
+                    <div className="h-1.5 w-20 rounded-full"></div>
                     <div className="h-1.5 w-6 bg-blue-900 rounded-full"></div>
                     <div className="h-1.5 w-2 bg-slate-300 rounded-full"></div>
                   </div>
@@ -2149,7 +2178,7 @@ export default function App() {
         {/* ========================================================= */}
         {activeTab === 'registry' && (
           <div className="space-y-8">
-            <div className="relative overflow-hidden bg-gradient-to-r from-white via-slate-50 to-amber-50/40 rounded-3xl p-6 sm:p-8 border border-slate-200 shadow-md">
+            <div className="relative overflow-hidden rounded-3xl p-6 sm:p-8 border border-slate-200 shadow-md">
               <h1 className="text-nexaDisplay font-extrabold text-slate-900 tracking-tight leading-tight">
                 Policyholder & Insurance Policy Registry
               </h1>
@@ -2221,7 +2250,7 @@ export default function App() {
         {/* ========================================================= */}
         {activeTab === 'audit' && (
           <div className="space-y-8">
-            <div className="relative overflow-hidden bg-gradient-to-r from-white via-slate-50 to-blue-50/40 rounded-3xl p-6 sm:p-8 border border-slate-200 shadow-md">
+            <div className="relative overflow-hidden rounded-3xl p-6 sm:p-8 border border-slate-200 shadow-md">
               <h1 className="text-nexaDisplay font-extrabold text-slate-900 tracking-tight leading-tight">
                 Regulatory Compliance & Immutable Audit Trail
               </h1>
@@ -2337,7 +2366,7 @@ export default function App() {
 
       {/* Modal: Submit Claim */}
       {showClaimModal && (
-        <div className="fixed inset-0 z-50 bg-black/60 backdrop-blur-sm flex items-center justify-center p-4">
+        <div className="fixed inset-0 z-50 bg-black/20 backdrop-blur-sm flex items-center justify-center p-4">
           <div className="bg-white rounded-3xl max-w-lg w-full p-6 sm:p-8 shadow-2xl border border-slate-200 space-y-4">
             <div className="flex justify-between items-center border-b border-slate-100 pb-3.5">
               <div>
@@ -2419,7 +2448,7 @@ export default function App() {
 
               <div className="pt-3.5 border-t border-slate-100 flex justify-end space-x-2.5">
                 <button type="button" onClick={() => setShowClaimModal(false)} className="px-5 py-2.5 border rounded-xl text-slate-600 hover:bg-slate-50 font-bold">Cancel</button>
-                <button type="submit" className="px-5 py-2.5 bg-[#0F2744] text-white rounded-xl hover:bg-[#1B3A57] font-bold shadow-md">Submit for Assessment</button>
+                <button type="submit" className="px-5 py-2.5 bg-[#C8102E] text-white rounded-xl hover:bg-[#8B0000] font-bold shadow-md">Submit for Assessment</button>
               </div>
             </form>
           </div>
@@ -2428,7 +2457,7 @@ export default function App() {
 
       {/* Modal: FNOL Notice */}
       {showFnolModal && (
-        <div className="fixed inset-0 z-50 bg-black/60 backdrop-blur-sm flex items-center justify-center p-4">
+        <div className="fixed inset-0 z-50 bg-black/20 backdrop-blur-sm flex items-center justify-center p-4">
           <div className="bg-white rounded-3xl max-w-lg w-full p-6 sm:p-8 shadow-2xl border border-slate-200 space-y-4">
             <div className="flex justify-between items-center border-b border-slate-100 pb-3.5">
               <div>
@@ -2514,7 +2543,7 @@ export default function App() {
 
               <div className="pt-3.5 border-t border-slate-100 flex justify-end space-x-2.5">
                 <button type="button" onClick={() => setShowFnolModal(false)} className="px-5 py-2.5 border rounded-xl text-slate-600 hover:bg-slate-50 font-bold">Cancel</button>
-                <button type="submit" className="px-5 py-2.5 bg-amber-500 hover:bg-amber-600 text-slate-950 font-black rounded-xl shadow-md">Register FNOL</button>
+                <button type="submit" className="px-5 py-2.5 bg-[#C8102E] hover:bg-[#8B0000] text-white font-black rounded-xl shadow-md">Register FNOL</button>
               </div>
             </form>
           </div>
@@ -2523,7 +2552,7 @@ export default function App() {
 
       {/* Modal: Update Investigation */}
       {showInvModal && (
-        <div className="fixed inset-0 z-50 bg-black/60 backdrop-blur-sm flex items-center justify-center p-4">
+        <div className="fixed inset-0 z-50 bg-black/20 backdrop-blur-sm flex items-center justify-center p-4">
           <div className="bg-white rounded-3xl max-w-md w-full p-6 sm:p-8 shadow-2xl border border-slate-200 space-y-4">
             <div className="flex justify-between items-center border-b border-slate-100 pb-3.5">
               <div>
@@ -2561,7 +2590,7 @@ export default function App() {
 
               <div className="pt-3.5 border-t border-slate-100 flex justify-end space-x-2.5">
                 <button type="button" onClick={() => setShowInvModal(false)} className="px-5 py-2.5 border rounded-xl text-slate-600 hover:bg-slate-50 font-bold">Cancel</button>
-                <button type="submit" className="px-5 py-2.5 bg-[#0F2744] text-white rounded-xl hover:bg-[#1B3A57] font-bold shadow-md">Save Determination</button>
+                <button type="submit" className="px-5 py-2.5 bg-[#C8102E] text-white rounded-xl hover:bg-[#8B0000] font-bold shadow-md">Save Determination</button>
               </div>
             </form>
           </div>

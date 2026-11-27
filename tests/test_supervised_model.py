@@ -41,15 +41,25 @@ def test_feature_mapping_uses_claim_dates_and_policy_inception():
         customer_data={"date_of_birth": "1984-06-01"},
         historical_claims=[{"amount": 10000}, {"amount": 11000}],
         indicators=[{"code": "DUPLICATE_CLAIM_DETECTED"}],
-        metadata={"defaults": {"document_completeness_score": 0.7}},
+        metadata={},
     )
     assert row["claim_amount_usd"] == 12000.0
     assert row["reporting_delay_days"] == 10.0
     assert row["policy_duration_months"] == pytest.approx(152 / 30.4375, abs=0.01)
     assert row["claimant_age"] == pytest.approx(40.0, abs=0.1)
     assert row["previous_claims_count"] == 2.0
-    assert row["duplicate_claim_flag"] == 1.0
-    assert row["document_completeness_score"] == 0.7
+    # duplicate_claim_flag was REMOVED (target leakage); not a supervised feature.
+    assert "duplicate_claim_flag" not in row
+    assert "duplicate_claim_flag" not in supervised.FEATURE_COLUMNS
+    assert "duplicate_claim_flag" not in supervised.NUMERIC_COLUMNS
+    assert "year" not in supervised.FEATURE_COLUMNS
+    # duplicate-claim detection lives in the rule engine, not the supervised model;
+    # indicators are accepted for compatibility but not used as features.
+    assert "DUPLICATE_CLAIM_DETECTED" not in row
+    # document_completeness_score is genuinely missing in live data -> NaN,
+    # NOT silently substituted from metadata defaults; the pipeline imputes.
+    import math as _math
+    assert _math.isnan(row["document_completeness_score"])
     assert row["claim_type"] == "health"
 
 
@@ -118,5 +128,5 @@ def test_engine_adds_bounded_advisory_evidence_when_model_is_installed(monkeypat
     assert alert["weight"] <= 25.0
     status = supervised.describe_model()
     assert status["status"] == "INSTALLED"
-    assert status["test_roc_auc_mean"] == pytest.approx(0.8)
-    assert status["test_pr_auc_mean"] == pytest.approx(0.6)
+    assert status["roc_auc"] == pytest.approx(0.8)
+    assert status["pr_auc"] == pytest.approx(0.6)

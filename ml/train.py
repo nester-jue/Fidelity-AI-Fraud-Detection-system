@@ -78,7 +78,13 @@ def train_and_evaluate_model():
             "claim_type": row["claim_type"],
         }
 
-        recent_change = "beneficiary" in synth_indicators
+        # TARGET-LEAKAGE GUARD: `synthetic_indicators` is the ground-truth label
+        # source (is_actual_fraud == bool(synthetic_indicators)). Deriving
+        # `recent_beneficiary_change` from it would leak the label into the
+        # RECENT_BENEFICIARY_ALTERATION rule. Real beneficiary-change events
+        # are a separate signal not present in this synthetic CSV, so we do NOT
+        # infer them from the label.
+        recent_change = False
 
         assessment = fraud_engine.evaluate_claim(
             claim_data=claim_dict,

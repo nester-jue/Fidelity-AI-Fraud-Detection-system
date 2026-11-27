@@ -1,5 +1,299 @@
 {
-  "accuracy_mean": 0.742363,
+  "accuracy": 0.6065,
+  "accuracy_mean": 0.6085,
+  "advisory_only": true,
+  "amount_deviation_zscore_definition": "(claim_amount_usd - mean[country]) / std[country]; population std ddof=0; per-country reference with global fallback; fitted on training only; recomputed inside pipeline; canonical shared with live inference.",
+  "amount_reference": {
+    "definition": "(claim_amount_usd - mean) / std; population std ddof=0; per-country reference with global fallback; fitted on training data only",
+    "global": {
+      "mean": 1369.5762968055556,
+      "n": 360000,
+      "std": 1163.2113959182282
+    },
+    "per_country": {
+      "c\u00f4te d'ivoire": {
+        "mean": 1459.8374876666664,
+        "n": 30000,
+        "std": 995.744173080411
+      },
+      "ethiopia": {
+        "mean": 994.1729186666668,
+        "n": 30000,
+        "std": 678.6614400241709
+      },
+      "ghana": {
+        "mean": 1247.3244053333333,
+        "n": 30000,
+        "std": 858.5740031173432
+      },
+      "kenya": {
+        "mean": 1565.5660516666667,
+        "n": 30000,
+        "std": 1078.2489683745869
+      },
+      "mozambique": {
+        "mean": 826.6173660000001,
+        "n": 30000,
+        "std": 544.7571973601837
+      },
+      "nigeria": {
+        "mean": 2020.8727336666666,
+        "n": 30000,
+        "std": 1438.1544652425148
+      },
+      "rwanda": {
+        "mean": 894.6974176666668,
+        "n": 30000,
+        "std": 589.7616439044858
+      },
+      "senegal": {
+        "mean": 1350.7473866666664,
+        "n": 30000,
+        "std": 906.3863254669411
+      },
+      "south africa": {
+        "mean": 2907.9991366666663,
+        "n": 30000,
+        "std": 1998.6338334616494
+      },
+      "tanzania": {
+        "mean": 1142.0995956666668,
+        "n": 30000,
+        "std": 770.4575560044692
+      },
+      "uganda": {
+        "mean": 938.8123330000001,
+        "n": 30000,
+        "std": 634.7295657119656
+      },
+      "zambia": {
+        "mean": 1086.168729,
+        "n": 30000,
+        "std": 726.4899231920023
+      }
+    }
+  },
+  "categorical_columns": [
+    "country",
+    "claim_type"
+  ],
+  "categories": {
+    "claim_type": [
+      "crop",
+      "health",
+      "life",
+      "motor",
+      "property",
+      "travel"
+    ],
+    "country": [
+      "c\u00f4te d'ivoire",
+      "ethiopia",
+      "ghana",
+      "kenya",
+      "mozambique",
+      "nigeria",
+      "rwanda",
+      "senegal",
+      "south africa",
+      "tanzania",
+      "uganda",
+      "zambia"
+    ]
+  },
+  "confusion_matrix": [
+    [
+      37988.0,
+      24173.0
+    ],
+    [
+      4159.0,
+      5680.0
+    ]
+  ],
+  "cv_comparison": {
+    "logistic": {
+      "accuracy_mean": 0.6085,
+      "accuracy_std": 0.001213,
+      "f1_mean": 0.288051,
+      "f1_std": 0.002337,
+      "false_negative_rate_mean": 0.420452,
+      "false_negative_rate_std": 0.004987,
+      "false_negatives_mean": 4137.0,
+      "false_negatives_std": 49.140615,
+      "false_positive_rate_mean": 0.386917,
+      "false_positive_rate_std": 0.000809,
+      "false_positives_mean": 24051.0,
+      "false_positives_std": 50.163732,
+      "n_mean": 72000.0,
+      "n_std": 0.0,
+      "pr_auc_mean": 0.21852,
+      "pr_auc_std": 0.003915,
+      "precision_mean": 0.191655,
+      "precision_std": 0.001529,
+      "prevalence_mean": 0.136659,
+      "prevalence_std": 7e-06,
+      "recall_mean": 0.579548,
+      "recall_std": 0.004987,
+      "roc_auc_mean": 0.634404,
+      "roc_auc_std": 0.004464,
+      "true_negatives_mean": 38109.6,
+      "true_negatives_std": 50.448389,
+      "true_positives_mean": 5702.4,
+      "true_positives_std": 48.984079
+    },
+    "random_forest": {
+      "accuracy_mean": 0.734747,
+      "accuracy_std": 0.002553,
+      "f1_mean": 0.269974,
+      "f1_std": 0.003961,
+      "false_negative_rate_mean": 0.641116,
+      "false_negative_rate_std": 0.004744,
+      "false_negatives_mean": 6308.2,
+      "false_negatives_std": 46.645043,
+      "false_positive_rate_mean": 0.205757,
+      "false_positive_rate_std": 0.002631,
+      "false_positives_mean": 12790.0,
+      "false_positives_std": 163.526145,
+      "n_mean": 72000.0,
+      "n_std": 0.0,
+      "pr_auc_mean": 0.208923,
+      "pr_auc_std": 0.003972,
+      "precision_mean": 0.216377,
+      "precision_std": 0.003572,
+      "prevalence_mean": 0.136659,
+      "prevalence_std": 7e-06,
+      "recall_mean": 0.358884,
+      "recall_std": 0.004744,
+      "roc_auc_mean": 0.623679,
+      "roc_auc_std": 0.004386,
+      "true_negatives_mean": 49370.6,
+      "true_negatives_std": 163.665024,
+      "true_positives_mean": 3531.2,
+      "true_positives_std": 46.696467
+    }
+  },
+  "cv_detail": {
+    "logistic": {
+      "cv_mean_std": {
+        "accuracy_mean": 0.6085,
+        "accuracy_std": 0.001213,
+        "f1_mean": 0.288051,
+        "f1_std": 0.002337,
+        "false_negative_rate_mean": 0.420452,
+        "false_negative_rate_std": 0.004987,
+        "false_negatives_mean": 4137.0,
+        "false_negatives_std": 49.140615,
+        "false_positive_rate_mean": 0.386917,
+        "false_positive_rate_std": 0.000809,
+        "false_positives_mean": 24051.0,
+        "false_positives_std": 50.163732,
+        "n_mean": 72000.0,
+        "n_std": 0.0,
+        "pr_auc_mean": 0.21852,
+        "pr_auc_std": 0.003915,
+        "precision_mean": 0.191655,
+        "precision_std": 0.001529,
+        "prevalence_mean": 0.136659,
+        "prevalence_std": 7e-06,
+        "recall_mean": 0.579548,
+        "recall_std": 0.004987,
+        "roc_auc_mean": 0.634404,
+        "roc_auc_std": 0.004464,
+        "true_negatives_mean": 38109.6,
+        "true_negatives_std": 50.448389,
+        "true_positives_mean": 5702.4,
+        "true_positives_std": 48.984079
+      },
+      "folds": 5,
+      "out_of_fold": {
+        "accuracy": 0.6085,
+        "confusion_matrix": [
+          [
+            190548.0,
+            120255.0
+          ],
+          [
+            20685.0,
+            28512.0
+          ]
+        ],
+        "f1": 0.288052,
+        "false_negative_rate": 0.420452,
+        "false_negatives": 20685.0,
+        "false_positive_rate": 0.386917,
+        "false_positives": 120255.0,
+        "n": 360000.0,
+        "pr_auc": 0.218285,
+        "precision": 0.191655,
+        "prevalence": 0.136658,
+        "recall": 0.579548,
+        "roc_auc": 0.634369,
+        "true_negatives": 190548.0,
+        "true_positives": 28512.0
+      }
+    },
+    "random_forest": {
+      "cv_mean_std": {
+        "accuracy_mean": 0.734747,
+        "accuracy_std": 0.002553,
+        "f1_mean": 0.269974,
+        "f1_std": 0.003961,
+        "false_negative_rate_mean": 0.641116,
+        "false_negative_rate_std": 0.004744,
+        "false_negatives_mean": 6308.2,
+        "false_negatives_std": 46.645043,
+        "false_positive_rate_mean": 0.205757,
+        "false_positive_rate_std": 0.002631,
+        "false_positives_mean": 12790.0,
+        "false_positives_std": 163.526145,
+        "n_mean": 72000.0,
+        "n_std": 0.0,
+        "pr_auc_mean": 0.208923,
+        "pr_auc_std": 0.003972,
+        "precision_mean": 0.216377,
+        "precision_std": 0.003572,
+        "prevalence_mean": 0.136659,
+        "prevalence_std": 7e-06,
+        "recall_mean": 0.358884,
+        "recall_std": 0.004744,
+        "roc_auc_mean": 0.623679,
+        "roc_auc_std": 0.004386,
+        "true_negatives_mean": 49370.6,
+        "true_negatives_std": 163.665024,
+        "true_positives_mean": 3531.2,
+        "true_positives_std": 46.696467
+      },
+      "folds": 5,
+      "out_of_fold": {
+        "accuracy": 0.734747,
+        "confusion_matrix": [
+          [
+            246853.0,
+            63950.0
+          ],
+          [
+            31541.0,
+            17656.0
+          ]
+        ],
+        "f1": 0.269963,
+        "false_negative_rate": 0.641116,
+        "false_negatives": 31541.0,
+        "false_positive_rate": 0.205757,
+        "false_positives": 63950.0,
+        "n": 360000.0,
+        "pr_auc": 0.20861,
+        "precision": 0.216357,
+        "prevalence": 0.136658,
+        "recall": 0.358884,
+        "roc_auc": 0.62361,
+        "true_negatives": 246853.0,
+        "true_positives": 17656.0
+      }
+    }
+  },
+  "cv_folds": 5,
   "decision_threshold": 0.5,
   "defaults": {
     "amount_deviation_zscore": -0.059,
@@ -8,26 +302,375 @@
     "claimant_age": 38.0,
     "country": "c\u00f4te d'ivoire",
     "document_completeness_score": 0.771,
-    "duplicate_claim_flag": 0.0,
     "policy_duration_months": 61.0,
     "previous_claims_count": 2.0,
     "reporting_delay_days": 10.0,
-    "seasonality_flag": 0.0,
-    "year": 2024.0
+    "seasonality_flag": 0.0
+  },
+  "evaluation_metrics": {
+    "accuracy": 0.6065,
+    "accuracy_mean": 0.6085,
+    "confusion_matrix": [
+      [
+        37988.0,
+        24173.0
+      ],
+      [
+        4159.0,
+        5680.0
+      ]
+    ],
+    "cv_folds": 5,
+    "cv_mean_std": {
+      "accuracy_mean": 0.6085,
+      "accuracy_std": 0.001213,
+      "f1_mean": 0.288051,
+      "f1_std": 0.002337,
+      "false_negative_rate_mean": 0.420452,
+      "false_negative_rate_std": 0.004987,
+      "false_negatives_mean": 4137.0,
+      "false_negatives_std": 49.140615,
+      "false_positive_rate_mean": 0.386917,
+      "false_positive_rate_std": 0.000809,
+      "false_positives_mean": 24051.0,
+      "false_positives_std": 50.163732,
+      "n_mean": 72000.0,
+      "n_std": 0.0,
+      "pr_auc_mean": 0.21852,
+      "pr_auc_std": 0.003915,
+      "precision_mean": 0.191655,
+      "precision_std": 0.001529,
+      "prevalence_mean": 0.136659,
+      "prevalence_std": 7e-06,
+      "recall_mean": 0.579548,
+      "recall_std": 0.004987,
+      "roc_auc_mean": 0.634404,
+      "roc_auc_std": 0.004464,
+      "true_negatives_mean": 38109.6,
+      "true_negatives_std": 50.448389,
+      "true_positives_mean": 5702.4,
+      "true_positives_std": 48.984079
+    },
+    "f1": 0.286204,
+    "f1_mean": 0.288051,
+    "false_negative_rate": 0.422706,
+    "false_positive_rate": 0.388877,
+    "holdout": {
+      "accuracy": 0.6065,
+      "confusion_matrix": [
+        [
+          37988.0,
+          24173.0
+        ],
+        [
+          4159.0,
+          5680.0
+        ]
+      ],
+      "f1": 0.286204,
+      "false_negative_rate": 0.422706,
+      "false_negatives": 4159.0,
+      "false_positive_rate": 0.388877,
+      "false_positives": 24173.0,
+      "n": 72000.0,
+      "pr_auc": 0.217086,
+      "precision": 0.190266,
+      "prevalence": 0.136653,
+      "recall": 0.577294,
+      "roc_auc": 0.634516,
+      "true_negatives": 37988.0,
+      "true_positives": 5680.0
+    },
+    "pr_auc": 0.21852,
+    "pr_auc_mean": 0.21852,
+    "precision": 0.190266,
+    "precision_mean": 0.191655,
+    "recall": 0.577294,
+    "recall_mean": 0.579548,
+    "roc_auc": 0.634404,
+    "roc_auc_mean": 0.634404,
+    "source": "stratified K-fold out-of-fold + fixed stratified holdout on synthetic combined dataset; NOT real-world validation"
   },
   "excluded_leakage_columns": [
     "detection_method",
+    "duplicate_claim_flag",
+    "fraud_label",
     "fraud_probability",
+    "fraud_scheme",
     "fraud_scheme_type",
     "record_id",
-    "recovery_amount_usd"
+    "recovery_amount",
+    "recovery_amount_usd",
+    "synthetic_indicators",
+    "year"
   ],
-  "f1_mean": 0.364982,
-  "false_negatives_mean": 4508.2,
-  "false_positives_mean": 14041.7,
+  "f1": 0.286204,
+  "f1_mean": 0.288051,
+  "f1_score": 0.286204,
+  "fairness": {
+    "claimant_age": {
+      "bins": [
+        "<25",
+        "25-34",
+        "35-44",
+        "45-54",
+        "55-64",
+        "65+"
+      ],
+      "feature": "claimant_age",
+      "groups": {
+        "25-34": {
+          "accuracy": 0.62265,
+          "f1": 0.285306,
+          "false_negative_rate": 0.440664,
+          "false_positive_rate": 0.367498,
+          "fraud_prevalence": 0.134658,
+          "n": 96682,
+          "n_fraud": 13019,
+          "n_legitimate": 83663,
+          "precision": 0.19149,
+          "recall": 0.559336,
+          "sufficient_data": true
+        },
+        "35-44": {
+          "accuracy": 0.605597,
+          "f1": 0.298373,
+          "false_negative_rate": 0.414926,
+          "false_positive_rate": 0.390969,
+          "fraud_prevalence": 0.143335,
+          "n": 114236,
+          "n_fraud": 16374,
+          "n_legitimate": 97862,
+          "precision": 0.200247,
+          "recall": 0.585074,
+          "sufficient_data": true
+        },
+        "45-54": {
+          "accuracy": 0.584304,
+          "f1": 0.29319,
+          "false_negative_rate": 0.394994,
+          "false_positive_rate": 0.419136,
+          "fraud_prevalence": 0.142506,
+          "n": 69534,
+          "n_fraud": 9909,
+          "n_legitimate": 59625,
+          "precision": 0.193474,
+          "recall": 0.605006,
+          "sufficient_data": true
+        },
+        "55-64": {
+          "accuracy": 0.563894,
+          "f1": 0.281111,
+          "false_negative_rate": 0.359391,
+          "false_positive_rate": 0.447885,
+          "fraud_prevalence": 0.133102,
+          "n": 22201,
+          "n_fraud": 2955,
+          "n_legitimate": 19246,
+          "precision": 0.180063,
+          "recall": 0.640609,
+          "sufficient_data": true
+        },
+        "65+": {
+          "accuracy": 0.541262,
+          "f1": 0.262229,
+          "false_negative_rate": 0.307203,
+          "false_positive_rate": 0.478949,
+          "fraud_prevalence": 0.117676,
+          "n": 4011,
+          "n_fraud": 472,
+          "n_legitimate": 3539,
+          "precision": 0.161721,
+          "recall": 0.692797,
+          "sufficient_data": true
+        },
+        "<25": {
+          "accuracy": 0.644237,
+          "f1": 0.265815,
+          "false_negative_rate": 0.468924,
+          "false_positive_rate": 0.340147,
+          "fraud_prevalence": 0.121269,
+          "n": 53336,
+          "n_fraud": 6468,
+          "n_legitimate": 46868,
+          "precision": 0.177272,
+          "recall": 0.531076,
+          "sufficient_data": true
+        }
+      },
+      "note": "Age-binned subgroup metrics on synthetic out-of-fold data. claimant_age is itself a model input; subgroup differences must not be read as justified real-world disparity. Verify on real labelled data with a protected-attribute audit before any operational use.",
+      "threshold": 0.5
+    },
+    "country": {
+      "feature": "country",
+      "groups": {
+        "c\u00f4te d'ivoire": {
+          "accuracy": 0.514,
+          "f1": 0.297756,
+          "false_negative_rate": 0.322298,
+          "false_positive_rate": 0.51535,
+          "fraud_prevalence": 0.152033,
+          "n": 30000,
+          "n_fraud": 4561,
+          "n_legitimate": 25439,
+          "precision": 0.190791,
+          "recall": 0.677702,
+          "sufficient_data": true
+        },
+        "ethiopia": {
+          "accuracy": 0.718367,
+          "f1": 0.237936,
+          "false_negative_rate": 0.615228,
+          "false_positive_rate": 0.238597,
+          "fraud_prevalence": 0.114267,
+          "n": 30000,
+          "n_fraud": 3428,
+          "n_legitimate": 26572,
+          "precision": 0.172216,
+          "recall": 0.384772,
+          "sufficient_data": true
+        },
+        "ghana": {
+          "accuracy": 0.639033,
+          "f1": 0.269939,
+          "false_negative_rate": 0.483488,
+          "false_positive_rate": 0.342788,
+          "fraud_prevalence": 0.1292,
+          "n": 30000,
+          "n_fraud": 3876,
+          "n_legitimate": 26124,
+          "precision": 0.182714,
+          "recall": 0.516512,
+          "sufficient_data": true
+        },
+        "kenya": {
+          "accuracy": 0.5604,
+          "f1": 0.287751,
+          "false_negative_rate": 0.378876,
+          "false_positive_rate": 0.44973,
+          "fraud_prevalence": 0.142967,
+          "n": 30000,
+          "n_fraud": 4289,
+          "n_legitimate": 25711,
+          "precision": 0.18725,
+          "recall": 0.621124,
+          "sufficient_data": true
+        },
+        "mozambique": {
+          "accuracy": 0.7916,
+          "f1": 0.207404,
+          "false_negative_rate": 0.729944,
+          "false_positive_rate": 0.149828,
+          "fraud_prevalence": 0.100967,
+          "n": 30000,
+          "n_fraud": 3029,
+          "n_legitimate": 26971,
+          "precision": 0.168347,
+          "recall": 0.270056,
+          "sufficient_data": true
+        },
+        "nigeria": {
+          "accuracy": 0.327533,
+          "f1": 0.355834,
+          "false_negative_rate": 0.09472,
+          "false_positive_rate": 0.821598,
+          "fraud_prevalence": 0.205167,
+          "n": 30000,
+          "n_fraud": 6155,
+          "n_legitimate": 23845,
+          "precision": 0.221436,
+          "recall": 0.90528,
+          "sufficient_data": true
+        },
+        "rwanda": {
+          "accuracy": 0.769067,
+          "f1": 0.223144,
+          "false_negative_rate": 0.685425,
+          "false_positive_rate": 0.177367,
+          "fraud_prevalence": 0.105433,
+          "n": 30000,
+          "n_fraud": 3163,
+          "n_legitimate": 26837,
+          "precision": 0.172893,
+          "recall": 0.314575,
+          "sufficient_data": true
+        },
+        "senegal": {
+          "accuracy": 0.573067,
+          "f1": 0.283108,
+          "false_negative_rate": 0.399002,
+          "false_positive_rate": 0.43149,
+          "fraud_prevalence": 0.140267,
+          "n": 30000,
+          "n_fraud": 4208,
+          "n_legitimate": 25792,
+          "precision": 0.185166,
+          "recall": 0.600998,
+          "sufficient_data": true
+        },
+        "south africa": {
+          "accuracy": 0.406633,
+          "f1": 0.333321,
+          "false_negative_rate": 0.180177,
+          "false_positive_rate": 0.684641,
+          "fraud_prevalence": 0.180933,
+          "n": 30000,
+          "n_fraud": 5428,
+          "n_legitimate": 24572,
+          "precision": 0.209185,
+          "recall": 0.819823,
+          "sufficient_data": true
+        },
+        "tanzania": {
+          "accuracy": 0.710233,
+          "f1": 0.236183,
+          "false_negative_rate": 0.610209,
+          "false_positive_rate": 0.248155,
+          "fraud_prevalence": 0.114933,
+          "n": 30000,
+          "n_fraud": 3448,
+          "n_legitimate": 26552,
+          "precision": 0.169419,
+          "recall": 0.389791,
+          "sufficient_data": true
+        },
+        "uganda": {
+          "accuracy": 0.653333,
+          "f1": 0.257143,
+          "false_negative_rate": 0.523052,
+          "false_positive_rate": 0.321284,
+          "fraud_prevalence": 0.1258,
+          "n": 30000,
+          "n_fraud": 3774,
+          "n_legitimate": 26226,
+          "precision": 0.176022,
+          "recall": 0.476948,
+          "sufficient_data": true
+        },
+        "zambia": {
+          "accuracy": 0.638733,
+          "f1": 0.26242,
+          "false_negative_rate": 0.497655,
+          "false_positive_rate": 0.341258,
+          "fraud_prevalence": 0.127933,
+          "n": 30000,
+          "n_fraud": 3838,
+          "n_legitimate": 26162,
+          "precision": 0.177598,
+          "recall": 0.502345,
+          "sufficient_data": true
+        }
+      },
+      "note": "Computed on out-of-fold synthetic-data predictions. Differences may reflect synthetic generator parameters, not real-world fraud; no claim of fairness or unfairness is made for any real population.",
+      "threshold": 0.5
+    }
+  },
+  "false_negative_rate_mean": 0.420452,
+  "false_negatives_mean": 4137.0,
+  "false_positive_rate_mean": 0.386917,
+  "false_positives_mean": 24051.0,
   "feature_columns": [
     "country",
-    "year",
     "claim_amount_usd",
     "policy_duration_months",
     "previous_claims_count",
@@ -36,53 +679,298 @@
     "claimant_age",
     "claim_type",
     "seasonality_flag",
-    "amount_deviation_zscore",
-    "duplicate_claim_flag"
+    "amount_deviation_zscore"
   ],
+  "fraud_prevalence": 0.136658,
   "fraud_rows": 49197,
+  "known_limitations": [
+    "Training data are three SYNTHETIC datasets (baseline.csv, enhanced_detection.csv, fraud_wave.csv; 120,000 records each; ~360,000 combined), generated by datasets/generate_dataset.py. They are NOT independently verified historical insurance fraud cases. Reported metrics are measured on synthetic held-out data only; they are NOT evidence of real-world insurance-fraud detection accuracy, are NOT production-validated, and must NOT be used as proof of commercial effectiveness. Per-country fraud rates reflect synthetic generator parameters, not real-world fraud in any country.",
+    "Advisory fraud intelligence only. The model NEVER automatically rejects a claim, approves a payout, declares a customer guilty, suspends a policyholder, or makes a final investigation decision. All high-risk claims follow the existing human review / investigation workflow.",
+    "Domain mismatch: training data is generic insurance (motor/health/property/life/travel/crop; 12 African countries; year=2024), while the live app is Zimbabwean life assurance with claim types such as Death Benefit / Funeral Cash Plan / Accident / Critical Illness. Unknown claim_type is ignored by the one-hot encoder; unknown country falls back to global statistics.",
+    "Live application does not collect country on claims/policies; live 'country' is 'unknown' unless supplied, and amount reference falls back to a global (not per-country) statistic.",
+    "claimant_age is imputed with the training median when absent; live value is derived from Customer.date_of_birth (when present) vs incident date. Imputation reduces accuracy for claims missing age/DOB.",
+    "document_completeness_score is UNAVAILABLE in the live application; it is imputed with the training median (~0.77). The feature carries no live signal. (feature_status=unavailable_in_live_app).",
+    "previous_claims_count live is derived from len(historical_claims) or a provided value; partial/limited history UNDERCOUNTS prior claims vs training. 'not_yet_calculable'/'derived' status is reported.",
+    "reporting_delay_days live is derived from submission_date - incident_date (or provided); missing dates -> imputed. 'not_yet_calculable' when dates are absent.",
+    "policy_duration_months live is (incident_date - effective_date)/30.4375, clamped >=0; synthetic training uses integer months 1..120. Missing dates -> imputed.",
+    "amount_deviation_zscore canonical = (claim_amount_usd - mean[country]) / std[country], population std ddof=0, per-country reference with global fallback, fitted on training only; missing amount -> imputed.",
+    "Missing numeric features are imputed with TRAINING medians inside the saved pipeline; this is reported via feature_status, never silent. Unknown categories are ignored; missing categories -> 'unknown'.",
+    "Trained on a mixed-scenario synthetic pool (baseline + enhanced_detection + fraud_wave); prevalence ~13.7%. Threshold selection used out-of-fold predictions on synthetic data; re-tune on verified production labels.",
+    "Fairness results are measured on synthetic data and cannot establish real-world fairness; country/age disparities require real labelled audit."
+  ],
   "legitimate_rows": 310803,
-  "limitation": "Advisory signal only. Trained on the supplied labelled CSVs; human review remains required before any claim decision.",
+  "limitation": "Training data are three SYNTHETIC datasets (baseline.csv, enhanced_detection.csv, fraud_wave.csv; 120,000 records each; ~360,000 combined), generated by datasets/generate_dataset.py. They are NOT independently verified historical insurance fraud cases. Reported metrics are measured on synthetic held-out data only; they are NOT evidence of real-world insurance-fraud detection accuracy, are NOT production-validated, and must NOT be used as proof of commercial effectiveness. Per-country fraud rates reflect synthetic generator parameters, not real-world fraud in any country.",
   "model_kind": "logistic",
-  "pr_auc_mean": 0.365953,
-  "precision_mean": 0.275184,
-  "recall_mean": 0.541803,
+  "model_selection_rationale": "selected on stratified CV: highest PR-AUC (primary; imbalanced fraud), tie-break F1 then precision; NOT accuracy. Both kinds evaluated.",
+  "model_version": "supervised-logistic-20261127T033933Z",
+  "n_mean": 72000.0,
+  "never_auto_decision": "Never automatically rejects a claim, approves a payout, declares guilt, suspends a policyholder, or makes a final investigation decision. Human review/investigation workflow is mandatory.",
+  "numeric_columns": [
+    "claim_amount_usd",
+    "policy_duration_months",
+    "previous_claims_count",
+    "reporting_delay_days",
+    "document_completeness_score",
+    "claimant_age",
+    "seasonality_flag",
+    "amount_deviation_zscore"
+  ],
+  "old_vs_new": {
+    "new": {
+      "accuracy": 0.6065,
+      "decision_threshold": 0.5,
+      "f1": 0.286204,
+      "false_negative_rate": 0.422706,
+      "false_positive_rate": 0.388877,
+      "feature_columns": [
+        "country",
+        "claim_amount_usd",
+        "policy_duration_months",
+        "previous_claims_count",
+        "reporting_delay_days",
+        "document_completeness_score",
+        "claimant_age",
+        "claim_type",
+        "seasonality_flag",
+        "amount_deviation_zscore"
+      ],
+      "had_target_leakage": [],
+      "metrics_source": "stratified K-fold out-of-fold + fixed stratified holdout on synthetic combined dataset; NOT real-world validation",
+      "pr_auc": 0.21852,
+      "precision": 0.190266,
+      "recall": 0.577294,
+      "roc_auc": 0.634404,
+      "trained_at": "2026-11-27T03:39:33.486159+00:00",
+      "training_rows": 360000,
+      "version": "supervised-logistic-20261127T033933Z"
+    },
+    "old": {
+      "accuracy": 0.742363,
+      "decision_threshold": 0.5,
+      "f1": 0.364982,
+      "false_negative_rate": null,
+      "false_positive_rate": null,
+      "feature_columns": [
+        "country",
+        "year",
+        "claim_amount_usd",
+        "policy_duration_months",
+        "previous_claims_count",
+        "reporting_delay_days",
+        "document_completeness_score",
+        "claimant_age",
+        "claim_type",
+        "seasonality_flag",
+        "amount_deviation_zscore",
+        "duplicate_claim_flag"
+      ],
+      "had_target_leakage": [
+        "duplicate_claim_flag",
+        "year"
+      ],
+      "note": "Old artifact's own reported metrics; it was trained with target leakage (duplicate_claim_flag/year) and NOT evaluated on this clean split. Not apples-to-apples; see new clean metrics.",
+      "pr_auc": 0.365953,
+      "precision": 0.275184,
+      "recall": 0.541803,
+      "roc_auc": 0.716869,
+      "trained_at": "2026-11-26T11:08:47.383199+00:00",
+      "training_rows": 360000,
+      "version": "supervised-logistic-20261126T110847Z"
+    },
+    "production_artifact": "C:\\Users\\user\\Desktop\\FIDE-AI-Fraud-Detection\\backend\\app\\ml\\models\\fraud_classifier.joblib"
+  },
+  "pr_auc": 0.21852,
+  "pr_auc_mean": 0.21852,
+  "precision": 0.190266,
+  "precision_mean": 0.191655,
+  "prevalence_mean": 0.136659,
+  "recall": 0.577294,
+  "recall_mean": 0.579548,
   "repeat_metrics": {
-    "accuracy_mean": 0.742363,
-    "accuracy_std": 0.001684,
-    "f1_mean": 0.364982,
-    "f1_std": 0.00077,
-    "false_negatives_mean": 4508.2,
-    "false_negatives_std": 25.277658,
-    "false_positives_mean": 14041.7,
-    "false_positives_std": 143.854128,
-    "pr_auc_mean": 0.365953,
-    "pr_auc_std": 0.003902,
-    "precision_mean": 0.275184,
-    "precision_std": 0.001244,
-    "recall_mean": 0.541803,
-    "recall_std": 0.002569,
-    "roc_auc_mean": 0.716869,
-    "roc_auc_std": 0.001878,
-    "seed_mean": 46.5,
-    "seed_std": 2.872281,
-    "true_negatives_mean": 48119.3,
-    "true_negatives_std": 143.854128,
-    "true_positives_mean": 5330.8,
-    "true_positives_std": 25.277658
+    "accuracy_mean": 0.608278,
+    "accuracy_std": 0.001547,
+    "f1_mean": 0.287916,
+    "f1_std": 0.001299,
+    "false_negative_rate_mean": 0.42049,
+    "false_negative_rate_std": 0.002726,
+    "false_negatives_mean": 4137.2,
+    "false_negatives_std": 26.820887,
+    "false_positive_rate_mean": 0.387169,
+    "false_positive_rate_std": 0.001817,
+    "false_positives_mean": 24066.8,
+    "false_positives_std": 112.925462,
+    "n_mean": 72000.0,
+    "n_std": 0.0,
+    "pr_auc_mean": 0.219,
+    "pr_auc_std": 0.002048,
+    "precision_mean": 0.191539,
+    "precision_std": 0.000935,
+    "prevalence_mean": 0.136653,
+    "prevalence_std": 0.0,
+    "recall_mean": 0.57951,
+    "recall_std": 0.002726,
+    "roc_auc_mean": 0.634951,
+    "roc_auc_std": 0.001276,
+    "seed_mean": 44.0,
+    "seed_std": 1.414214,
+    "true_negatives_mean": 38094.2,
+    "true_negatives_std": 112.925462,
+    "true_positives_mean": 5701.8,
+    "true_positives_std": 26.820887
   },
   "report_path": "ml/training_report.json",
-  "roc_auc_mean": 0.716869,
-  "runs": 10,
-  "seed_mean": 46.5,
+  "roc_auc": 0.634404,
+  "roc_auc_mean": 0.634404,
+  "runs": 5,
+  "seed": 42,
   "sources": [
     "baseline.csv (120,000 rows)",
     "enhanced_detection.csv (120,000 rows)",
     "fraud_wave.csv (120,000 rows)"
   ],
+  "synthetic_data_limitation": "Training data are three SYNTHETIC datasets (baseline.csv, enhanced_detection.csv, fraud_wave.csv; 120,000 records each; ~360,000 combined), generated by datasets/generate_dataset.py. They are NOT independently verified historical insurance fraud cases. Reported metrics are measured on synthetic held-out data only; they are NOT evidence of real-world insurance-fraud detection accuracy, are NOT production-validated, and must NOT be used as proof of commercial effectiveness. Per-country fraud rates reflect synthetic generator parameters, not real-world fraud in any country.",
   "test_size": 0.2,
-  "trained_at": "2026-11-26T11:08:47.383199+00:00",
+  "threshold_objective": "f1",
+  "threshold_rationale": "maximise F1 at listed thresholds; tie-break higher precision/recall, lower FPR; not accuracy",
+  "threshold_table": [
+    {
+      "accuracy": 0.175681,
+      "f1": 0.245618,
+      "false_negative_rate": 0.01803,
+      "false_negatives": 887.0,
+      "false_positive_rate": 0.951947,
+      "false_positives": 295868.0,
+      "precision": 0.140363,
+      "recall": 0.98197,
+      "threshold": 0.3,
+      "true_negatives": 14935.0,
+      "true_positives": 48310.0
+    },
+    {
+      "accuracy": 0.251961,
+      "f1": 0.254731,
+      "false_negative_rate": 0.064536,
+      "false_negatives": 3175.0,
+      "false_positive_rate": 0.85623,
+      "false_positives": 266119.0,
+      "precision": 0.14744,
+      "recall": 0.935464,
+      "threshold": 0.35,
+      "true_negatives": 44684.0,
+      "true_positives": 46022.0
+    },
+    {
+      "accuracy": 0.362742,
+      "f1": 0.266833,
+      "false_negative_rate": 0.151432,
+      "false_negatives": 7450.0,
+      "false_positive_rate": 0.71416,
+      "false_positives": 221963.0,
+      "precision": 0.158306,
+      "recall": 0.848568,
+      "threshold": 0.4,
+      "true_negatives": 88840.0,
+      "true_positives": 41747.0
+    },
+    {
+      "accuracy": 0.489214,
+      "f1": 0.280073,
+      "false_negative_rate": 0.272964,
+      "false_negatives": 13429.0,
+      "false_positive_rate": 0.548431,
+      "false_positives": 170454.0,
+      "precision": 0.173444,
+      "recall": 0.727036,
+      "threshold": 0.45,
+      "true_negatives": 140349.0,
+      "true_positives": 35768.0
+    },
+    {
+      "accuracy": 0.6085,
+      "f1": 0.288052,
+      "false_negative_rate": 0.420452,
+      "false_negatives": 20685.0,
+      "false_positive_rate": 0.386917,
+      "false_positives": 120255.0,
+      "precision": 0.191655,
+      "recall": 0.579548,
+      "threshold": 0.5,
+      "true_negatives": 190548.0,
+      "true_positives": 28512.0
+    },
+    {
+      "accuracy": 0.7091,
+      "f1": 0.285092,
+      "false_negative_rate": 0.575564,
+      "false_negatives": 28316.0,
+      "false_positive_rate": 0.245841,
+      "false_positives": 76408.0,
+      "precision": 0.214629,
+      "recall": 0.424436,
+      "threshold": 0.55,
+      "true_negatives": 234395.0,
+      "true_positives": 20881.0
+    },
+    {
+      "accuracy": 0.781769,
+      "f1": 0.259796,
+      "false_negative_rate": 0.719759,
+      "false_negatives": 35410.0,
+      "false_positive_rate": 0.138844,
+      "false_positives": 43153.0,
+      "precision": 0.242132,
+      "recall": 0.280241,
+      "threshold": 0.6,
+      "true_negatives": 267650.0,
+      "true_positives": 13787.0
+    },
+    {
+      "accuracy": 0.827169,
+      "f1": 0.205448,
+      "false_negative_rate": 0.836494,
+      "false_negatives": 41153.0,
+      "false_positive_rate": 0.067779,
+      "false_positives": 21066.0,
+      "precision": 0.276331,
+      "recall": 0.163506,
+      "threshold": 0.65,
+      "true_negatives": 289737.0,
+      "true_positives": 8044.0
+    },
+    {
+      "accuracy": 0.850533,
+      "f1": 0.128615,
+      "false_negative_rate": 0.919284,
+      "false_negatives": 45226.0,
+      "false_positive_rate": 0.027612,
+      "false_positives": 8582.0,
+      "precision": 0.316339,
+      "recall": 0.080716,
+      "threshold": 0.7,
+      "true_negatives": 302221.0,
+      "true_positives": 3971.0
+    }
+  ],
+  "thresholds_tested": [
+    0.3,
+    0.35,
+    0.4,
+    0.45,
+    0.5,
+    0.55,
+    0.6,
+    0.65,
+    0.7
+  ],
+  "trained_at": "2026-11-27T03:39:33.486159+00:00",
+  "training_data_limitations": "Training data are three SYNTHETIC datasets (baseline.csv, enhanced_detection.csv, fraud_wave.csv; 120,000 records each; ~360,000 combined), generated by datasets/generate_dataset.py. They are NOT independently verified historical insurance fraud cases. Reported metrics are measured on synthetic held-out data only; they are NOT evidence of real-world insurance-fraud detection accuracy, are NOT production-validated, and must NOT be used as proof of commercial effectiveness. Per-country fraud rates reflect synthetic generator parameters, not real-world fraud in any country.",
+  "training_data_sources": [
+    "baseline.csv (120,000 rows)",
+    "enhanced_detection.csv (120,000 rows)",
+    "fraud_wave.csv (120,000 rows)"
+  ],
   "training_rows": 360000,
-  "true_negatives_mean": 48119.3,
-  "true_positives_mean": 5330.8,
-  "version": "supervised-logistic-20261126T110847Z"
+  "true_negatives_mean": 38109.6,
+  "true_positives_mean": 5702.4,
+  "version": "supervised-logistic-20261127T033933Z"
 }

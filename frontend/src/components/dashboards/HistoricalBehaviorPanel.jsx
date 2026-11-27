@@ -3,7 +3,7 @@ import { History, Activity, ShieldAlert } from 'lucide-react';
 import { api } from '../../api/apiClient.js';
 
 const SEV_STYLES = {
-  high: 'bg-red-50 text-red-800', medium: 'bg-amber-50 text-amber-800', low: 'bg-blue-50 text-blue-700',
+  high: 'bg-[#8B0000] text-white', medium: 'bg-[#FCEBED] text-[#8B0000]', low: 'bg-white text-[#222222] border border-[#EEEEEE]',
 };
 
 export default function HistoricalBehaviorPanel({ user }) {
@@ -49,7 +49,7 @@ export default function HistoricalBehaviorPanel({ user }) {
   return (
     <div className="space-y-6">
       <div className="bg-white rounded-2xl border border-slate-200 p-6 shadow-sm">
-        <h1 className="nexa-suite-heading text-[#0F2744] flex items-center gap-3"><History size={22} className="text-amber-500" /> Historical Claim Behaviour Intelligence</h1>
+        <h1 className="nexa-suite-heading text-[#C8102E] flex items-center gap-3"><History size={22} className="text-amber-500" /> Historical Claim Behaviour Intelligence</h1>
         <p className="text-xs text-slate-500 font-medium mt-1">Comparisons of the current claim against policyholder history, similar historical claims and policy information — all real records.</p>
       </div>
 
@@ -80,7 +80,7 @@ export default function HistoricalBehaviorPanel({ user }) {
               {anomalies.length === 0 && <p className="text-xs text-slate-400">No anomalies found in historical patterns.</p>}
               {anomalies.map((a, i) => (
                 <div key={i} className="text-xs mb-2 bg-slate-50 border border-slate-100 rounded-xl px-3 py-2">
-                  <p className="font-semibold text-[#0F2744]">{a.type} <span className={`px-1.5 py-0.5 rounded text-[9px] ${SEV_STYLES[a.severity] || ''}`}>{a.severity}</span></p>
+                  <p className="font-semibold text-[#C8102E]">{a.type} <span className={`px-1.5 py-0.5 rounded text-[9px] ${SEV_STYLES[a.severity] || ''}`}>{a.severity}</span></p>
                   <p className="text-slate-600">{a.evidence}</p>
                   <p className="text-slate-500">Reason: {a.reason}</p>
                 </div>
@@ -126,7 +126,7 @@ export default function HistoricalBehaviorPanel({ user }) {
               {comparisons.length === 0 && <p className="text-xs text-slate-400">No notable comparisons found.</p>}
               {comparisons.map((c, i) => (
                 <div key={i} className="text-xs mb-2 bg-slate-50 border border-slate-100 rounded-xl px-3 py-2">
-                  <p className="font-semibold text-[#0F2744]">{c.topic}</p>
+                  <p className="font-semibold text-[#C8102E]">{c.topic}</p>
                   <p className="text-slate-700">{c.detail}</p>
                   {c.evidence && <p className="text-[10px] text-slate-400">{c.evidence}</p>}
                 </div>

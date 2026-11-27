@@ -94,7 +94,7 @@ export default function FraudInvestigationDashboard({ activeTab }) {
             { id: 'evidence-management', label: 'Evidence' },
             { id: 'investigation-reports', label: 'Reports' },
           ].map(t => (
-            <button key={t.id} onClick={() => setTab(t.id)} className={`px-4 py-2 text-xs font-bold rounded-xl transition-colors ${tab === t.id ? 'bg-[#0F2744] text-white' : 'bg-white text-slate-600 hover:bg-slate-50 border border-slate-200'}`}>{t.label}</button>
+            <button key={t.id} onClick={() => setTab(t.id)} className={`px-4 py-2 text-xs font-bold rounded-xl transition-colors ${tab === t.id ? 'bg-[#C8102E] text-white' : 'bg-white text-[#8B0000] hover:bg-[#FCEBED] border border-[#C8102E]'}`}>{t.label}</button>
           ))}
         </div>
       </div>
@@ -326,7 +326,7 @@ export default function FraudInvestigationDashboard({ activeTab }) {
 
       {/* ─── OCR DOCUMENT DETAIL MODAL ─── */}
       {detailDoc && (
-        <div className="fixed inset-0 z-50 bg-black/60 flex items-center justify-center p-4 overflow-y-auto">
+        <div className="fixed inset-0 z-50 bg-black/20 flex items-center justify-center p-4 overflow-y-auto">
           <div className="bg-white rounded-3xl max-w-3xl w-full shadow-2xl border border-slate-200 max-h-[90vh] overflow-y-auto">
             <div className="sticky top-0 bg-white border-b border-slate-200 p-5 flex items-center justify-between rounded-t-3xl">
               <h2 className="text-base font-extrabold text-slate-900">OCR Document — Evidence</h2>
@@ -344,7 +344,7 @@ export default function FraudInvestigationDashboard({ activeTab }) {
               {detailDoc.raw_text_snippet && (
                 <div>
                   <h3 className="text-xs font-extrabold uppercase tracking-wider text-slate-700 mb-1.5">Extracted Text</h3>
-                  <div className="bg-slate-900 text-slate-200 rounded-xl p-4 font-mono whitespace-pre-wrap max-h-48 overflow-y-auto">{detailDoc.raw_text_snippet}</div>
+                  <div className="bg-slate-50 border border-slate-200 text-slate-800 rounded-xl p-4 font-mono whitespace-pre-wrap max-h-48 overflow-y-auto">{detailDoc.raw_text_snippet}</div>
                 </div>
               )}
               {(detailDoc.extracted_dates?.length || detailDoc.extracted_amounts?.length || detailDoc.extracted_national_ids?.length) && (

@@ -114,6 +114,12 @@ def _run_ai_claim_analysis(claim_id: int):
         cust_dict = {
             "customer_id": claim.customer.customer_id if claim.customer else "UNKNOWN",
             "national_id": claim.customer.national_id if claim.customer else "",
+            "name": claim.customer.name if claim.customer else "",
+            # wire DOB so the supervised layer can derive claimant_age; nullable
+            "date_of_birth": (
+                claim.customer.date_of_birth.isoformat()
+                if claim.customer and claim.customer.date_of_birth else None
+            ),
         }
 
         # 3b. Persist forensic findings to ClaimDocument records (Phase 9)
@@ -147,9 +153,20 @@ def _run_ai_claim_analysis(claim_id: int):
                 "claim_id": claim.claim_id,
                 "policy_number": policy_dict["policy_number"],
                 "amount": claim.amount,
-                "incident_date": claim.incident_date.isoformat(),
-                "submission_date": claim.submission_date.isoformat(),
+                "incident_date": claim.incident_date.isoformat() if claim.incident_date else "",
+                "submission_date": claim.submission_date.isoformat() if claim.submission_date else "",
                 "claim_type": claim.claim_type,
+                # honest features for training/inference consistency (not fabricated)
+                "days_since_inception": (
+                    (claim.incident_date - claim.policy.effective_date).days
+                    if claim.policy and claim.policy.effective_date and claim.incident_date
+                    else None
+                ),
+                "previous_claims_count": len(history_list),
+                "reporting_delay_days": (
+                    max(0, (claim.submission_date - claim.incident_date).days)
+                    if claim.submission_date and claim.incident_date else None
+                ),
             },
             policy_data=policy_dict,
             customer_data=cust_dict,

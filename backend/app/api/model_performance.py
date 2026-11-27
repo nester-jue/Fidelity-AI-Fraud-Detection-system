@@ -63,6 +63,21 @@ async def model_history(
     return model_performance.get_model_performance_history(db, limit=limit)
 
 
+@router.get("/supervised-model", summary="Supervised fraud model status (advisory only; nothing invented)")
+async def supervised_model_status(
+    current_user: Any = Depends(require_roles([RoleEnum.SYSTEM_ADMIN])),
+) -> Dict[str, Any]:
+    """Honest supervised-model monitoring payload from the saved artifact.
+
+    Reports installed/enabled, version, last training date, training rows,
+    ROC-AUC, PR-AUC, precision, recall, F1, decision threshold, sources and
+    known/training-data limitations. Unavailable metrics are null, never
+    invented. A missing or invalid artifact does not break the rule engine.
+    """
+    from ..ml import supervised
+    return supervised.describe_model()
+
+
 @router.get("/data-retention", summary="Data retention settings for model artefacts")
 async def data_retention() -> Dict[str, Any]:
     return model_performance.get_data_retention_settings()

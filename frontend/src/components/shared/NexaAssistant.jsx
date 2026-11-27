@@ -176,11 +176,11 @@ export default function NexaAssistant({ user }) {
       {!open && (
         <button
           onClick={() => setOpen(true)}
-          className="fixed right-6 bottom-6 z-40 w-14 h-14 rounded-full bg-gradient-to-br from-amber-500 to-amber-600 hover:from-amber-400 hover:to-amber-500 shadow-lg flex items-center justify-center hover:scale-105 transition-all"
+          className="fixed right-6 bottom-6 z-40 w-14 h-14 rounded-full bg-[#C8102E] hover:bg-[#8B0000] shadow-lg flex items-center justify-center hover:scale-105 transition-all"
           title="NEXA AI Intelligence Assistant"
           aria-label="Open NEXA AI Intelligence Assistant"
         >
-          <MessageSquare size={22} className="text-slate-950" />
+          <MessageSquare size={22} className="text-white" />
         </button>
       )}
 
@@ -191,43 +191,44 @@ export default function NexaAssistant({ user }) {
           <div className="fixed inset-0 bg-black/20 -z-10" onClick={() => setOpen(false)} aria-hidden="true" />
           <div className="flex flex-col w-full sm:w-[420px] h-[80vh] max-h-[620px] sm:h-[580px] rounded-t-2xl sm:rounded-2xl border border-slate-200 shadow-2xl bg-white">
             {/* Header */}
-            <div className="bg-[#0A192F] text-white px-5 py-4 flex items-center justify-between rounded-t-2xl sm:rounded-t-2xl">
+            <div className="bg-white text-[#222222] px-5 py-4 flex items-center justify-between border-b border-[#EEEEEE] rounded-t-2xl sm:rounded-t-2xl">
               <div className="min-w-0">
-                <div className="flex items-center space-x-2">
-                  <ShieldCheck size={18} className="text-amber-400 flex-shrink-0" />
-                  <span className="font-extrabold tracking-wide text-white truncate">NEXA AI Intelligence Assistant</span>
+                <div className="flex items-center gap-2">
+                  <span className="w-1 h-6 rounded-full bg-[#C8102E]" aria-hidden="true" />
+                  <ShieldCheck size={18} className="text-[#C8102E] flex-shrink-0" />
+                  <span className="font-extrabold tracking-wide text-[#222222] truncate">NEXA AI Intelligence Assistant</span>
                 </div>
-                <p className="text-[10px] text-slate-400 mt-0.5">Role-aware · reads real records only</p>
+                <p className="text-[10px] text-[#222222] mt-0.5">Role-aware · reads real records only</p>
               </div>
               <div className="flex items-center space-x-2 flex-shrink-0">
                 <button
                   onClick={resetConversation}
                   title="New conversation"
                   aria-label="New conversation"
-                  className="p-1.5 rounded-lg hover:bg-slate-700 transition"
+                  className="p-1.5 rounded-md hover:bg-[#FCEBED] text-[#222222] transition"
                 >
-                  <RotateCcw size={15} className="text-slate-300" />
+                  <RotateCcw size={15} />
                 </button>
                 <button
                   onClick={() => setOpen(false)}
                   title="Close assistant"
                   aria-label="Close assistant"
-                  className="p-1.5 rounded-lg hover:bg-slate-700 transition"
+                  className="p-1.5 rounded-md hover:bg-[#FCEBED] text-[#222222] transition"
                 >
-                  <X size={17} className="text-slate-300" />
+                  <X size={17} />
                 </button>
               </div>
             </div>
 
             {/* Role badge */}
-            <div className="px-5 py-2 border-b border-slate-100 bg-slate-50">
-              <p className="text-[10px] font-bold text-slate-500 uppercase tracking-wider">
+            <div className="px-5 py-2 border-b border-[#EEEEEE] bg-white">
+              <p className="text-[10px] font-bold text-[#222222] uppercase tracking-wider">
                 Active role: {roleLabel}
               </p>
             </div>
 
             {/* Messages */}
-            <div className="flex-1 overflow-y-auto p-4 space-y-3 bg-slate-50">
+            <div className="flex-1 overflow-y-auto p-4 space-y-3 bg-white">
               {messages.length === 0 && !loading && (
                 <div className="text-center text-sm text-slate-400 p-6 space-y-2">
                   <Sparkles size={20} className="mx-auto text-slate-300" />
@@ -240,18 +241,18 @@ export default function NexaAssistant({ user }) {
                   <div
                     className={`max-w-[85%] rounded-xl px-4 py-2.5 text-sm whitespace-pre-line shadow-sm ${
                       m.from === 'user'
-                        ? 'bg-amber-500 text-slate-950 font-medium'
+                        ? 'bg-[#C8102E] text-white font-medium'
                         : m.isNote
-                          ? 'bg-transparent text-slate-400 italic text-[11px] px-2'
+                          ? 'bg-transparent text-[#222222] italic text-[11px] px-2'
                           : m.isError
-                            ? 'bg-red-50 border border-red-200 text-red-700'
-                            : 'bg-white text-slate-800'
+                            ? 'bg-[#FCEBED] border border-[#EEEEEE] text-[#8B0000]'
+                            : 'bg-white text-[#222222] border border-[#EEEEEE]'
                     }`}
                   >
                     {m.from === 'user' && <div className="text-[10px] opacity-75 mb-1 text-right font-bold uppercase tracking-wider">YOU</div>}
                     <div className={m.from === 'user' ? 'text-right' : 'text-left'}>
                       {typing && typing.id === m.id ? (
-                        <span>{typing.text}<span className="inline-block w-[5px] h-[17px] bg-amber-500 rounded-sm animate-pulse ml-0.5 align-baseline" /></span>
+                        <span>{typing.text}<span className="inline-block w-[5px] h-[17px] bg-[#C8102E] rounded-sm animate-pulse ml-0.5 align-baseline" /></span>
                       ) : (
                         m.text
                       )}
@@ -262,7 +263,7 @@ export default function NexaAssistant({ user }) {
               ))}
               {(loading || typing) && (
                 <div className="flex justify-start">
-                  <div className="px-4 py-2.5 bg-white border border-slate-200 rounded-xl text-xs text-slate-400 flex items-center gap-0.5">
+                  <div className="px-4 py-2.5 bg-white border border-[#EEEEEE] rounded-md text-xs text-[#222222] flex items-center gap-0.5">
                     {loading && !typing ? (
                       <>
                         <Loader2 size={13} className="animate-spin mr-1.5" />
@@ -270,9 +271,9 @@ export default function NexaAssistant({ user }) {
                       </>
                     ) : (
                       <span className="text-[11px] font-bold flex items-center gap-1">
-                        <span className="w-1.5 h-1.5 bg-amber-500 rounded-full animate-bounce" />
-                        <span className="w-1.5 h-1.5 bg-amber-500 rounded-full animate-bounce" style={{ animationDelay: '0.15s' }} />
-                        <span className="w-1.5 h-1.5 bg-amber-500 rounded-full animate-bounce" style={{ animationDelay: '0.3s' }} />
+                        <span className="w-1.5 h-1.5 bg-[#C8102E] rounded-full animate-bounce" />
+                        <span className="w-1.5 h-1.5 bg-[#C8102E] rounded-full animate-bounce" style={{ animationDelay: '0.15s' }} />
+                        <span className="w-1.5 h-1.5 bg-[#C8102E] rounded-full animate-bounce" style={{ animationDelay: '0.3s' }} />
                         NEXA AI is typing…
                       </span>
                     )}
@@ -284,13 +285,13 @@ export default function NexaAssistant({ user }) {
 
             {/* Suggested questions */}
             {suggested.length > 0 && (
-              <div className="px-4 py-2.5 flex flex-wrap gap-1.5 border-t border-slate-100 bg-white">
+              <div className="px-4 py-2.5 flex flex-wrap gap-1.5 border-t border-[#EEEEEE] bg-white">
                 {suggested.slice(0, 3).map((q, i) => (
                   <button
                     key={i}
                     onClick={() => send(q)}
                     disabled={loading || typing}
-                    className="text-[11px] px-2.5 py-1 rounded-full border border-amber-300 text-amber-800 bg-amber-50 hover:bg-amber-100 font-medium disabled:opacity-40 transition"
+                    className="text-[11px] px-2.5 py-1 rounded-full border border-[#EEEEEE] text-[#8B0000] bg-[#FCEBED] hover:bg-[#FCEBED] font-medium disabled:opacity-40 transition"
                   >
                     {q}
                   </button>
@@ -300,13 +301,13 @@ export default function NexaAssistant({ user }) {
 
             {/* Error banner */}
             {error && (
-              <p className="px-4 pb-1 text-[11px] text-red-600 font-bold" role="alert">
+              <p className="px-4 pb-1 text-[11px] text-[#8B0000] font-bold" role="alert">
                 {error}
               </p>
             )}
 
             {/* Input */}
-            <div className="p-3 border-t border-slate-200 bg-white flex items-center space-x-2 rounded-b-2xl sm:rounded-b-2xl">
+            <div className="p-3 border-t border-[#EEEEEE] bg-white flex items-center space-x-2 rounded-b-2xl sm:rounded-b-2xl">
               <textarea
                 value={input}
                 onChange={(e) => setInput(e.target.value)}
@@ -318,13 +319,13 @@ export default function NexaAssistant({ user }) {
                 }}
                 placeholder="Ask a question…"
                 rows={2}
-                className="flex-1 text-sm border border-slate-300 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-amber-400 resize-none bg-slate-50"
+                className="flex-1 text-sm border border-[#EEEEEE] rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-[#C8102E] resize-none bg-white text-[#222222]"
                 aria-label="Message the assistant"
               />
               <button
                 onClick={() => send()}
                 disabled={loading || typing || !input.trim()}
-                className="p-2.5 rounded-lg bg-amber-500 hover:bg-amber-600 text-slate-950 disabled:opacity-40 transition flex-shrink-0"
+                className="p-2.5 rounded-md bg-[#C8102E] hover:bg-[#8B0000] text-white disabled:opacity-40 transition flex-shrink-0"
                 aria-label="Send message"
               >
                 <Send size={16} />

@@ -15,7 +15,7 @@ function EvidenceRow({ e, updating, onUpdate }) {
   return (
     <tr className="hover:bg-slate-50">
       <td className="p-3 border-b border-slate-100 text-xs font-mono text-slate-500">#{e.id}</td>
-      <td className="p-3 border-b border-slate-100 text-xs font-extrabold text-[#0F2744]">{e.title}</td>
+      <td className="p-3 border-b border-slate-100 text-xs font-extrabold text-[#C8102E]">{e.title}</td>
       <td className="p-3 border-b border-slate-100 text-xs"><span className="font-semibold uppercase">{e.evidence_type}</span></td>
       <td className="p-3 border-b border-slate-100 text-xs">{e.claim_id ? `Claim ${e.claim_id}` : ''}{e.investigation_id ? ` (Inv ${e.investigation_id})` : ''}</td>
       <td className="p-3 border-b border-slate-100 text-xs">
@@ -63,7 +63,7 @@ export default function EvidenceManagement({ user }) {
     <div className="space-y-6">
       <div className="bg-white rounded-2xl border border-slate-200 p-6 shadow-sm flex items-center justify-between">
         <div>
-          <h1 className="text-2xl font-extrabold text-[#0F2744] flex items-center gap-3"><FileCheck size={22} className="text-amber-500" /> Digital Evidence & Audit Trail</h1>
+          <h1 className="text-2xl font-extrabold text-[#C8102E] flex items-center gap-3"><FileCheck size={22} className="text-amber-500" /> Digital Evidence & Audit Trail</h1>
           <p className="text-xs text-slate-500 font-medium mt-1">SHA-256 fingerprinted records — integrity is re-verified on demand; evidence updates are audited.</p>
         </div>
         <div className="flex gap-2">
@@ -79,7 +79,7 @@ export default function EvidenceManagement({ user }) {
 
       <div className="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-x-auto">
         <table className="w-full text-left">
-          <thead className="bg-[#0F2744] text-white">
+          <thead className="bg-[#C8102E] text-white">
             <tr className="text-[10px] font-extrabold uppercase tracking-wide">
               <th className="p-4">ID</th><th className="p-4">Title</th><th className="p-4">Type</th>
               <th className="p-4">Link</th><th className="p-4">Status</th><th className="p-4">SHA-256</th>

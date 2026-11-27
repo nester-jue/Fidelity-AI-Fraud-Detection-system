@@ -1,20 +1,30 @@
 import React from 'react';
 import {
-  ShieldCheck, LogOut, Bell, User,
+  ShieldCheck, LogOut,
   LayoutDashboard, FileText, Plus, Upload,
   ScanText, Brain, AlertTriangle, FileCheck,
   Users, Settings, Activity, BarChart3,
   ClipboardCheck, Scale, Search, Eye,
   Briefcase, TrendingUp, Shield, Server,
-  Database, Cpu, List, ChevronRight
+  Database, Cpu, List, ChevronRight, Bell, User
 } from 'lucide-react';
 
-// Role-based navigation configuration
+/* ══════════════════════════════════════════════════════════════════════════
+   FIDE AI FRAUD DETECTION — FIDELITY LIFE ASSURANCE ZIMBABWE
+   Corporate dashboard layout. WHITE surfaces + Fidelity red (#C8102E),
+   black headings, subtle #EEEEEE borders. Role-based navigation and
+   permissions are preserved exactly; only the presentation is restyled.
+   ══════════════════════════════════════════════════════════════════════════ */
+
+const FIDELITY_RED = '#C8102E';
+
+// Role-based navigation configuration (unchanged items & permissions;
+// `color` retained for API compatibility, now uniformly corporate).
 const NAV_CONFIG = {
   claims_officer: {
     label: 'Claims Officer',
-    color: 'from-blue-700 to-blue-900',
-    accent: '#3B82F6',
+    color: '',
+    accent: FIDELITY_RED,
     items: [
       { id: 'dashboard', label: 'Dashboard', icon: LayoutDashboard },
       { id: 'my-claims', label: 'My Claims', icon: FileText },
@@ -30,8 +40,8 @@ const NAV_CONFIG = {
   },
   claims_manager: {
     label: 'Claims Manager',
-    color: 'from-indigo-700 to-indigo-900',
-    accent: '#6366F1',
+    color: '',
+    accent: FIDELITY_RED,
     items: [
       { id: 'dashboard', label: 'Dashboard', icon: LayoutDashboard },
       { id: 'my-claims', label: 'Claims Register', icon: FileText },
@@ -47,8 +57,8 @@ const NAV_CONFIG = {
   },
   executive: {
     label: 'Executive',
-    color: 'from-slate-800 to-slate-950',
-    accent: '#F59E0B',
+    color: '',
+    accent: FIDELITY_RED,
     items: [
       { id: 'dashboard', label: 'Executive Overview', icon: LayoutDashboard },
       { id: 'claims-performance', label: 'Claims Performance', icon: BarChart3 },
@@ -62,8 +72,8 @@ const NAV_CONFIG = {
   },
   compliance: {
     label: 'Compliance Officer',
-    color: 'from-purple-800 to-purple-950',
-    accent: '#8B5CF6',
+    color: '',
+    accent: FIDELITY_RED,
     items: [
       { id: 'dashboard', label: 'Compliance Overview', icon: LayoutDashboard },
       { id: 'alerts', label: 'Compliance Alerts', icon: AlertTriangle },
@@ -77,8 +87,8 @@ const NAV_CONFIG = {
   },
   fraud_investigator: {
     label: 'Fraud Investigator',
-    color: 'from-red-800 to-red-950',
-    accent: '#EF4444',
+    color: '',
+    accent: FIDELITY_RED,
     items: [
       { id: 'dashboard', label: 'Investigation Overview', icon: LayoutDashboard },
       { id: 'fraud-alerts', label: 'Fraud Alerts', icon: AlertTriangle },
@@ -93,8 +103,8 @@ const NAV_CONFIG = {
   },
   admin: {
     label: 'System Administrator',
-    color: 'from-emerald-800 to-emerald-950',
-    accent: '#10B981',
+    color: '',
+    accent: FIDELITY_RED,
     items: [
       { id: 'dashboard', label: 'Admin Overview', icon: LayoutDashboard },
       { id: 'users', label: 'User Management', icon: Users },
@@ -132,44 +142,42 @@ export default function DashboardLayout({ user, activeTab, setActiveTab, onLogou
   };
 
   return (
-    <div className="min-h-screen bg-slate-50 flex flex-col font-sans">
-      {/* Top Header */}
-      <header className="bg-[#0A192F] text-white border-b border-slate-700/80 sticky top-0 z-50 shadow-lg">
+    <div className="min-h-screen bg-white flex flex-col font-sans text-[#222222]">
+      {/* Top corporate navigation — white, Fidelity branding left, red accents */}
+      <header className="bg-white text-[#222222] border-b border-[#EEEEEE] sticky top-0 z-50 shadow-sm">
         <div className="px-4 sm:px-6 h-16 flex items-center justify-between gap-3 flex-wrap min-w-0">
-          {/* Brand */}
-          <div className="flex items-center space-x-3">
-            <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-amber-500 to-amber-600 flex items-center justify-center shadow-md">
-              <ShieldCheck size={22} className="text-slate-950" />
+          <div className="flex items-center gap-3 min-w-0">
+            <div className="w-10 h-10 rounded-md bg-[#C8102E] flex items-center justify-center shadow-sm shrink-0">
+              <ShieldCheck size={22} className="text-white" />
             </div>
-            <div>
-              <div className="flex items-center space-x-2">
-                <span className="font-extrabold tracking-wider text-sm text-white">FIDELITY LIFE</span>
-                <span className="text-[9px] px-1.5 py-0.5 rounded-full bg-amber-500 text-slate-950 font-black tracking-widest uppercase">ASSURANCE</span>
+            <div className="min-w-0">
+              <div className="flex items-center gap-2">
+                <span className="font-extrabold tracking-wide text-sm text-[#222222]">FIDELITY LIFE</span>
+                <span className="text-[9px] px-1.5 py-0.5 rounded-sm bg-[#FCEBED] border border-[#EEEEEE] text-[#8B0000] font-black tracking-widest uppercase">ASSURANCE</span>
               </div>
-              <p className="text-[10px] text-slate-400 font-semibold tracking-wide hidden sm:block">NEXA AI Fraud Detection Platform</p>
+              <p className="text-[10px] text-[#222222] font-semibold tracking-wide hidden sm:block">NEXA AI Fraud Detection Platform</p>
             </div>
           </div>
 
-          {/* Right side: AI status + user */}
-          <div className="flex items-center space-x-3">
-            <div className="hidden md:flex items-center space-x-1.5 text-[11px] bg-slate-800/80 px-2.5 py-1 rounded-full border border-slate-700 text-slate-300">
-              <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse"></span>
-              <span>AI: <strong className="text-amber-300">v1.2-hybrid</strong></span>
+          <div className="flex items-center gap-3">
+            <div className="hidden md:flex items-center gap-1.5 text-[11px] px-2.5 py-1 rounded-full bg-[#FCEBED] border border-[#EEEEEE] text-[#8B0000]">
+              <span className="w-1.5 h-1.5 rounded-full bg-[#C8102E]" aria-hidden="true" />
+              <span>AI: <strong>v1.2-hybrid</strong></span>
             </div>
 
-            <div className="flex items-center space-x-2 pl-3 border-l border-slate-700">
-              <div className="w-8 h-8 rounded-lg bg-slate-800 border-2 border-amber-500 flex items-center justify-center font-bold text-xs text-amber-400">
+            <div className="flex items-center gap-2 pl-3 border-l border-[#EEEEEE]">
+              <div className="w-8 h-8 rounded-md bg-[#FCEBED] border border-[#EEEEEE] flex items-center justify-center font-bold text-xs text-[#8B0000]">
                 {(user?.full_name || user?.username || 'U').slice(0, 2).toUpperCase()}
               </div>
               <div className="hidden lg:block text-left">
-                <p className="text-xs font-bold text-white leading-tight">{user?.full_name || user?.username}</p>
-                <p className="text-[10px] text-amber-400 font-semibold">{roleLabels[user?.role] || user?.role}</p>
+                <p className="text-xs font-bold text-[#222222] leading-tight">{user?.full_name || user?.username}</p>
+                <p className="text-[10px] text-[#C8102E] font-semibold">{roleLabels[user?.role] || user?.role}</p>
               </div>
             </div>
 
             <button
               onClick={onLogout}
-              className="p-2 text-slate-400 hover:text-white hover:bg-slate-800 rounded-lg transition"
+              className="p-2 text-[#C8102E] hover:bg-[#FCEBED] rounded-md transition"
               title="Sign Out"
             >
               <LogOut size={16} />
@@ -179,15 +187,13 @@ export default function DashboardLayout({ user, activeTab, setActiveTab, onLogou
       </header>
 
       <div className="flex flex-1 overflow-hidden">
-        {/* Sidebar */}
-        <aside className={`w-56 bg-gradient-to-b ${navConfig.color} flex flex-col flex-shrink-0 overflow-y-auto min-w-0`}>
-          {/* Department label */}
-          <div className="px-4 py-4 border-b border-white/10">
-            <span className="text-[10px] text-white/50 uppercase font-black tracking-widest">Department</span>
-            <p className="text-xs font-bold text-white mt-0.5">{navConfig.label}</p>
+        {/* Sidebar — white corporate, black text, red icons, light-red active */}
+        <aside className="w-56 bg-white border-r border-[#EEEEEE] flex flex-col flex-shrink-0 overflow-y-auto min-w-0">
+          <div className="px-4 py-4 border-b border-[#EEEEEE]">
+            <span className="text-[10px] text-[#222222] uppercase font-black tracking-widest">Department</span>
+            <p className="text-xs font-bold text-[#222222] mt-0.5">{navConfig.label}</p>
           </div>
 
-          {/* Nav items */}
           <nav className="flex-1 py-3 px-2 space-y-0.5">
             {navConfig.items.map((item) => {
               const Icon = item.icon;
@@ -196,30 +202,28 @@ export default function DashboardLayout({ user, activeTab, setActiveTab, onLogou
                 <button
                   key={item.id}
                   onClick={() => setActiveTab(item.id)}
-                  className={`w-full flex items-center space-x-2.5 px-3 py-2.5 rounded-lg text-left transition text-xs font-semibold ${
-                    isActive
-                      ? 'bg-white/20 text-white shadow-sm'
-                      : 'text-white/60 hover:text-white hover:bg-white/10'
+                  aria-current={isActive ? 'page' : undefined}
+                  className={`relative w-full flex items-center gap-2.5 px-3 py-2.5 rounded-lg text-left transition text-xs font-semibold ${
+                    isActive ? 'bg-[#FCEBED] text-[#222222]' : 'text-[#222222] hover:bg-[#FCEBED] hover:text-[#C8102E]'
                   }`}
                 >
-                  <Icon size={15} className={isActive ? 'text-white' : 'text-white/50'} />
-                  <span>{item.label}</span>
-                  {isActive && <ChevronRight size={12} className="ml-auto text-white/70" />}
+                  {isActive && <span aria-hidden="true" className="absolute left-0 top-1.5 bottom-1.5 w-1 rounded-full bg-[#C8102E]" />}
+                  <Icon size={15} className="text-[#C8102E] shrink-0" />
+                  <span className="truncate">{item.label}</span>
+                  {isActive && <ChevronRight size={12} className="ml-auto text-[#C8102E]" />}
                 </button>
               );
             })}
           </nav>
 
-          {/* Footer */}
-          <div className="px-4 py-3 border-t border-white/10">
-            <p className="text-[10px] text-white/40 font-semibold">
-              © 2026 Fidelity Life<br />NEXA AI Suite v2.0
+          <div className="px-4 py-3 border-t border-[#EEEEEE]">
+            <p className="text-[10px] text-[#222222] font-semibold">
+              © 2026 Fidelity Life Assurance Zimbabwe<br />FIDE AI Fraud Detection
             </p>
           </div>
         </aside>
 
-        {/* Main content area */}
-        <main className="flex-1 min-w-0 overflow-y-auto bg-slate-50 p-5 lg:p-6">
+        <main className="flex-1 min-w-0 overflow-y-auto bg-white p-5 lg:p-6">
           {children}
         </main>
       </div>

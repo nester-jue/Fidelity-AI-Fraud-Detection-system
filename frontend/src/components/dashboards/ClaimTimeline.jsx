@@ -20,12 +20,12 @@ function EventCard({ e }) {
   return (
     <div className="relative flex gap-3">
       <div className="flex flex-col items-center">
-        <div className={`w-4 h-4 rounded-full border-2 border-[#0F2744] ${expanded ? 'bg-[#0F2744]' : 'bg-white'} z-10`} />
+        <div className={`w-4 h-4 rounded-full border-2 border-[#C8102E] ${expanded ? 'bg-[#C8102E]' : 'bg-white'} z-10`} />
       </div>
       <div className="flex-1 bg-white rounded-xl border border-slate-200 px-4 py-3">
         <div className="flex items-start justify-between">
           <div>
-            <p className="text-xs font-extrabold text-[#0F2744] uppercase tracking-wide">{label}</p>
+            <p className="text-xs font-extrabold text-[#C8102E] uppercase tracking-wide">{label}</p>
             <p className="text-[11px] text-slate-500">{new Date(e.timestamp).toLocaleString()}</p>
           </div>
           <button onClick={() => setExpanded(!expanded)} title="Show details" className="text-slate-400 hover:text-slate-700">
@@ -83,7 +83,7 @@ export default function ClaimTimeline({ user }) {
     <div className="space-y-6">
       <div className="bg-white rounded-2xl border border-slate-200 p-6 flex items-center justify-between shadow-sm">
         <div>
-          <h1 className="text-2xl font-extrabold text-[#0F2744] flex items-center gap-3"><Clock size={22} className="text-amber-500" /> Claim Timeline Intelligence</h1>
+          <h1 className="text-2xl font-extrabold text-[#C8102E] flex items-center gap-3"><Clock size={22} className="text-amber-500" /> Claim Timeline Intelligence</h1>
           <p className="text-xs text-slate-500 font-medium">Chronological reconstruction of claim events from real records — never fabricated.</p>
         </div>
         <div className="flex gap-2">
@@ -95,7 +95,7 @@ export default function ClaimTimeline({ user }) {
             <option value="">— select claim —</option>
             {recentClaims.map(c => <option key={c.id} value={c.id}>{c.label}</option>)}
           </select>
-          <button onClick={() => fetchTimeline()} className="px-5 py-2.5 rounded-xl bg-[#0F2744] text-white font-bold text-sm" disabled={!claimId || loading}>Load Timeline</button>
+          <button onClick={() => fetchTimeline()} className="px-5 py-2.5 rounded-xl bg-[#C8102E] text-white font-bold text-sm" disabled={!claimId || loading}>Load Timeline</button>
         </div>
       </div>
 

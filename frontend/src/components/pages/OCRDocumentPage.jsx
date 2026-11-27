@@ -7,17 +7,17 @@ import { api } from '../../api/apiClient.js';
 
 const statusBadge = (status) => {
   const map = {
-    pending: 'bg-slate-100 text-slate-700',
-    processing: 'bg-blue-100 text-blue-800',
-    completed: 'bg-emerald-100 text-emerald-800',
-    failed: 'bg-red-100 text-red-800',
+    pending: 'bg-white text-[#222222] border border-[#EEEEEE]',
+    processing: 'bg-[#FCEBED] text-[#8B0000]',
+    completed: 'bg-[#FCEBED] text-[#8B0000]',
+    failed: 'bg-[#8B0000] text-white',
   };
-  return <span className={`px-2 py-0.5 rounded-full text-[10px] font-bold uppercase ${map[status] || 'bg-slate-100 text-slate-700'}`}>{status}</span>;
+  return <span className={`px-2 py-0.5 rounded-full text-[10px] font-bold uppercase ${map[status] || 'bg-white text-[#222222] border border-[#EEEEEE]'}`}>{status}</span>;
 };
 
 function ConfidenceBar({ score }) {
   const pct = Math.min(100, Math.max(0, score || 0));
-  const color = pct >= 80 ? '#10B981' : pct >= 50 ? '#F59E0B' : '#EF4444';
+  const color = pct >= 80 ? '#C8102E' : pct >= 50 ? '#8B0000' : '#222222';
   return (
     <div className="flex items-center space-x-2">
       <div className="w-16 h-2 bg-slate-200 rounded-full overflow-hidden">
@@ -346,7 +346,7 @@ export default function OCRDocumentPage({ user, activeTab }) {
 
         {/* Sample document detail modal — full OCR extraction data */}
         {sampleDetail && (
-          <div className="fixed inset-0 z-50 bg-black/60 flex items-center justify-center p-4 overflow-y-auto">
+          <div className="fixed inset-0 z-50 bg-black/20 flex items-center justify-center p-4 overflow-y-auto">
             <div className="bg-white rounded-3xl max-w-3xl w-full shadow-2xl border border-slate-200 max-h-[85vh] overflow-y-auto">
               <div className="sticky top-0 bg-white border-b border-slate-200 p-5 flex items-center justify-between rounded-t-3xl">
                 <div>
@@ -453,7 +453,7 @@ export default function OCRDocumentPage({ user, activeTab }) {
                 {sampleDetail.raw_text_snippet && (
                   <div>
                     <h3 className="nexa-suite-section text-slate-700 uppercase mb-2">Extracted Text (Snippet)</h3>
-                    <div className="bg-slate-900 text-slate-200 rounded-xl p-4 text-[11px] font-mono whitespace-pre-wrap max-h-40 overflow-y-auto">
+                    <div className="bg-slate-50 border border-slate-200 text-slate-800 rounded-xl p-4 text-[11px] font-mono whitespace-pre-wrap max-h-40 overflow-y-auto">
                       {sampleDetail.raw_text_snippet}
                     </div>
                   </div>
@@ -535,7 +535,7 @@ export default function OCRDocumentPage({ user, activeTab }) {
                 <div key={i} className="p-4">
                   <div className="flex items-center space-x-2 mb-1">
                     <span className={`px-2 py-0.5 rounded-full text-[10px] font-bold ${
-                      issue.severity === 'potential_inconsistency' ? 'bg-amber-100 text-amber-800' : 'bg-red-100 text-red-800'
+                      issue.severity === 'potential_inconsistency' ? 'bg-[#FCEBED] text-[#8B0000]' : 'bg-[#8B0000] text-white'
                     }`}>{issue.severity}</span>
                     <span className="text-xs font-bold text-slate-700">{issue.type}</span>
                     <span className="text-xs text-slate-500 font-mono">Claim {issue.claim_id}</span>
@@ -657,7 +657,7 @@ export default function OCRDocumentPage({ user, activeTab }) {
 
       {/* Document Detail Modal */}
       {selectedDoc && (
-        <div className="fixed inset-0 z-50 bg-black/60 flex items-center justify-center p-4 overflow-y-auto">
+        <div className="fixed inset-0 z-50 bg-black/20 flex items-center justify-center p-4 overflow-y-auto">
           <div className="bg-white rounded-3xl max-w-3xl w-full shadow-2xl border border-slate-200 max-h-[90vh] overflow-y-auto">
             <div className="sticky top-0 bg-white border-b border-slate-200 p-5 flex items-center justify-between rounded-t-3xl">
               <div>
@@ -751,7 +751,7 @@ export default function OCRDocumentPage({ user, activeTab }) {
               {selectedDoc.raw_text_snippet && (
                 <div>
                   <h3 className="nexa-suite-section text-slate-700 uppercase mb-2">Extracted Text (Snippet)</h3>
-                  <div className="bg-slate-900 text-slate-200 rounded-xl p-4 text-[11px] font-mono whitespace-pre-wrap max-h-40 overflow-y-auto">
+                  <div className="bg-slate-50 border border-slate-200 text-slate-800 rounded-xl p-4 text-[11px] font-mono whitespace-pre-wrap max-h-40 overflow-y-auto">
                     {selectedDoc.raw_text_snippet}
                   </div>
                 </div>

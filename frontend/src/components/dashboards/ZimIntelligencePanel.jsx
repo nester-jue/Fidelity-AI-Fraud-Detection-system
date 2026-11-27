@@ -83,7 +83,7 @@ export default function ZimIntelligencePanel({ user }) {
     <div className="space-y-7">
       <div className="bg-white rounded-2xl border border-slate-200 p-8 shadow-sm">
         <div className="flex items-center justify-between">
-          <h1 className="text-4xl font-extrabold text-[#0F2744] flex items-center gap-3"><Globe size={30} className="text-amber-500" /> Zimbabwe Insurance Intelligence</h1>
+          <h1 className="text-4xl font-extrabold text-[#C8102E] flex items-center gap-3"><Globe size={30} className="text-amber-500" /> Zimbabwe Insurance Intelligence</h1>
           {lastUpdated && <span className="text-sm text-slate-400">Last verified information update: {lastUpdated}</span>}
         </div>
         <p className="text-base text-slate-600 font-medium mt-1">
@@ -100,7 +100,7 @@ export default function ZimIntelligencePanel({ user }) {
             ) : (
               <div className="flex flex-wrap gap-3">
                 {config.accepted_currencies.map(c => (
-                  <span key={c} className={`px-4 py-2 rounded-full text-base font-black ${c === config.mandatory_currency ? 'bg-[#0F2744] text-white' : 'bg-slate-100 text-slate-600'}`}>
+                  <span key={c} className={`px-4 py-2 rounded-full text-base font-black ${c === config.mandatory_currency ? 'bg-[#C8102E] text-white' : 'bg-slate-100 text-slate-600'}`}>
                     {c}{c === config.mandatory_currency ? ' (mandatory)' : ''}
                   </span>
                 ))}
@@ -123,7 +123,7 @@ export default function ZimIntelligencePanel({ user }) {
                 ))}
                 <div className="mt-4 flex gap-3">
                   <input value={nidTest} onChange={e => setNidTest(e.target.value)} placeholder="e.g. 63-1234567-A-01" className="px-4 py-3 text-base border border-slate-200 rounded-lg w-56" />
-                  <button onClick={validateNid} disabled={!nidTest.trim()} className="px-4 py-3 text-base font-bold bg-[#0F2744] text-white rounded-lg disabled:opacity-50">Validate ID</button>
+                  <button onClick={validateNid} disabled={!nidTest.trim()} className="px-4 py-3 text-base font-bold bg-[#C8102E] text-white rounded-lg disabled:opacity-50">Validate ID</button>
                 </div>
                 {nidResult && (
                   <div className="mt-4 text-base bg-slate-50 rounded-xl px-4 py-3">
@@ -140,7 +140,7 @@ export default function ZimIntelligencePanel({ user }) {
             <h3 className="text-base font-extrabold text-slate-700 uppercase tracking-wider mb-4">Date Format Normalisation</h3>
             <div className="flex gap-3">
               <input value={dateTest} onChange={e => setDateTest(e.target.value)} placeholder="e.g. 15/03/2026 (DD/MM/YYYY)" className="px-4 py-3 text-base border border-slate-200 rounded-lg w-64" />
-              <button onClick={normalizeDate} disabled={!dateTest.trim()} className="px-4 py-3 text-base font-bold bg-[#0F2744] text-white rounded-lg disabled:opacity-50">Normalize</button>
+              <button onClick={normalizeDate} disabled={!dateTest.trim()} className="px-4 py-3 text-base font-bold bg-[#C8102E] text-white rounded-lg disabled:opacity-50">Normalize</button>
             </div>
             {dateResult && (
               <p className="mt-4 text-base">{dateResult.ok ? `→ ISO: ${dateResult.iso}` : `✗ ${(dateResult.errors || ['No match']).join(' ')}`}</p>

@@ -22,17 +22,17 @@ import { api } from '../../api/apiClient.js';
 // ---------------------------------------------------------------------------
 
 const TYPE_COLORS = {
-  customer: '#3B82F6', policy: '#10B981', claim: '#8B5CF6',
-  document: '#F59E0B', beneficiary: '#EF4444', payment_ref: '#6B72BE',
-  default: '#6B7280',
+  customer: '#C8102E', policy: '#EEEEEE', claim: '#8B0000',
+  document: '#C8102E', beneficiary: '#8B0000', payment_ref: '#C8102E',
+  default: '#222222',
 };
 const TYPE_LABELS = {
   customer: 'Customer', policy: 'Policy', claim: 'Claim',
   document: 'Document', beneficiary: 'Beneficiary', payment_ref: 'Account Ref',
 };
-const EDGE_STROKE = '#334155';
-const EDGE_STRONG = '#F87171';
-const EDGE_SUSPICIOUS_MID = '#F87171';
+const EDGE_STROKE = '#222222';
+const EDGE_STRONG = '#C8102E';
+const EDGE_SUSPICIOUS_MID = '#C8102E';
 
 // Enlarged layout: the fraud relationship network gets a much bigger canvas
 // (1400x960 instead of 760x480) and the card is centered on the page.
@@ -169,7 +169,7 @@ export default function FraudNetworkGraph({ user }) {
   const hasEmpty = !g.nodes || g.nodes.length === 0;
   const suspiciousCount = (g.suspicious_nodes?.length || 0) + (g.suspicious_edges?.length || 0);
 
-  const KpiMini = ({ icon: Icon, label, value, sub, accent = '#334155' }) => (
+  const KpiMini = ({ icon: Icon, label, value, sub, accent = '#222222' }) => (
     <div className="bg-white rounded-2xl border border-slate-200 p-5">
       <div className="flex items-start justify-between">
         <div><p className="text-[10px] font-extrabold uppercase tracking-wider text-slate-500">{label}</p><p className="text-2xl font-extrabold text-slate-900 mt-1">{value}</p></div>
@@ -218,13 +218,13 @@ export default function FraudNetworkGraph({ user }) {
           <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
             <KpiMini icon={Network} label="Total entities analysed" value={fmtNum(g.summary?.total_nodes)} />
             <KpiMini icon={Plus} label="Total relationships identified" value={fmtNum(g.summary?.total_edges)} />
-            <KpiMini icon={ShieldCheck} label="Suspicious relationships for review" value={fmtNum(suspiciousCount)} accent="#EF4444" />
+            <KpiMini icon={ShieldCheck} label="Suspicious relationships for review" value={fmtNum(suspiciousCount)} accent="#8B0000" />
             <KpiMini icon={FileWarning} label="Connected claim clusters" value={fmtNum(g.summary?.clusters)} />
           </div>
 
           {/* ── Live Graph ── */}
           <div className="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden max-w-5xl mx-auto">
-            <div className="px-6 py-4 bg-[#0F2744] text-white flex items-center justify-between">
+            <div className="px-6 py-4 bg-[#C8102E] text-white flex items-center justify-between">
               <div className="flex items-center gap-2 font-bold">
                 <Network size={16} className="text-amber-400" />
                 <span>Fraud Relationship Network (live graph)</span>
@@ -233,7 +233,7 @@ export default function FraudNetworkGraph({ user }) {
                 {fmtNum(g.summary?.total_nodes)} entities · {fmtNum(g.summary?.total_edges)} relationships · {fmtNum(g.summary?.clusters)} clusters
               </span>
             </div>
-            <div className="relative bg-slate-950">
+            <div className="relative bg-white border border-slate-200">
               <svg viewBox={`0 0 ${GRAPH_W} ${GRAPH_H}`} className={`w-full ${GRAPH_ASPECT}`} role="img" aria-label="Fraud relationship network graph">
                 {/* Edges */}
                 {(g.edges || []).map((e, i) => {
@@ -250,7 +250,7 @@ export default function FraudNetworkGraph({ user }) {
                         className={isS ? 'animate-pulse' : ''}
                         cursor="default" />
                       {isS && (
-                        <circle cx={(a.x + b.x) / 2} cy={(a.y + b.y) / 2} r="4.5" fill="#F87171" stroke="#1E3A8A" strokeWidth="2" />
+                        <circle cx={(a.x + b.x) / 2} cy={(a.y + b.y) / 2} r="4.5" fill="#C8102E" stroke="#8B0000" strokeWidth="2" />
                       )}
                     </g>
                   );
@@ -263,9 +263,9 @@ export default function FraudNetworkGraph({ user }) {
                   const label = nodeLabel(n);
                   return (
                     <g key={n.id} transform={`translate(${p.x}, ${p.y})`}>
-                      {n.is_suspicious && <circle r="22" fill="none" stroke="#F87171" strokeWidth="2" className="animate-ping opacity-45" />}
-                      <circle r="12" fill={color} stroke={n.is_suspicious ? '#F87171' : '#0F2744'} strokeWidth={n.is_suspicious ? 3 : 1.5} />
-                      <text textAnchor="middle" y="-15" fill="#CBD5E1" fontSize="8" fontWeight="bold">{label}</text>
+                      {n.is_suspicious && <circle r="22" fill="none" stroke="#C8102E" strokeWidth="2" className="animate-ping opacity-45" />}
+                      <circle r="12" fill={color} stroke={n.is_suspicious ? '#C8102E' : '#C8102E'} strokeWidth={n.is_suspicious ? 3 : 1.5} />
+                      <text textAnchor="middle" y="-15" fill="#222222" fontSize="8" fontWeight="bold">{label}</text>
                       <text textAnchor="middle" y="18" fill="white" fontSize="7" fontWeight="bold">
                         {n.entity_type === 'claim' ? (n.amount ? `${new Intl.NumberFormat('en-US', { maximumFractionDigits: 0 }).format(n.amount)}` : '') : ''}
                       </text>
@@ -276,8 +276,8 @@ export default function FraudNetworkGraph({ user }) {
                 <g transform="translate(14, 14)">
                   {Object.entries(TYPE_COLORS).filter(([k]) => k !== 'default').map(([k, color], i) => (
                     <g key={k} transform={`translate(0, ${i * 16})`}>
-                      <circle cx="5" cy="5" r="5" fill={color} />
-                      <text x="16" y="9" fontSize="9" fontWeight="bold" fill="#CBD5E1">{TYPE_LABELS[k] || k}</text>
+                      <circle cx="5" cy="5" r="5" fill={color} stroke="#C8102E" strokeWidth="1" />
+                      <text x="16" y="9" fontSize="9" fontWeight="bold" fill="#222222">{TYPE_LABELS[k] || k}</text>
                     </g>
                   ))}
                 </g>

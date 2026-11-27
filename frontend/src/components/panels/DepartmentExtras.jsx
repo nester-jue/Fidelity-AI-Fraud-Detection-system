@@ -93,14 +93,20 @@ function ClaimsTable({ items, emptyTitle, emptyNote, header, extraRow }) {
   );
 }
 
-const riskBadge = (category) => (
-  <span className={`px-2 py-0.5 rounded-full text-[10px] font-bold uppercase ${
-    category === 'Critical' ? 'bg-red-100 text-red-800'
-      : category === 'High' ? 'bg-orange-100 text-orange-800'
-        : category === 'Medium' ? 'bg-amber-100 text-amber-800'
-          : 'bg-emerald-100 text-emerald-800'
-  }`}>{category || 'Unassessed'}</span>
-);
+const riskBadge = (category) => {
+  // Fidelity risk presentation (text label always rendered; colour never alone).
+  const c = (category || '').toLowerCase();
+  const cls = c === 'critical' || c === 'high' ? 'bg-[#8B0000] text-white border-[#8B0000]'
+    : c === 'medium' ? 'bg-[#FCEBED] text-[#8B0000] border-[#C8102E]'
+      : c === 'low' ? 'bg-white text-[#222222] border-[#EEEEEE]'
+        : 'bg-white text-[#222222] border-[#EEEEEE]';
+  return (
+    <span className={`inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-bold uppercase border ${cls}`}>
+      {c === 'low' && <span className="inline-block w-1.5 h-1.5 rounded-full bg-[#C8102E] mr-1" aria-hidden="true" />}
+      {category || 'Unassessed'}
+    </span>
+  );
+};
 
 export function PendingClaimsPanel({ user }) {
   const { items, loading, error, retry } = useList(claimsFetcher);
@@ -286,7 +292,7 @@ export function PerformanceAnalyticsPanel({ user }) {
       {items && stats.length === 0 ? null : (
         <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
           {stats.map(([label, value]) => (
-            <div key={label} className="bg-white p-5 rounded-2xl border border-slate-200 shadow-sm border-t-4 border-t-[#0F2744]">
+            <div key={label} className="bg-white p-5 rounded-2xl border border-slate-200 shadow-sm border-t-4 border-t-[#C8102E]">
               <span className="text-[11px] font-bold uppercase tracking-wider text-slate-500">{label}</span>
               <p className="text-3xl font-black text-slate-900 mt-2">{value}</p>
             </div>
@@ -518,7 +524,7 @@ export function RiskDashboardPanel({ user }) {
         <div className="bg-white p-6 rounded-2xl border border-slate-200 shadow-sm">
           <h3 className="text-sm font-extrabold text-slate-700 uppercase tracking-wider mb-4">Fraud Network Exposure</h3>
           <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-            <div><p className="text-[11px] font-bold uppercase tracking-wider text-slate-500">Total Entities</p><p className="text-3xl font-black text-[#0F2744]">{ins.summary?.total_nodes || 0}</p></div>
+            <div><p className="text-[11px] font-bold uppercase tracking-wider text-slate-500">Total Entities</p><p className="text-3xl font-black text-[#C8102E]">{ins.summary?.total_nodes || 0}</p></div>
             <div><p className="text-[11px] font-bold uppercase tracking-wider text-slate-500">Total Relationships</p><p className="text-3xl font-black text-slate-600">{ins.summary?.total_edges || 0}</p></div>
             <div><p className="text-[11px] font-bold uppercase tracking-wider text-red-500">Suspicious Signals</p><p className="text-3xl font-black text-red-600">{(ins.suspicious_nodes || []).length + (ins.suspicious_edges || []).length}</p></div>
             <div><p className="text-[11px] font-bold uppercase tracking-wider text-slate-500">Clusters</p><p className="text-3xl font-black text-slate-800">{ins.summary?.clusters || 0}</p></div>
@@ -565,7 +571,7 @@ export function FraudRiskExposurePanel({ user }) {
       <div><h1 className="text-2xl font-extrabold text-slate-900">Fraud Risk Exposure</h1><p className="text-xs text-slate-500 mt-0.5">Enterprise exposure to potential fraud relationships and exposure magnitude</p></div>
       {!items?.nodes?.length ? <PanelEmpty title="No fraud exposure relationships" note="The fraud network graph currently has no relationships — exposure to collusion risk is nil." /> : (
         <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-          <div className="bg-white p-5 rounded-2xl border border-slate-200 shadow-sm border-t-4 border-t-[#0F2744]"><span className="text-[11px] font-bold uppercase tracking-wider text-slate-500">Entities at Risk</span><p className="text-3xl font-black text-slate-900 mt-2">{items.suspicious_nodes?.length || 0}</p></div>
+          <div className="bg-white p-5 rounded-2xl border border-slate-200 shadow-sm border-t-4 border-t-[#C8102E]"><span className="text-[11px] font-bold uppercase tracking-wider text-slate-500">Entities at Risk</span><p className="text-3xl font-black text-slate-900 mt-2">{items.suspicious_nodes?.length || 0}</p></div>
           <div className="bg-white p-5 rounded-2xl border border-slate-200 shadow-sm border-t-4 border-t-red-600"><span className="text-[11px] font-bold uppercase tracking-wider text-slate-500">Risk Relationships</span><p className="text-3xl font-black text-slate-900 mt-2">{suspiciousCount}</p></div>
           <div className="bg-white p-5 rounded-2xl border border-slate-200 shadow-sm border-t-4 border-t-amber-500"><span className="text-[11px] font-bold uppercase tracking-wider text-slate-500">Total Connected Entities</span><p className="text-3xl font-black text-slate-900 mt-2">{items.summary?.total_nodes || 0}</p></div>
           <div className="bg-white p-5 rounded-2xl border border-slate-200 shadow-sm border-t-4 border-t-slate-600"><span className="text-[11px] font-bold uppercase tracking-wider text-slate-500">Suspicion Clusters</span><p className="text-3xl font-black text-slate-900 mt-2">{items.summary?.clusters || 0}</p></div>
@@ -624,9 +630,9 @@ export function RiskConcentrationPanel({ user }) {
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
           {dist.map((item, i) => (
             <div key={i} className="bg-white p-5 rounded-2xl border border-slate-200 shadow-sm">
-              <PieChart size={18} className="text-[#0F2744] inline mb-1" />
+              <PieChart size={18} className="text-[#C8102E] inline mb-1" />
               <p className="text-[11px] font-bold uppercase tracking-wider text-slate-500">{item.name}</p>
-              <p className="text-3xl font-black text-[#0F2744] mt-2">{item.percentage}%</p>
+              <p className="text-3xl font-black text-[#C8102E] mt-2">{item.percentage}%</p>
               <p className="text-xs text-slate-500 mt-1">{item.count} claims</p>
             </div>
           ))}
@@ -677,7 +683,7 @@ export function FraudTrendsPanel({ user }) {
       {!items?.summary ? <PanelEmpty title="No trend data" note="The fraud network insights service has no trend data for the current period." /> : (
         <div className="bg-white p-6 rounded-2xl border border-slate-200 shadow-sm">
           <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-4">
-            <div><p className="text-[11px] font-bold uppercase tracking-wider text-slate-500">Total Entities</p><p className="text-3xl font-black text-[#0F2744] mt-2">{items.summary?.total_nodes ?? 0}</p></div>
+            <div><p className="text-[11px] font-bold uppercase tracking-wider text-slate-500">Total Entities</p><p className="text-3xl font-black text-[#C8102E] mt-2">{items.summary?.total_nodes ?? 0}</p></div>
             <div><p className="text-[11px] font-bold uppercase tracking-wider text-slate-500">Total Relationships</p><p className="text-3xl font-black text-slate-600 mt-2">{items.summary?.total_edges ?? 0}</p></div>
             <div><p className="text-[11px] font-bold uppercase tracking-wider text-red-500">Suspicious Signals</p><p className="text-3xl font-black text-red-600 mt-2">{(items.suspicious_nodes || []).length + (items.suspicious_edges || []).length}</p></div>
             <div><p className="text-[11px] font-bold uppercase tracking-wider text-slate-500">Clusters</p><p className="text-3xl font-black text-slate-800 mt-2">{items.summary?.clusters ?? 0}</p></div>
@@ -748,7 +754,7 @@ export function DatabaseMonitoringPanel({ user }) {
     <div className="space-y-6 max-w-3xl">
       <div className="flex items-center justify-between">
         <div><h1 className="text-2xl font-extrabold text-slate-900">Database Monitoring</h1><p className="text-xs text-slate-500 mt-0.5">Database connectivity, record volumes and system data counts</p></div>
-        <Database size={20} className="text-[#0F2744] opacity-70" />
+        <Database size={20} className="text-[#C8102E] opacity-70" />
       </div>
       {kpis.every(([, v]) => v === '—') ? <PanelEmpty title="Database counters unavailable" note="Live database metrics are not available at this time. Try again shortly." /> : (
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
@@ -773,7 +779,7 @@ export function APIMonitoringPanel({ user }) {
         <div className="bg-white rounded-2xl border border-slate-200 p-8 text-center">
           <AlertCircle className="w-8 h-8 text-amber-400 mx-auto" />
           <p className="text-xs text-slate-500 mt-2">No health status returned. The API monitoring service is not available.</p>
-          <button onClick={retry} className="mt-4 px-5 py-2.5 bg-[#0F2744] text-white font-bold text-xs rounded-xl"><RefreshCw size={14} className="inline mr-1.5" />Retry</button>
+          <button onClick={retry} className="mt-4 px-5 py-2.5 bg-[#C8102E] text-white font-bold text-xs rounded-xl"><RefreshCw size={14} className="inline mr-1.5" />Retry</button>
         </div>
       </div>
     );
@@ -782,7 +788,7 @@ export function APIMonitoringPanel({ user }) {
     <div className="space-y-6 max-w-3xl">
       <div className="flex items-center justify-between">
         <div><h1 className="text-2xl font-extrabold text-slate-900">API Monitoring</h1><p className="text-xs text-slate-500 mt-0.5">Endpoint health via /health — overall system connectivity</p></div>
-        <Link2 size={20} className="text-[#0F2744] opacity-70" />
+        <Link2 size={20} className="text-[#C8102E] opacity-70" />
       </div>
       <div className="bg-white rounded-2xl border border-slate-200 shadow-sm p-6">
         <div className="flex items-center gap-4">
@@ -884,7 +890,7 @@ export function AIAssistantPanel({ user }) {
 
   return (
     <div className="max-w-3xl mx-auto space-y-6 h-[70vh] flex flex-col">
-      <div><h1 className="text-2xl font-extrabold text-slate-900 flex items-center gap-2"><HeartPulse size={22} className="text-[#0F2744]" /> AI Assistant</h1><p className="text-xs text-slate-500 mt-0.5">Role-aware conversational assistant (NEXA AI) — queries are enforced by backend RBAC</p></div>
+      <div><h1 className="text-2xl font-extrabold text-slate-900 flex items-center gap-2"><HeartPulse size={22} className="text-[#C8102E]" /> AI Assistant</h1><p className="text-xs text-slate-500 mt-0.5">Role-aware conversational assistant (NEXA AI) — queries are enforced by backend RBAC</p></div>
       <div className="flex-1 bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden flex flex-col">
         <div className="flex-1 overflow-y-auto p-4 space-y-3">
           {err && <div className="bg-red-50 border-l-4 border-red-600 px-4 py-2.5 rounded-xl text-xs font-bold text-red-800">{err}</div>}
@@ -892,7 +898,7 @@ export function AIAssistantPanel({ user }) {
             <p className="text-center text-slate-400 text-xs py-8">No messages yet. Ask a question or pick a suggestion below.</p>
           ) : messages.map((m, i) => (
             <div key={i} className={`flex ${m.type === 'user' ? 'justify-end' : 'justify-start'}`}>
-              <div className={`px-3.5 py-2.5 rounded-xl text-xs max-w-[85%] ${m.type === 'user' ? 'bg-[#0F2744] text-white' : 'bg-slate-50 border border-slate-200 text-slate-700'}`}>
+              <div className={`px-3.5 py-2.5 rounded-xl text-xs max-w-[85%] ${m.type === 'user' ? 'bg-[#C8102E] text-white' : 'bg-slate-50 border border-slate-200 text-slate-700'}`}>
                 <p>{typing && i === messages.length - 1 && m.type === 'bot' ? typing.text : m.text}</p>
                 <span className="block mt-1 text-[9px] font-mono text-slate-400">{m.at}</span>
               </div>
@@ -902,7 +908,7 @@ export function AIAssistantPanel({ user }) {
         <div className="border-t border-slate-100 p-3">
           <div className="flex gap-2">
             <input value={input} onChange={e => setInput(e.target.value)} onKeyDown={e => e.key === 'Enter' && send()} placeholder="Ask a fraud-related question…" className="flex-1 px-3 py-2.5 border border-slate-300 rounded-xl text-xs disabled:opacity-50" disabled={sending || typing} />
-            <button onClick={send} disabled={sending || typing || !input.trim()} className="px-4 py-2.5 bg-[#0F2744] text-white rounded-xl font-bold text-xs disabled:opacity-50"><Loader2 className={`w-4 h-4 inline ${sending ? 'animate-spin' : ''}`} /></button>
+            <button onClick={send} disabled={sending || typing || !input.trim()} className="px-4 py-2.5 bg-[#C8102E] text-white rounded-xl font-bold text-xs disabled:opacity-50"><Loader2 className={`w-4 h-4 inline ${sending ? 'animate-spin' : ''}`} /></button>
           </div>
           {suggested.length > 0 && (
             <div className="flex flex-wrap gap-2 mt-2">

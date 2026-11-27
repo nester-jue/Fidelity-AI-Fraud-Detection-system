@@ -3,8 +3,8 @@ import { Bell, ShieldAlert, Play, CheckCheck, XCircle } from 'lucide-react';
 import { api } from '../../api/apiClient.js';
 
 const SEV_STYLES = {
-  CRITICAL: 'bg-red-50 text-red-800', HIGH: 'bg-orange-50 text-orange-800',
-  WARNING: 'bg-amber-50 text-amber-800', INFO: 'bg-blue-50 text-blue-700',
+  CRITICAL: 'bg-[#8B0000] text-white', HIGH: 'bg-[#8B0000] text-white',
+  WARNING: 'bg-[#FCEBED] text-[#8B0000]', INFO: 'bg-white text-[#222222] border border-[#EEEEEE]',
 };
 const SEV_ICONS = { CRITICAL: ShieldAlert, HIGH: XCircle, WARNING: Bell, INFO: Play };
 
@@ -13,7 +13,7 @@ function AlertRow({ alert, onAction }) {
   return (
     <tr className="hover:bg-slate-50">
       <td className="p-3 border-b border-slate-100 text-xs font-black text-slate-500">#{alert.id}</td>
-      <td className="p-3 border-b border-slate-100 text-xs font-extrabold text-[#0F2744]">{alert.alert_type.replace(/_/g, ' ')}</td>
+      <td className="p-3 border-b border-slate-100 text-xs font-extrabold text-[#C8102E]">{alert.alert_type.replace(/_/g, ' ')}</td>
       <td className="p-3 border-b border-slate-100 text-xs">
         <span className={`px-2 py-0.5 rounded-full text-[10px] font-bold ${SEV_STYLES[alert.severity] || ''}`}>{alert.severity}</span>
         <Icon size={12} className="text-slate-300 ml-1" />
@@ -67,10 +67,10 @@ export default function PredictiveAlerts({ user }) {
     <div className="space-y-6">
       <div className="bg-white rounded-2xl border border-slate-200 p-6 shadow-sm flex items-center justify-between">
         <div>
-          <h1 className="text-2xl font-extrabold text-[#0F2744] flex items-center gap-3"><Bell size={22} className="text-amber-500" /> Predictive Fraud Risk Monitoring</h1>
+          <h1 className="text-2xl font-extrabold text-[#C8102E] flex items-center gap-3"><Bell size={22} className="text-amber-500" /> Predictive Fraud Risk Monitoring</h1>
           <p className="text-xs text-slate-500 font-medium mt-1">Proactive risk indicators from live claim data — these are indicators for review, NOT confirmed fraud.</p>
         </div>
-        <button onClick={runScan} disabled={scanning} className="px-5 py-2.5 rounded-xl bg-amber-500 hover:bg-amber-600 text-slate-950 font-bold text-sm disabled:opacity-40">
+        <button onClick={runScan} disabled={scanning} className="px-5 py-2.5 rounded-xl bg-[#C8102E] hover:bg-[#8B0000] text-white font-bold text-sm disabled:opacity-40">
           {scanning ? 'Scanning…' : 'Run Predictive Scan'}
         </button>
       </div>
@@ -90,7 +90,7 @@ export default function PredictiveAlerts({ user }) {
 
       <div className="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-x-auto">
         <table className="w-full text-left">
-          <thead className="bg-[#0F2744] text-white text-[10px]">
+          <thead className="bg-[#C8102E] text-white text-[10px]">
             <tr className="uppercase tracking-wide font-extrabold">
               <th className="p-3">ID</th><th className="p-3">Type</th><th className="p-3">Severity</th><th className="p-3 text-center">Risk</th>
               <th className="p-3">Description</th><th className="p-3">Evidence</th><th className="p-3">Status</th><th className="p-3"></th>
